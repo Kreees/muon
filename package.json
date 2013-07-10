@@ -1,0 +1,37 @@
+{
+    "name":"muon",
+    "version":"0.0.4",
+    "description":"client-server web framework for single page application building",
+    "license": "MIT",
+    "author": {
+        "name": "Kirill Sukharev",
+        "email": "SukharevKirill@gmail.com",
+        "url": "https://plus.google.com/112520076349444283739"
+    },
+    "homepage": "http://muonjs.com",
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/Kreees/muonjs.git"
+    },
+    "bugs":{
+        "url": "http://github.com/Kreees/muonjs/issues",
+        "email": "SukharevKirill@gmail.com"
+    },
+    "main": "./module.js",
+    "bin":{
+        "muon-init": "./bin/init.js"
+    },
+    "dependencies": {
+        "ejs": "*",
+        "express":"3.1.0",
+        "mongodb":"*",
+        "underscore": "*",
+        "jade":"*",
+        "less-middleware":"*",
+        "less":"*",
+        "coffee-script":"*",
+        "consolidate":"*",
+        "q": "*",
+        "dox":"*"
+    }
+}

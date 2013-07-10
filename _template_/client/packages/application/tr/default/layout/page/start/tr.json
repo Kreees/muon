@@ -1,0 +1,7 @@
+{
+    "index":[
+        "This is initial page of your project. You can find it in ",
+        "<span class='dir'>'/client/packages/application/views/layout/page/index/'</span>",
+        " directory. <br>Feel free to change its content or even remove it. And don't forget to add new ones!"
+    ]
+}

@@ -1,0 +1,77 @@
+/**
+ * Here you can put all common part of your CSS code.
+ * Feel free to add other files here and don't forget to add them in index.html
+ *
+ * @file
+ * @name assets/css/application.css
+ * @author #{user}
+ *
+ */
+
+
+body {
+    padding: 0; margin: 0;
+}
+
+* {
+    /*font-weight: normal !important;*/
+}
+
+*:focus {
+    outline: none;
+}
+
+[data-muon], [data-tr] {
+    position: relative;
+}
+
+[data-debug] {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    bottom: 100%;
+    padding: 1px 7px 7px 7px;
+    height: 11px;
+    font-size: 11px;
+    text-shadow: gray 0 0 2px;
+    color: white !important;
+    opacity: .2;
+    letter-spacing: 1px;
+    cursor: pointer;
+    /*transition: background 1000ms;*/
+    /*-webkit-transition: background 1000ms;*/
+}
+
+body.debug [data-muon]:hover > [data-debug], body.debug [data-muon] > .pinned[data-debug]{
+    background-color: #000;
+    display: block;
+}
+
+body.debug [data-tr]:hover > [data-debug] {
+    background-color: #400;
+    display: block;
+}
+
+body.debug [data-debug]:hover, body.debug .pinned[data-debug] {
+    z-index: 10001;
+    opacity: 1;
+}
+
+body.debug [data-muon]:hover,body.debug .pinned[data-muon]{
+    background-color: rgba(240,240,240,.5);
+    box-shadow: #666 2px 2px 7px;
+}
+
+body.debug [data-tr]:hover{
+    background-color: rgba(255,230,230,.5);
+    box-shadow: #666 2px 2px 7px;
+}
+
+body.debug .untranslated[data-tr] {
+    background-color: #800;
+    color: white;
+}
+
+span.highlight {
+    color: #D00;
+}
