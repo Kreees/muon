@@ -415,6 +415,8 @@
 
         m.get_view_by_name = function(view_type,view_name,_context_name,pack,recursive){
             pack = pack || m.base_package;
+            _context_name = _context_name || "";
+            pack = pack || m.base_package;
             _context_name = _context_name.replace(/:/g,".");
             try{
                 var View = null;
@@ -1113,6 +1115,8 @@
         routes: {},
         navigate: function(url,opts){
             _.defer(function(){
+                opts = opts || {};
+                if (!("trigger" in opts)) opts.trigger = true;
                 if (!(opts && opts.history_nav)){
                     __history__.push(location.pathname);
                     __forward_history__ = [];
@@ -1334,7 +1338,7 @@
                 });
             }
 
-            if (typeof mod.ready == "function") mod.ready(form_pack_application_layout);
+            if (typeof mod.ready == "function") mod.ready.apply(mod.surrogate,[form_pack_application_layout]);
             else form_pack_application_layout();
 
             delete window[callback_name];
