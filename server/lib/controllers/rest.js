@@ -50,7 +50,6 @@ var rest = {
             var query = null;
             if (req.method == "GET") query = req.query;
             if (req.method == "POST") query = req.body;
-            delete query.uniq;
             this.objects.find(query)
                 .then(dfd.resolve,dfd.reject);
             return dfd.promise;

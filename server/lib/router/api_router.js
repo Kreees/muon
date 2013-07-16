@@ -159,6 +159,7 @@ errorize = function(req,res,data){
 
 module.exports = function(req,res){
     var target_action = null;
+    delete req.query._uniq_;
     if(req.method == "POST") target_action="create";
     if(req.method == "PUT") target_action="edit";
     if(req.method == "DELETE") target_action="delete";
