@@ -50,9 +50,13 @@ module.exports = {
                 var model = plugin.models[i];
                 var defaults = {}
                 for(var j in model.attrs) defaults[j] = model.attrs[j].default || defs[model.attrs[j].type];
+                var host = muon.cfg.protocol+"://";
+                host += muon.cfg.domain||muon.cfg.host||"localhost";
+                if (muon.cfg.port && parseInt(muon.cfg.port) != 80)
+                    host += ":"+muon.cfg.port;
                 var back_model = {
                     model_name: (pl_name?pl_name+":":"")+model.model_name,
-                    urlRoot: "/apis/"+(model.plugin_name?model.plugin_name+":":"")+model.model.url,
+                    urlRoot: host+"/apis/"+(model.plugin_name?model.plugin_name+":":"")+model.model.url,
                     defaults: defaults
                 };
                 var back_model_str = "muon.model_"+ i.replace(/\./g,"_");

@@ -23,12 +23,18 @@ global.m.getRandomString = function(length){
 
 function init_server(next){
     next = next || function(){}
+    global.m.__plugins = {}
+    global.m.__plugins[""] = global.m;
     Q.when(db.init("mongodb://"+global.m.cfg.db_host+"/"+global.m.cfg.db_name)).then(
         function(){
             global.m.plugins = {};
             plugins.init(global.m.cfg).then(
                 function(a){
-                    global.m.plugins = a;
+                    for(var i in a){
+                        if (i in global.m.__plugins) continue;
+                        global.m.__plugins[i] = a[i];
+                        global.m.plugins[i] = a[i];
+                    }
                     models.init(global.m.cfg).then(
                         function(a){
                             for(var i in a) global.m[i] = a[i];
@@ -68,6 +74,8 @@ function compile_package(req,res){
         models = null,
         dependencies = null,
         callback_text = null,
+        open_script = "",
+        close_script = "",
         viewsdir = global.m.path+"/client/packages"+req.path+"/views",
         pack_name = req.path.replace(/\//g,""),
         pack_translation = {};
@@ -99,12 +107,29 @@ function compile_package(req,res){
         callback_text = fs.readFileSync(global.m.path+"/client/packages"+req.path+"/package.js","utf8");
         callback_text = callback_text.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
         callback_text = "<script data-pack='"+pack_name+"'>\n"
-                        +req.query.callback+"("+callback_text+","+JSON.stringify(pack_translation)+");\n</script>";
+                        +"m.__package_init_data['"+pack_name+"'] = ["+callback_text+","+JSON.stringify(pack_translation)+"];\n</script>";
+
+        open_script += "<script type='text/javascript'>";
+        open_script += "window.__prev_package__ = m.__current_package__;";
+        open_script += "m.__current_package__ = '"+pack_name+"';"
+        open_script += "m.packages[m.__current_package__] = {"
+        open_script += "    views: {},"
+        open_script += "    views_unnamed: {},"
+        open_script += "    router_path: null,"
+        open_script += "    loaded: false,"
+        open_script += "    translation: {}"
+        open_script += "};"
+        open_script += "</script>\n"
+
+        close_script += "<script type='text/javascript'>"
+        close_script += "   m.__current_package__ = __prev_package__;";
+        close_script += "   delete __prev_package__";
+        close_script += "</script>\n";
         finalize();
     }
     function finalize(){
         res.set("Content-Type","text/plain");
-        _.defer(res.end,models+""+views.join("")+callback_text);
+        _.defer(res.end,models+open_script+views.join("")+callback_text+close_script);
     }
 
     tr_proc.render_translation(pack_name,req.query.lang || global.m.default_lang,model_render);

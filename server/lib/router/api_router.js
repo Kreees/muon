@@ -35,7 +35,7 @@ function get_permissions(permissions,req){
     var get_dfd = Q.defer();
     if (permissions === undefined) _.defer(get_dfd.resolve,["all"]);
     else if (_.isFunction(permissions)){
-        Q.when(permissions(req)).then(function(resolved){
+        Q.when(permissions.call(req.context,req)).then(function(resolved){
             if (typeof resolved == "string"){
                 if (resolved.toLowerCase() == "none") return get_dfd.resolve([]);
                 if (resolved.toLowerCase() == "all") return get_dfd.resolve(["all"]);
@@ -57,38 +57,49 @@ function get_permissions(permissions,req){
     return get_dfd.promise;
 }
 
-function do_action(dfd,req,res,controller,action,target,value){
-    function run(){
-        try {
-            req.context = {
-                controller: controller,
-                target: target,
-                action: action
-            }
-            var result = controller.actions[action].call(target.model,req,res,value);
-            if (result == null) return _.defer(dfd.reject,"Not found");
-            Q.when(result).
-                then(function(obj){
-                    var _obj = obj;
-                    if (obj instanceof Array) {
-                        _obj = new db.QuerySet(target.model);
-                        _obj.push.apply(_obj,obj);
-                        _obj.c = controller;
-                    }
-                    else {
-                        if (!(obj instanceof target.model))
-                            _obj = new target.model(obj);
-                    }
-                    dfd.resolve(_obj)}
-                ,dfd.reject);
+function run_dependency(model,req,res,next){
+    if (req.context.__middleware__.indexOf(model.model_name) != -1) return next();
+    var deps = (model.dependencies || []).slice();
+    req.context.__middleware__.push(model.model_name);
+    var plug_models = global.m.__plugins[model.plugin_name].models;
+    function _run_(){
+        if (deps.length == 0){
+            if (typeof model.m == "function") return model.m.apply(req.context,[req,res,next]);
+            else return next();
         }
-        catch(e){
-            _.defer(dfd.reject,"Internal server error: "+ e.toString());
-            console.error(e.stack);
+        var dep_name = deps.shift();
+        if (!(dep_name in plug_models)){
+            throw Error("Model dependency '"+dep_name+"' in plugin '"+model.plugin_name+"' doesn't exist.");
+            process.kill();
         }
+        run_dependency(plug_models[dep_name],req,res,_run_);
     }
-    if (typeof target.model.m == "function") target.model.m(req,res,run);
-    else run();
+    _run_();
+}
+
+function do_action(dfd,req,res,controller,action,target,value){
+    try {
+        var result = controller.actions[action].call(req.context,req,res,value);
+        if (result == null) return _.defer(dfd.reject,"Not found");
+        Q.when(result).
+            then(function(obj){
+                var _obj = obj;
+                if (obj instanceof Array) {
+                    _obj = new db.QuerySet(target.model);
+                    _obj.push.apply(_obj,obj);
+                    _obj.c = controller;
+                }
+                else {
+                    if (!(obj instanceof target.model))
+                        _obj = new target.model(obj);
+                }
+                dfd.resolve(_obj)}
+            ,dfd.reject);
+    }
+    catch(e){
+        _.defer(dfd.reject,"Internal server error: "+ e.toString());
+        console.error(e.stack);
+    }
 }
 
 function target_is_model(dfd,req,res,value,action,target){
@@ -108,19 +119,27 @@ function target_is_model(dfd,req,res,value,action,target){
         return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
     }
 
-    get_permissions(target.permissions,req)
-        .then(function(permissions){
-            check_permissions(permissions,controller,action)
-        .then(function(){
-    get_permissions(controller.permissions,req)
-        .then(function(permissions){
-            check_permissions(permissions,controller,action)
-                .then(function(){
-                    do_action(dfd,req,res,controller,action,target,value);
-    },dfd.reject)
-    },dfd.reject)
-    },dfd.reject)
-    },dfd.reject);
+    req.context.__controller__ = controller;
+    req.context.__target__ = target;
+    req.context.__action__ = action;
+    req.context.__model__ = target.model;
+    run_dependency(target.model,req,res,function(){
+        if(req.context.__permissions__.indexOf(target.model.model_name) != -1) return do_action();
+        req.context.__permissions__.push(target.model.model_name)
+        get_permissions(target.permissions,req)
+            .then(function(permissions){
+                check_permissions(permissions,controller,action)
+                    .then(function(){
+                        get_permissions(controller.permissions,req)
+                            .then(function(permissions){
+                                check_permissions(permissions,controller,action)
+                                    .then(function(){
+                                        do_action(dfd,req,res,controller,action,target,value);
+                                    },dfd.reject)
+                            },dfd.reject)
+                    },dfd.reject)
+            },dfd.reject);
+    });
 }
 
 get_next_object = function(req,res,value,action,target){
@@ -158,6 +177,14 @@ errorize = function(req,res,data){
 }
 
 module.exports = function(req,res){
+    req.context = {
+        __controller__: null,
+        __target__: null,
+        __action__: null,
+        __model__: null,
+        __middleware__: [],
+        __permissions__: []
+    };
     var target_action = null;
     delete req.query._uniq_;
     if(req.method == "POST") target_action="create";

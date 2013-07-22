@@ -11,7 +11,11 @@ module.exports = function(cfg)
         var plugin_scope = {};
         plugins.init(cfg).then(
             function(a){
-                plugin_scope.plugins = a;
+                for(var i in a){
+                    if (i in global.m.__plugins) continue;
+                    global.m.__plugins[i] = a[i];
+                    plugin_scope.plugins[i] = a[i];
+                }
                 models.init(cfg).then(
             function(a){
                 for(var i in a) plugin_scope[i] = a[i];

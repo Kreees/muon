@@ -1286,6 +1286,7 @@
             page_route = page_route.substr(0,(page_route.indexOf("(") == -1)?page_route.length:page_route.indexOf("("));
             page_route = page_route.replace(/(^\/)|(\/$)/g,"");
             page = page_route.split("/").reverse().join("_");
+            if (page.length == 0) page = "index";
         }
         var surrogate = m.packages[pack].module_obj.surrogate;
         m.router.route(prepare_route(pref,route),pack+"_"+route, function(){

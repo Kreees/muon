@@ -15,7 +15,7 @@ var rest = {
         },
         "edit": function(req,res,id){
             var dfd = Q.defer();
-            this.objects.get(id).then(
+            this.__model__.objects.get(id).then(
                 function(a){
                     a.set(req.body);
                     a.save().then(dfd.resolve,dfd.reject);
@@ -26,7 +26,7 @@ var rest = {
         },
         "delete": function(req,res,id){
             var dfd = Q.defer();
-            this.objects.get(id).then(
+            this.__model__.objects.get(id).then(
                 function(a){
                     a.del().then(dfd.resolve,dfd.reject);
                 },
@@ -35,13 +35,13 @@ var rest = {
         },
         "get": function(req,res,id){
             var dfd = Q.defer();
-            this.objects.get(id).
+            this.__model__.objects.get(id).
                 then(dfd.resolve,dfd.reject);
             return dfd.promise;
         },
         "index": function(req){
             var dfd = Q.defer();
-            this.objects.find()
+            this.__model__.objects.find()
                 .then(dfd.resolve,dfd.reject);
             return dfd.promise;
         },
@@ -50,7 +50,7 @@ var rest = {
             var query = null;
             if (req.method == "GET") query = req.query;
             if (req.method == "POST") query = req.body;
-            this.objects.find(query)
+            this.__model__.objects.find(query)
                 .then(dfd.resolve,dfd.reject);
             return dfd.promise;
         }
