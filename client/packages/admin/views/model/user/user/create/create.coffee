@@ -20,9 +20,9 @@ m.ModelView.extend {
       email: @email.val()
       password: @pass.val()
     }).then(=>
-      a.do_action("login",{email:@email.val(),password:@pass.val()}).then( ->
-        m.remove_profile("first_user")
-        m.add_profile("logined")
+      a.action("login",{email:@email.val(),password:@pass.val()}).then( ->
+        m.unset_profile("first_user")
+        m.set_profile("logined")
       )
     )
   "check": ->

@@ -129,23 +129,45 @@
             if (flag === false){ return m.unset_profile(profile); }
             if (profile == "muon") return;
             if (m.has_profile(profile)) return;
-            $("body").addClass(profile);
-            $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
+            var className = document.body.className.split(/\s+/);
+            className = className.concat(profile.split("."));
+            document.body.className = className.sort().join(" ");
+            var profiles_to_filter = _.keys(__profiles__).filter(function(p){
+                return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
+            });
+            profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
+            if (profiles_to_filter.length == 0) return;
+            var templates = [];
+            for(var i in profiles_to_filter){
+                templates = templates.concat(__profiles__[profiles_to_filter[i]]);
+            }
+            $("[data-muon]").filter(templates.join(",")).each(function(){
                 if (this.muon_view instanceof m.View) this.muon_view.reload();
             });
-            m.router.reload();
         },
         unset_profile: function(profile){
             if (profile == "muon") return;
             if (!m.has_profile(profile)) return;
+            var profiles_to_filter = _.keys(__profiles__).filter(function(p){
+                return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
+            });
+            profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
+            if (profiles_to_filter.length == 0) return;
+            var templates = [];
+            for(var i in profiles_to_filter){
+                templates = templates.concat(__profiles__[profiles_to_filter[i]]);
+            }
             $("body").removeClass(profile);
-            $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
+            $("[data-muon]").filter(templates.join(",")).each(function(){
                 if (this.muon_view instanceof m.View) this.muon_view.reload();
             });
-            m.router.reload();
         },
         has_profile: function(profile){
-            return $("body").hasClass(profile);
+            return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).
+                            test(document.body.className.split(/\s+/).sort().join("."));
+        },
+        get_profile: function(){
+            return document.body.className.split(/\s+/).sort().join(".");
         }
     };
     /**
@@ -167,7 +189,6 @@
         var new_view = _view_b.apply(this,arguments);
         if (obj.__auto_generated__) return new_view;
         var template = new_view.prototype.template;
-        var profile = new_view.prototype.profile;
         if (typeof template == "string"){
             if (!_.isObject(m.packages[m.__current_package__].views[view_type]))
                 m.packages[m.__current_package__].views[view_type] = {};
@@ -404,15 +425,20 @@
     });
 
     (function(muon){
+        function profile_sort(a,b){
+            if (a.split(".").length > b.split(".").length) return -1;
+            if (a.split(".").length < b.split(".").length) return 1;
+            return 0;
+        }
+
         muon.template_for_view = function(view) {
             var selector = view.template+"_"+view.view_type;
-            var classes = document.body.className.split(/\s+/);
             var profile = "muon";
-            for(var i in classes.reverse()){
-                if (classes[i] in __profiles__ &&
-                    __profiles__[classes[i]].indexOf("."+selector+"[data-pack='"+view.package+"']") != -1)
+            view.constructor.profiles = view.constructor.profiles.sort(profile_sort);
+            for(var i in view.constructor.profiles){
+                if (m.has_profile(view.constructor.profiles[i]))
                 {
-                    profile = classes[i];
+                    profile = view.constructor.profiles[i];
                     break;
                 }
             }
@@ -596,6 +622,7 @@
 
         m.View = Backbone.View.extend({
             tag_name: "div",
+            profiles: [],
             toString: function(){
                 return this.package+":"+this.view_type+":"+this.template;
             },
@@ -1046,12 +1073,10 @@
             if (this.target) this.$target = this.$("#"+this.target);
             else this.$target = this.$el;
             this.$target.addClass('')
-            if (this.$target.length != 0) console.log(this.$target[0]);
         },
         __reset__: function(){
             for(var i in this.views){
                 var view = this.views[i];
-//                console.log(this.$target,view.$el);
                 if (view instanceof m.View) this.$target.append(view.$el);
             }
         },
@@ -1437,17 +1462,28 @@
     }
 
     function proc_unhandled_views(pack){
+        var processed = [];
         $("script[data-pack='"+pack+"'][type='text/muon-template']").each(function(){
+            if (processed.indexOf(this) != -1) return;
+            processed.push(this);
+            $("script#"+this.id+"[data-pack='"+pack+"'][type='text/muon-template']")
+                .not(this)
+                .each(function(){
+                    processed.push(this);
+                });
             var name = this.id.replace(/_template$/,"");
             var type = name.match(/_([a-zA-Z0-9]*?)$/)[1];
             name = name.replace(RegExp("_"+type+"$"),"");
             if (m.packages[pack].views[type] && m.packages[pack].views[type][name]) return;
             var view_class_obj = null;
-            if (name == "application" && type == "layout") view_class_obj = m.ApplicationLayoutView;
-            else if (name.match(/_page$/) && type == "layout") view_class_obj = m.PageLayoutView;
-            else if (type in m.base_views) view_class_obj = m.base_views[type];
+            if (name == "application" && type == "layout")
+                view_class_obj = m.ApplicationLayoutView;
+            else if (name.match(/_page$/) && type == "layout")
+                view_class_obj = m.PageLayoutView;
+            else if (type in m.base_views)
+                view_class_obj = m.base_views[type];
             if (!view_class_obj) return;
-            view_class_obj.extend({template: name});
+            view_class_obj.extend({template: name,package:pack});
         })
     }
 
@@ -1456,6 +1492,8 @@
             var name = this.id.replace(/_template$/,"");
             var type = name.match(/_([a-zA-Z0-9]*?)$/)[1];
             name = name.replace(RegExp("_"+type+"$"),"");
+            m.packages[pack].views[type][name].profiles = m.packages[pack].views[type][name].profiles || [];
+            m.packages[pack].views[type][name].profiles.push(this.dataset.profile);
             if (!(__profiles__[this.dataset.profile] instanceof Array)) __profiles__[this.dataset.profile] = [];
             __profiles__[this.dataset.profile].push("."+name+"_"+type+"[data-pack='"+pack+"']");
         })

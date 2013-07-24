@@ -1,20 +1,12 @@
 module.exports = {
     middleware: [
         function(){
-            var _this = this;
             var dfd = $.Deferred();
-            if (!this.admin_users){
-                this.admin_users = new m.Collection(null,{url: "/apis/user.user/"});
-                this.admin_users.fetch().then(function(){
-                    if (_this.admin_users.length == 0) m.set_profile("first_user");
-                    dfd.resolve();
-                });
-            }
-            else {
-                if (_this.admin_users.length == 0) m.set_profile("first_user");
-                _.defer(dfd.resolve);
-            }
-            return dfd.promise();
+            var a = new m.Collection(null,{url: "/apis/user.user/"});
+            a.fetch().then(function(a){
+                m.set_profile("first_user",a.length == 0);
+                dfd.resolve();
+            });
         }
     ],
     routes: [

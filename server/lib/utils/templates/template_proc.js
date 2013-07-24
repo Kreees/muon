@@ -1,6 +1,7 @@
 var app = global.m.app,
     fs = require("fs"),
-    path = global.m.path
+    path = global.m.path,
+    _ = require("underscore")
 ;
 
 var pre_wrapper = {
@@ -26,8 +27,8 @@ function prepare(pack,name,data){
     id = id.split("/").reverse().join("_").toLowerCase();
     var profile = "muon";
     if (name.indexOf(".") != -1){
-        profile = name.substr(name.lastIndexOf(".")+1);
-        name = name.replace(RegExp("\\."+profile+"$"),"");
+        profile = _.uniq(name.split(".").splice(1).concat(["muon"])).sort().join(".");
+        name = name.split(".")[0];
     }
     if (extension_name in pre_wrapper){
         data = pre_wrapper[extension_name]
@@ -59,8 +60,8 @@ function post_proc(pack,name,data){
     name = name.replace(RegExp("\\."+extension_name+"$"),"");
     var profile = "muon";
     if (name.indexOf(".") != -1){
-        profile = name.substr(name.lastIndexOf(".")+1);
-        name = name.replace(RegExp("\\."+profile+"$"),"");
+        profile = _.uniq(name.split(".").splice(1).concat(["muon"])).sort().join(".");
+        name = name.split(".")[0];
     }
     if (extension_name in post_wrapper){
         if (["css","less"].indexOf(extension_name)){

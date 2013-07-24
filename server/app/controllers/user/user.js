@@ -2,12 +2,9 @@ var md5 = require("crypto").createHash("md5");
 var Q = require("q");
 
 module.exports = m.rest.extend({
-//    permissions: function(){
-//
-//    },
     actions: {
         create: function(req,res){
-            req.body.password = md.update(req.body.password).digest("hex");
+            req.body.password = md5.update(req.body.password).digest("hex");
             return m.rest.actions.create.apply(this,arguments);
         },
         "edit": function(req,res,id){

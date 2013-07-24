@@ -4,6 +4,11 @@
 
 .form-horizontal .control-group {
     margin-bottom: 5px;
+    height: 30px !important;
+}
+
+.form-horizontal .control-group:first-child {
+    margin-top: 20px;
 }
 
 .form-horizontal .control-group.button-group {
