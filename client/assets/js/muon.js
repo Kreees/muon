@@ -29,6 +29,12 @@
      */
     var __default_lang__ = document.getElementsByTagName("html")[0].lang || "en";
     var __debug__ = false;
+    var __profiles__ = {};
+    window.__routes__ = [];
+    window.__middleware__ = {};
+    var __history__ = [];
+    var __forward_history__ = [];
+
     window.muon = {
         __package_init_data: {},
         is_debug: function(){
@@ -118,6 +124,34 @@
                 console.log(e.message);
                 return;
             }
+        },
+        set_profile: function(profile){
+            if (profile == "muon") return;
+            $("body")[0].className = "muon "+profile;
+            $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
+               if (this.muon_view instanceof m.View) this.muon_view.reload();
+            });
+        },
+        unset_profile: function(){
+            if (profile == "muon") return;
+            $("body")[0].className = "muon";
+            $("[data-muon]").each(function(){
+                if (this.muon_view instanceof m.View)  this.muon_view.reload();
+            });
+        },
+        add_profile: function(profile){
+            if (profile == "muon") return;
+            $("body").addClass(profile);
+            $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
+                if (this.muon_view instanceof m.View) this.muon_view.reload();
+            });
+        },
+        remove_profile: function(profile){
+            if (profile == "muon") return;
+            $("body").removeClass(profile);
+            $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
+                if (this.muon_view instanceof m.View) this.muon_view.reload();
+            });
         }
     };
     /**
@@ -135,11 +169,12 @@
     _b_.View.extend = function(obj,common){
         var view_type = (_.isString(obj.view_type))?obj.view_type:this.prototype.view_type;
         var pack = m.__current_package__ || "application";
-        obj.package = pack;
+        obj.package = obj.package || pack;
         var new_view = _view_b.apply(this,arguments);
         if (obj.__auto_generated__) return new_view;
         var template = new_view.prototype.template;
-        if (_.isString(template)){
+        var profile = new_view.prototype.profile;
+        if (typeof template == "string"){
             if (!_.isObject(m.packages[m.__current_package__].views[view_type]))
                 m.packages[m.__current_package__].views[view_type] = {};
             m.packages[m.__current_package__].views[view_type][template] = new_view;
@@ -163,9 +198,9 @@
         if (obj.urlRoot && obj.urlRoot.indexOf("0.0.0.0") != -1){
             obj.urlRoot = obj.urlRoot.replace("0.0.0.0",location.hostname);
         }
-        if (obj.__auto_generated__) return new_model;
         var new_model = _model_b.apply(this,arguments);
         new_model.model_name = model_name;
+        if (obj.__auto_generated__) return new_model;
         if (_.isString(model_name)) {
             var attrId = new_model.prototype.idAttribute;
             var _objs = {};
@@ -220,7 +255,7 @@
     }
 
     Backbone.ajax = function(request){
-        request.url += (request.url.indexOf("?") == -1?"?":"&")+"uniq="+getUniq();
+        request.url += (request.url.indexOf("?") == -1?"?":"&")+"__uniq__="+getUniq();
         return $.ajax.apply(Backbone,arguments);
     }
 
@@ -270,6 +305,18 @@
                     }
                 })
                 return dfd.promise();
+            },
+            action: function(action,args_obj,opts){
+                var _this = this;
+                args_obj = args_obj || {}
+                args_obj.__action__ = action;
+                opts = opts || {};
+                var s = opts.success,
+                    e = opts.error;
+                opts.success = function(){s && s.apply(_this,arguments)}
+                opts.error = function(){e && e.apply(_this,arguments)}
+                opts.data = args_obj;
+                return $.ajax((typeof this.url == "function")?this.url():this.url,this.obj,opts);
             },
             destroy: function(args){
                 var dfd = $.Deferred();
@@ -364,7 +411,20 @@
 
     (function(muon){
         muon.template_for_view = function(view) {
-            var selector = "script#"+view.template+"_"+view.view_type+"_template[type='text/muon-template'][data-pack='"+view.package+"']"
+            var selector = view.template+"_"+view.view_type;
+            var classes = document.body.className.split(/\s+/);
+            var profile = "muon";
+            for(var i in classes.reverse()){
+                if (classes[i] in __profiles__ &&
+                    __profiles__[classes[i]].indexOf("."+selector+"[data-pack='"+view.package+"']") != -1)
+                {
+                    profile = classes[i];
+                    break;
+                }
+            }
+            selector = "script#"+selector+"_template";
+            selector += "[type='text/muon-template'][data-pack='"+view.package+"']"
+            selector += "[data-profile='"+profile+"']";
             if (document.querySelectorAll) return document.querySelector(selector);
             else return $(selector)[0];
         }
@@ -413,7 +473,8 @@
                 model_attrs.__auto_generated__ = true;
                 if (projection instanceof m.Model) return _.extend(projection,model_attrs);
                 if (!(model_name in m.models)) throw Error("Unknown model name: "+model_name);
-                var Model = m.models[model_name].extend(model_attrs);
+                var Model = m.models[model_name];
+                if (this.dataset["contextAttrs"]) Model = Model.extend(model_attrs);
                 var dfd = $.Deferred();
                 if ((typeof projection == "string" || typeof projection == "number" || projection) && this.dataset.modeltId)
                     throw Error("You shouldn't use both projection variable and model Id attribute in one view simultaneously.")
@@ -426,7 +487,7 @@
                     return dfd.promise();
                 }
                 if (_.isObject(projection) || projection === undefined){
-                    return new Model(projection)
+                    return new Model()
                 }
                 _.defer(dfd.reject,"Wrong projection type")
                 return dfd.promise();
@@ -598,7 +659,15 @@
                 this.render_template($el[0]);
                 $el.attr("data-pack",this.package);
                 $el.addClass([this.template?this.template+"_"+this.view_type:"",this.className,this.view_type,"block"].join(" "));
-                this.setElement($el);
+                if (this.el && this.el.muon_view == this){
+                    this.undelegateEvents();
+                    this.el.innerHTML = $el[0].innerHTML;
+                    this.delegateEvents();
+                    this.$el = $el;
+                }
+                else {
+                    this.setElement($el[0]);
+                }
                 this.el.muon_view = this;
                 this.el.dataset.muon = "";
                 render_focus.call(this);
@@ -614,10 +683,22 @@
                 }
                 if ('function' == typeof this.rendered) this.rendered($el);
             },
+            __remove_inner_views: function(){
+                this.$("[dat-muon]").each(function(){
+                    if (this.muon_view instanceof m.View) this.muon_view.remove();
+                });
+            },
             remove: function(){
-                this.trigger("removed");
                 delete this.el.muon_view;
+                this.__remove_inner_views();
+                this.trigger("removed");
                 Backbone.View.prototype.remove.call(this);
+            },
+            reload: function(){
+                this.__remove_inner_views();
+                this.undelegateEvents()
+                this.trigger("reloaded");
+                this.render();
             },
             pack: function(){return m.packages[this.package];},
             focus: function(el){
@@ -1144,11 +1225,6 @@
         }
     });
 
-    window.__routes__ = [];
-    window.__history__ = [];
-    window.__forward_history__ = [];
-    window.__loading_pack_proc__ = false;
-
     m.Router = Backbone.Router.extend({
         initialize: function(){
             for(var i in this.routes){
@@ -1212,7 +1288,11 @@
     function add_pack_routes(pack,route,mod){
         mod.surrogate = mod.surrogate || {};
         var flatten_m = function(mid){return flatten_middleware(mid,mod.surrogate);}
+
         mod.middleware = flatten_m(mod.middleware);
+        if (m.packages[pack].parent_pack && m.packages[pack].parent_pack.middleware )
+            mod.middleware = flatten_m(mod.middleware.concat(m.packages[pack].parent_pack.middleware));
+        m.packages[pack].middleware = mod.middleware;
         if (_.isObject(mod.routes) && !mod.routes.length){
             var route_keys = _.keys(mod.routes);
             for(var i in route_keys.reverse())
@@ -1229,7 +1309,6 @@
                     var pack_route = prepare_route(route,r_obj.route);
                     m.router.route(pack_route,r_obj.package,m.require_pack(r_obj.package,null,pack));
                 }
-
                 else {
                     var route_middleware = flatten_m(mod.middleware.concat(r_obj.middleware));
                     if (_.isString(r_obj.redirect)){
@@ -1318,7 +1397,7 @@
     }
 
     function flatten_middleware(middl,surrogate){
-        return _.flatten([middl]).filter(function(m){return _.isFunction(m);}).map(function(f){return _.bind(f,surrogate)});
+        return _.flatten([middl]).filter(function(m){return typeof m == "function";}).map(function(f){return _.bind(f,surrogate)});
     }
 
     function proc_unhandled_views(pack){
@@ -1336,6 +1415,16 @@
         })
     }
 
+    function proc_profiled_views(pack){
+        $("script[data-pack='"+pack+"'][type='text/muon-template'][data-profile]").each(function(){
+            var name = this.id.replace(/_template$/,"");
+            var type = name.match(/_([a-zA-Z0-9]*?)$/)[1];
+            name = name.replace(RegExp("_"+type+"$"),"");
+            if (!(__profiles__[this.dataset.profile] instanceof Array)) __profiles__[this.dataset.profile] = [];
+            __profiles__[this.dataset.profile].push("."+name+"_"+type+"[data-pack='"+pack+"']");
+        })
+    }
+
     m.require_pack = function(pack,callback,parent_pack){
         if (pack in m.packages) return function(){};
         var fallback_path = "";
@@ -1346,6 +1435,7 @@
             m.packages[pack].translation = trs;
             m.packages[pack].parent_pack = m.packages[parent_pack||""];
             proc_unhandled_views(pack);
+            proc_profiled_views(pack);
             if (route){
                 Backbone.history.handlers = Backbone.history.handlers.filter(function(obj){
                     if (obj.route.toString() == to_regexp(route).toString() ||
@@ -1358,14 +1448,13 @@
                 add_pack_routes(pack,route,mod);
             }
             function form_pack_application_layout(){
+                mod.use_app_layout = mod.use_app_layout || true;
                 if (mod.use_app_layout){
                     var app_layout_class = null;
                     if (m.packages[pack].views.layout && m.packages[pack].views.layout.application)
-                        app_layout_class = m.packages[pack].views.layout.application
-                    else{
-                        app_layout_class = m.ApplicationLayoutView
-                    }
-                    app_layout_class = app_layout_class.extend({package:pack});
+                        app_layout_class = m.packages[pack].views.layout.application;
+                    else
+                        app_layout_class = m.ApplicationLayoutView.extend({package:pack})
                     var app_layout = m.packages[pack].app_layout = new app_layout_class;
                     if (m.__application_view__ == app_layout) app_layout.$el.appendTo("body");
                     else {
@@ -1379,7 +1468,7 @@
                             app_layout.__parent_app_layout.add(page_name,page);
                         }
                     }
-                    app_layout.add_pages(mod.pages || []);
+                    app_layout.add_pages(mod.pages || ["*"]);
                 }
                 _.defer(function(){
                     Backbone.history.loadUrl();

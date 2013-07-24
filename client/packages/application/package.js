@@ -13,10 +13,16 @@ module.exports = {
             "package": "admin"
         },
         {
+            "route": "cabinet"
+        },
+        {
+            "route": "muon_login",
+            "redirect": "/cabinet"
+        },
+        {
             "route": "*a",
             "page": "not_found"
         }
-
     ],
     surrogate: {}
 };

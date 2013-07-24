@@ -4,8 +4,8 @@ var app = global.m.app,
 ;
 
 var pre_wrapper = {
-    "less": "\t.#{id}[data-pack='#{pack}'] {\n\tposition: relative;\n\t\t#{data}\n}",
-    "css": "\t.#{id}[data-pack='#{pack}'] {\n\tposition: relative;\n\t\t#{data}\n}"
+    "less": "\t#{profile}\t.#{id}[data-pack='#{pack}'] {\n\tposition: relative;\n\t\t#{data}\n}",
+    "css": "\t#{profile}\t.#{id}[data-pack='#{pack}'] {\n\tposition: relative;\n\t\t#{data}\n}"
 };
 
 var post_wrapper = {
@@ -13,22 +13,31 @@ var post_wrapper = {
     "css": "\n<!-- #{pack}:#{name} -->\n<style data-pack='#{pack}'>\n#{data}\n</style>\n",
     "js": "\n<!-- #{pack}:#{name} -->\n<script type='text/javascript' data-pack='#{pack}'>\n#{data}\n</script>\n",
     "coffee": "\n<!-- #{pack}:#{name} -->\n<script type='text/javascript' data-pack='#{pack}'>\n#{data}\n</script>\n",
-    "jade": "\n<!-- #{pack}:#{name} -->\n<script data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>\n#{data}\n</script>\n",
-    "html": "\n<!-- #{pack}:#{name} -->\n<script data-pack='#{pack}' type='text/muon-template'id='#{id}_template'>\n#{data}\n</script>\n",
-    "jqote": "\n<!-- #{pack}:#{name} -->\n<script data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>\n#{data}\n</script>\n"
+    "jade": "\n<!-- #{pack}:#{name} -->\n<script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>\n#{data}\n</script>\n",
+    "html": "\n<!-- #{pack}:#{name} -->\n<script #{profile} data-pack='#{pack}' type='text/muon-template'id='#{id}_template'>\n#{data}\n</script>\n",
+    "jqote": "\n<!-- #{pack}:#{name} -->\n<script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>\n#{data}\n</script>\n"
 }
 
 function prepare(pack,name,data){
     if (data.length == 0) return "";
     var extension_name = name.substr(name.lastIndexOf(".")+1);
+    name = name.replace(RegExp("\\."+extension_name+"$"),"");
     var id = name.substr(0,name.lastIndexOf("/"));
     id = id.split("/").reverse().join("_").toLowerCase();
+    var profile = "muon";
+    if (name.indexOf(".") != -1){
+        profile = name.substr(name.lastIndexOf(".")+1);
+        name = name.replace(RegExp("\\."+profile+"$"),"");
+    }
     if (extension_name in pre_wrapper){
         data = pre_wrapper[extension_name]
             .replace("#{data}",data.replace(/\n/g,"\n\t"))
             .replace(/#\{name\}/g,name)
             .replace(/#\{id\}/g,id)
             .replace(/#\{pack\}/g,pack);
+        if (["css","less"].indexOf(extension_name) != -1){
+            data = data.replace(/#\{profile\}/g,profile?"body."+profile:"");
+        }
     }
     return data;
 }
@@ -47,9 +56,16 @@ function post_proc(pack,name,data){
     var extension_name = name.substr(name.lastIndexOf(".")+1);
     var id = name.substr(0,name.lastIndexOf("/"));
     id = id.split("/").reverse().join("_").toLowerCase();
+    name = name.replace(RegExp("\\."+extension_name+"$"),"");
+    var profile = "muon";
+    if (name.indexOf(".") != -1){
+        profile = name.substr(name.lastIndexOf(".")+1);
+        name = name.replace(RegExp("\\."+profile+"$"),"");
+    }
     if (extension_name in post_wrapper){
-        if (["css","less"].indexOf(extension_name))
+        if (["css","less"].indexOf(extension_name)){
             data = media_query_proc(data);
+        }
         data = post_wrapper[extension_name].replace("#{data}",data.replace(/\n/g,"\n\t"))
             .replace(/#\{name\}/g,name)
             .replace(/#\{id\}/g,id)
@@ -59,6 +75,9 @@ function post_proc(pack,name,data){
                     ".extend({\n\t    template:'"+id.replace(/_[a-zA-Z0-9]+$/g,"")+"',\n\t    ")
                 .replace(/,[\s\n]*\}/g,"\n\t  }");
 
+        }
+        if (["jade","html","jqote"].indexOf(extension_name) != -1){
+            data = data.replace(/#\{profile\}/g,profile?"data-profile='"+profile+"'":"");
         }
     }
     return data;

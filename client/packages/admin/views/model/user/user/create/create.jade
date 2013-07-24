@@ -1,0 +1,23 @@
+form.form-horizontal
+    div.control-group
+        label.control-label Nick*
+        div.controls
+            input#nick(type='text')
+    div.control-group
+        label.control-label Email*
+        div.controls
+            input#email(type='email')
+            span.help-inline Wrong email format
+    div.control-group
+        label.control-label Password*
+        div.controls
+            input#pass(type='password')
+            span.help-inline Password length should be more than 6 non-empty symbols
+    div.control-group.error
+        label.control-label Retype password*
+        div.controls
+            input#repass(type='password')
+            span.help-inline Password mismatch
+    div.control-group.button-group
+        div.controls
+            button.btn.btn-primary.disabled#create Create!

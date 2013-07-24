@@ -1,6 +1,6 @@
 module.exports = {
     attrs: {
-       "name": {
+       "nick": {
            type: "string",
            null_allowed: false
        },
@@ -11,6 +11,10 @@ module.exports = {
        "email":{
            type: "email",
            null_allowed: true
+       },
+       "roles": {
+           type: ["user.role"],
+           default: []
        }
     }
 }

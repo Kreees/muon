@@ -39,8 +39,8 @@ function init_server(next){
                         function(a){
                             for(var i in a) global.m[i] = a[i];
                             next();
-                        },function(){ throw Error("Plugins load error!");})
-                },function(){ throw Error("Models load error!");})
+                        },function(e){ throw Error("Models load error!");})
+                },function(e){ throw Error("Plugins load error!");})
         },function(){ throw Error("Database load error!");});
     return this;
 }

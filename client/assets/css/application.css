@@ -1,3 +1,12 @@
 * {
     border-radius: 0 !important;
 }
+
+.form-horizontal .control-group {
+    margin-bottom: 5px;
+}
+
+.form-horizontal .control-group.button-group {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
