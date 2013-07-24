@@ -29,7 +29,7 @@
      */
     var __default_lang__ = document.getElementsByTagName("html")[0].lang || "en";
     var __debug__ = false;
-    var __profiles__ = {};
+    window.__profiles__ = {};
     window.__routes__ = [];
     window.__middleware__ = {};
     var __history__ = [];
@@ -125,33 +125,27 @@
                 return;
             }
         },
-        set_profile: function(profile){
+        set_profile: function(profile,flag){
+            if (flag === false){ return m.unset_profile(profile); }
             if (profile == "muon") return;
-            $("body")[0].className = "muon "+profile;
-            $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
-               if (this.muon_view instanceof m.View) this.muon_view.reload();
-            });
-        },
-        unset_profile: function(){
-            if (profile == "muon") return;
-            $("body")[0].className = "muon";
-            $("[data-muon]").each(function(){
-                if (this.muon_view instanceof m.View)  this.muon_view.reload();
-            });
-        },
-        add_profile: function(profile){
-            if (profile == "muon") return;
+            if (m.has_profile(profile)) return;
             $("body").addClass(profile);
             $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
                 if (this.muon_view instanceof m.View) this.muon_view.reload();
             });
+            m.router.reload();
         },
-        remove_profile: function(profile){
+        unset_profile: function(profile){
             if (profile == "muon") return;
+            if (!m.has_profile(profile)) return;
             $("body").removeClass(profile);
             $("[data-muon]").filter((__profiles__[profile]||[]).join(",")).each(function(){
                 if (this.muon_view instanceof m.View) this.muon_view.reload();
             });
+            m.router.reload();
+        },
+        has_profile: function(profile){
+            return $("body").hasClass(profile);
         }
     };
     /**
@@ -661,9 +655,10 @@
                 $el.addClass([this.template?this.template+"_"+this.view_type:"",this.className,this.view_type,"block"].join(" "));
                 if (this.el && this.el.muon_view == this){
                     this.undelegateEvents();
-                    this.el.innerHTML = $el[0].innerHTML;
+                    this.el.innerHTML = "";
+                    $(this.el).append($el.children());
+                    this.$el = $(this.el);
                     this.delegateEvents();
-                    this.$el = $el;
                 }
                 else {
                     this.setElement($el[0]);
@@ -676,7 +671,7 @@
                 this.render_debug_labels();
                 this.__set__ && this.__set__();
                 for(var i in m.base_views){
-                    var $els = $el.find("*[data-"+i+"-view]");
+                    var $els = this.$el.find("*[data-"+i+"-view]");
                     $els.each(function(){
                         insert_view.call(this,i,this.dataset.pack || _this.package,_this);
                     });
@@ -697,8 +692,9 @@
             reload: function(){
                 this.__remove_inner_views();
                 this.undelegateEvents()
-                this.trigger("reloaded");
                 this.render();
+                this.__reset__ && this.__reset__();
+                this.trigger("reloaded");
             },
             pack: function(){return m.packages[this.package];},
             focus: function(el){
@@ -993,6 +989,13 @@
                 this.$el.find("#"+i).append(block.$el);
             }
         },
+        __reset__: function(){
+            for(var i in this.blocks){
+                var block = this.blocks[i];
+                this.$("#"+i).html("");
+                this.$("#"+i).append(block.$el);
+            }
+        },
         get: function(alias){
             if (alias in this.blocks)
                 return this.blocks[alias];
@@ -1043,6 +1046,14 @@
             if (this.target) this.$target = this.$("#"+this.target);
             else this.$target = this.$el;
             this.$target.addClass('')
+            if (this.$target.length != 0) console.log(this.$target[0]);
+        },
+        __reset__: function(){
+            for(var i in this.views){
+                var view = this.views[i];
+//                console.log(this.$target,view.$el);
+                if (view instanceof m.View) this.$target.append(view.$el);
+            }
         },
         add: function(alias,view){
             if (alias instanceof muon.View){
@@ -1206,7 +1217,7 @@
         /**
          * Переопределение метода __set__ класса View {@link muon.View#__set__}
          *
-         * Создание объекта muon.PageLyaoutView приводит к автоматическому добавлению представления в
+         * Создание объекта muon.PageLayoutView приводит к автоматическому добавлению представления в
          * представление приложения
          *
          * @name __set__
@@ -1225,6 +1236,28 @@
         }
     });
 
+    var History = _b_.History;
+    _b_.History.prototype.navigate = function(fragment, options) {
+        if (!History.started) return false;
+        if (!options || options === true) options = {trigger: options};
+        fragment = this.getFragment(fragment || '');
+//        if (this.fragment === fragment) return;
+        this.fragment = fragment;
+        var url = this.root + fragment;
+        if (this._hasPushState) {
+            this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
+        } else if (this._wantsHashChange) {
+            this._updateHash(this.location, fragment, options.replace);
+            if (this.iframe && (fragment !== this.getFragment(this.getHash(this.iframe)))) {
+                if(!options.replace) this.iframe.document.open().close();
+                this._updateHash(this.iframe.location, fragment, options.replace);
+            }
+        } else {
+            return this.location.assign(url);
+        }
+        if (options.trigger) this.loadUrl(fragment);
+    };
+
     m.Router = Backbone.Router.extend({
         initialize: function(){
             for(var i in this.routes){
@@ -1237,6 +1270,9 @@
             Backbone.Router.prototype.route.apply(this,arguments);
         },
         routes: {},
+        reload: function(){
+            return this.navigate(location.pathname,{replace: true,trigger:true});
+        },
         navigate: function(url,opts){
             _.defer(function(){
                 opts = opts || {};
@@ -1247,10 +1283,10 @@
                 }
                 if (url.match(/^\//)){
                     if(url.match(/^\/\//)) location = url;
-                    else Backbone.Router.prototype.navigate.apply(this,[url,opts]);
+                    else _b_.Router.prototype.navigate.apply(this,[url,opts]);
                 }
                 else {
-                    Backbone.Router.prototype.navigate.apply(this,
+                    _b_.Router.prototype.navigate.apply(this,
                         [location.pathname +(location.pathname.match(/\/$/)?"":"/")+ url,opts]);
                 }
             });
