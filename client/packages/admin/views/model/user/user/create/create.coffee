@@ -20,7 +20,7 @@ m.ModelView.extend {
       email: @email.val()
       password: @pass.val()
     }).then(=>
-      a.action("login",{email:@email.val(),password:@pass.val()}).then( ->
+      new m.model_user_session().save({login:@email.val(),password:md5(@pass.val())}).then( ->
         m.unset_profile("first_user")
         m.set_profile("logined")
       )

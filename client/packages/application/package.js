@@ -24,5 +24,12 @@ module.exports = {
             "page": "not_found"
         }
     ],
-    surrogate: {}
+    ready: function(next){
+        var a = new m.model_user_user("me");
+        a.fetch().then(function(a){
+            m.set_projection("logined_user",a);
+            m.set_profile("logined");
+            next();
+        },next);
+    }
 };

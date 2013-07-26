@@ -40,7 +40,6 @@ module.exports = {
             plugin_scope.models = {};
             plugin_scope.model_names = [];
             plugin_scope.url_access = {};
-            try{
             for(var i in files){
                 var pack_path = files[i].replace(models_path+"/","");
                 var file_name = pack_path.substring(pack_path.lastIndexOf("/")+1,pack_path.length).replace(/\.js$/g,"");
@@ -71,19 +70,15 @@ module.exports = {
                     }
                 }
             }
-            }
-            catch(e){
-                console.log(e);
-                console.log(e.stack);
-                throw e;
-            }
 
             var cdir_pref = cfg.path+"/server/app/controllers/";
-
             for(var i in plugin_scope.models){
                 var model = plugin_scope.models[i];
                 var name = model.model_name;
                 model.s = {};
+                model.o = {};
+                model.d = {};
+                model.m = {};
                 // задаем контроллер для модели
                 // Если точного соответствия имени файла контроллера и имени модели нет
                 // то пытаемся подняться на ступень выше и взять контроллер на ступень выше.
@@ -108,7 +103,7 @@ module.exports = {
                     var c = null;
                     if ('string' == typeof scope_name){
                         try {c = require(cdir_pref+name.replace(/\./g,"/")+"/"+scope_name+".js");}
-                        catch(e){throw Error("No controller for scope '"+scope_name+"' found for "+name+"! Exit.");}
+                        catch(e){m.kill("No controller for scope '"+scope_name+"' found for "+name+"! Exit.");}
                     }
                     else {
                         var scope_obj = scope_name;
@@ -125,7 +120,34 @@ module.exports = {
                     scope.c = c;
                     if (typeof scope.c.actions != "object") scope.c.actions = {}
                     scope.model = model;
+                    scope.model_name = model.model_name;
                     scope.scope_name = scope_name;
+                }
+
+                for(var i in model.objects){
+                    var object_name = model.objects[i];
+                    var c = null;
+                    if ('string' == typeof object_name){
+                        try {c = require(cdir_pref+name.replace(/\./g,"/")+"/"+object_name+".js");}
+                        catch(e){m.kill("No controller for scope '"+object_name+"' found for "+name+"! Exit.");}
+                    }
+                    else {
+                        var object_obj = object_name;
+                        c = model.c.extend(object_obj);
+                        object_obj = object_obj.name;
+                    }
+                    /**
+                     * TODO Решить вопрос со скоупом - это должен быть самостоятельнй класс
+                     */
+                    var object = function(){
+//                        return ('function' == typeof scope_func.c.get)?scope_func.c.get():scope_func.c.index()
+                    };
+                    model.o[object_name] = object;
+                    object.c = c;
+                    if (typeof object.c.actions != "object") object.c.actions = {}
+                    object.model = model;
+                    object.model_name = model.model_name;
+                    object.object_name = object_name;
                 }
             }
 

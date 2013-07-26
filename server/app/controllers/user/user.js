@@ -1,7 +1,10 @@
 var md5 = require("crypto").createHash("md5");
 var Q = require("q");
+var _ = require("underscore");
 
 module.exports = m.rest.extend({
+    decorator: [],
+    permissions: ["create","index"],
     actions: {
         create: function(req,res){
             req.body.password = md5.update(req.body.password).digest("hex");
@@ -9,7 +12,7 @@ module.exports = m.rest.extend({
         },
         "edit": function(req,res,id){
             var dfd = Q.defer();
-            this.__model__.objects.get(id).then(
+            this.$model.objects.get(id).then(
                 function(a){
                     a.set(req.body);
                     a.save().then(dfd.resolve,dfd.reject);

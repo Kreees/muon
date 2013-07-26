@@ -16,5 +16,6 @@ module.exports = {
            type: ["user.role"],
            default: []
        }
-    }
+    },
+    objects: ["me"]
 }

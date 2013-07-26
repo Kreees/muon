@@ -223,15 +223,13 @@
                 attrs = attrs || {};
                 if (typeof attrs === "string" || typeof attrs === "number"){
                     var _id = attrs;
-                    if (_id in _objs) return _objs[attrs];
-                    else{
+                    if (!(_id in _objs)){
                         attrs = {}; attrs[attrId] = _id;
                         var obj = new new_model(attrs,opts);
-                        obj.fetch().then(function(){
-                            _objs[_id] = obj;
-                        });
-                        return obj;
+                        _objs[_id] = obj;
                     }
+                    if (opts && opts.force_sync) obj.fetch();
+                    return _objs[_id];
                 }
                 if (typeof attrs._id === "string" || typeof attrs._id === "number"){
                     if (attrs._id in _objs) _objs[attrs._id].set(attrs);
@@ -331,7 +329,7 @@
                 opts.success = function(){s && s.apply(_this,arguments)}
                 opts.error = function(){e && e.apply(_this,arguments)}
                 opts.data = args_obj;
-                return $.ajax((typeof this.url == "function")?this.url():this.url,this.obj,opts);
+                return $.ajax((typeof this.url == "function")?this.url():this.url,opts);
             },
             destroy: function(args){
                 var dfd = $.Deferred();
@@ -499,11 +497,11 @@
                 if ((typeof projection == "string" || typeof projection == "number" || projection) && this.dataset.modeltId)
                     throw Error("You shouldn't use both projection variable and model Id attribute in one view simultaneously.")
                 if (typeof projection == "string" || typeof projection == "number" ){
-                    _.defer(dfd.resolve,new Model(projection));
+                    _.defer(dfd.resolve,new Model(projection,{force_sync: true}));
                     return dfd.promise();
                 }
                 if (typeof this.dataset.modelId == 'string'){
-                    _.defer(dfd.resolve,new Model(this.dataset.modelId));
+                    _.defer(dfd.resolve,new Model(this.dataset.modelId,{force_sync: true}));
                     return dfd.promise();
                 }
                 if (_.isObject(projection) || projection === undefined){

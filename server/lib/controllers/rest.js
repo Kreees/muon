@@ -4,18 +4,12 @@ var _ = require("underscore"),
 
 var rest = {
     "actions":{
-        "create": function(req,res,id){
-            var dfd = Q.defer();
-            if (id) _.defer(dfd.reject,"Wrong REST request");
-            else {
-                var a = new this.__model__(req.body)
-                a.save().then(dfd.resolve,dfd.reject);
-            }
-            return dfd.promise;
+        "create": function(req,res){
+            return new this.$model(req.body).save();
         },
         "edit": function(req,res,id){
             var dfd = Q.defer();
-            this.__model__.objects.get(id).then(
+            this.$model.db.get(id).then(
                 function(a){
                     a.set(req.body);
                     a.save().then(dfd.resolve,dfd.reject);
@@ -26,7 +20,7 @@ var rest = {
         },
         "delete": function(req,res,id){
             var dfd = Q.defer();
-            this.__model__.objects.get(id).then(
+            this.$model.db.get(id).then(
                 function(a){
                     a.del().then(dfd.resolve,dfd.reject);
                 },
@@ -35,30 +29,20 @@ var rest = {
         },
         "get": function(req,res,id){
             var dfd = Q.defer();
-            this.__model__.objects.get(id).
-                then(dfd.resolve,dfd.reject);
+            try {id = m.objId(id)}
+            catch(e){return null;}
+            this.$model.db.find({$and:[{"_id":id},req.__compiled_where__]}).
+                then(function(a){
+                    if (a.length == 0) dfd.reject(null);
+                    else dfd.resolve(a.eval()[0]);
+                },dfd.reject);
             return dfd.promise;
         },
         "index": function(req){
-            var dfd = Q.defer();
-            this.__model__.objects.find(req.__compiled_where__)
-                .then(dfd.resolve,dfd.reject);
-            return dfd.promise;
+            return this.$model.db.find(req.__compiled_where__);
         },
         "search": function(req){
-            var model = this.__model__;
-            var dfd = Q.defer();
-            var query = null;
-            if (req.method == "GET") query = req.query;
-            if (req.method == "POST") query = req.body;
-            model.objects.find(req.__compiled_where__)
-                .then(function(arr){
-                    query._id = {$in:arr}
-                    model.objects.find(query)
-                        .then(dfd.resolve,dfd.reject);
-                },dfd.reject);
-
-            return dfd.promise;
+            return this.$model.db.find({$and:[req.__compiled_where__,(req.method.toUpperCase() == "GET")?req.query:req.body]})
         }
     },
     extend: function(extend_obj){

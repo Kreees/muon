@@ -6,7 +6,10 @@ var _ = require("underscore");
 var Q = require("q");
 
 var db = null;
-global.m.objId = ObjectID;
+m.objId = function(a){
+    if (a instanceof Array) return a.map(function(a){return ObjectID(a);});
+    else return ObjectID(a);
+}
 
 function log_args(){console.log(arguments);}
 function $(obj){
@@ -17,54 +20,31 @@ function $(obj){
     return obj.model.__collection;
 }
 
-var db_queryset = function(model){
+var db_queryset = function(model,data){
     this.model = model;
     this.model_name = model.model_name;
+    this.__data__ = {};
+    for(var i in data){
+        this.push(data[i]._id);
+        this.__data__[data[i]._id] = data[i];
+    }
 }
 
 db_queryset.prototype = [];
 _.extend(db_queryset.prototype,
 {
-    set: function(arr){
-
-    },
-    sort: function(){
-        return this;
-    },
-    limit: function(){
-        return this;
-    },
-    offset: function(){
-        return this;
-    },
-    find: function(){
-        return this;
-    },
-    not: function(){
-        return this;
+    del: function(){
+        return this.model.db.remove({_id: {$in: this.slice()}});
     },
     eval: function(){
-        var dfd = Q.defer();
-        var _this = this;
-        $.call(this).find({_id:{$in:this}}).toArray(function(e,data){
-            if (e || !data) dfd.reject(e);
-            var ret = [];
-            for(var i in data){
-                var obj = new _this.model(data[i]);
-                obj.id = data[i]._id.toString();
-                ret.push(obj);
-            }
-            dfd.resolve(ret);
-        });
-        return dfd.promise;
+        var ret = [];
+        for(var i in this.slice()) ret.push(new this.model(this.__data__[this[i]]));
+        return ret;
     },
     eval_raw: function(){
-        var dfd = Q.defer();
-        $(this).find({_id:{$in:this}}).toArray(function(e,data){
-            if (e) return dfd.reject(e);
-            dfd.resolve(data);
-        });
-        return dfd.promise;
+        var ret = [];
+        for(var i in this.slice()) ret.push(this.__data__[this[i]]);
+        return ret;
     }
 });
 
@@ -91,12 +71,9 @@ var db_model_extend = {
     find: function(where_clause){
         var dfd = Q.defer();
         var _this = this;
-        var cursor = $(this).find(where_clause);
-        cursor.toArray(function(e,data){
+        $(this).find(where_clause).toArray(function(e,data){
             if (e || !data) dfd.reject(e);
-            var ret = new db_queryset(_this);
-            for(var i in data) ret.push(data[i]._id);
-            dfd.resolve(ret);
+            else dfd.resolve(new db_queryset(_this.model,data));
         });
         return dfd.promise;
     }
@@ -141,8 +118,14 @@ var db_objet_extend = {
         return this.attributes[key];
     },
     set: function(key,val){
-        if ('object' == typeof key) _.extend(this.attributes,key);
-        else this.attributes[key] = val;
+        if ('object' == typeof key){
+            _.extend(this.attributes,key);
+            if ("_id" in this.attributes) this.id = this.attributes._id.toString();
+        }
+        else{
+            this.attributes[key] = val;
+            if (key == "_id") this.id = val.toString();
+        }
         return this;
     }
 }
@@ -153,8 +136,8 @@ module.exports = {
             throw Erro("Wrong model object type: should be a function");
         }
         _.extend(model.prototype,db_objet_extend);
-        model.objects = _.clone(db_model_extend);
-        model.objects.model = model;
+        model.db = _.clone(db_model_extend);
+        model.db.model = model;
     },
     QuerySet: db_queryset,
     init: function(db_name){

@@ -4,21 +4,6 @@ var rest = require(global.m.__sys_path+"/server/lib/controllers/rest.js").run,
     Q = require("q")
 ;
 
-function get_request_target(value){
-    var action = "";
-    if (typeof value === "string"){
-        if (value.indexOf(".") != -1){
-            action = value.split("."); action.splice(0,1);
-            action = action.join(".")
-            value = value.split(".")[0];
-        }
-    }
-    return {
-        value: value,
-        action: action
-    }
-}
-
 function check_permissions(allowed_actions,controller,action){
     var check_dfd = Q.defer();
     if (!_.isArray(allowed_actions))
@@ -57,19 +42,19 @@ function get_permissions(permissions,req){
     return get_dfd.promise;
 }
 
-function run_dependency(model,req,res,next){
-    if (req.context.__middleware__.indexOf(model.model_name) != -1) return next();
-    var deps = (model.dependencies || []).slice();
-    req.context.__middleware__.push(model.model_name);
-    var plug_models = m.__plugins[model.plugin_name].models;
+function run_dependency(target,req,res,next){
+    if (req.context.$middleware.indexOf(target.model_name) != -1) return next();
+    var deps = (target.c.dependencies || []).slice();
+    req.context.$middleware.push(target.model_name);
+    var plug_models = m.__plugins[target.model.plugin_name].models;
     function _run_(){
         if (deps.length == 0){
-            if (typeof model.m == "function") return model.m.apply(req.context,[req,res,next]);
+            if (typeof target.model.m == "function") return target.model.m.apply(req.context,[req,res,next]);
             else return next();
         }
         var dep_name = deps.shift();
         if (!(dep_name in plug_models)){
-            m.kill("Model dependency '"+dep_name+"' in plugin '"+model.plugin_name+"' doesn't exist.")
+            m.kill("Model dependency '"+dep_name+"' in plugin '"+target.model.plugin_name+"' doesn't exist.")
         }
         run_dependency(plug_models[dep_name],req,res,_run_);
     }
@@ -78,27 +63,38 @@ function run_dependency(model,req,res,next){
 
 function do_action(dfd,req,res,controller,action,target,value){
     try {
-        req.__compiled_where__ = controller.where || {}
-        for(var i in req.context.__where__)
-            if (!(i in req.__compiled_where__)) req.__compiled_where__[i] = req.context.__where__[i];
-        if(req.__query_ids__ instanceof Array) req.__compiled_where__._id = {$in:req.__query_ids__};
         var result;
-        if(req.__query_ids__ instanceof Array && value && req.__query_ids__.filter(function(id){return id.toString() == value;}) == 0)
+        req.__compiled_where__ = controller.where || {}
+        for(var i in req.context.$where)
+            if (!(i in req.__compiled_where__)) req.__compiled_where__[i] = req.context.__where__[i];
+        for(var i in req.__compiled_where__){
+            var empty_flag = true; break;
+        }
+        if (empty_flag) req.__compiled_where__ = {_id: {$nin: []}};
+        if(req.__query_ids__ instanceof Array) req.__compiled_where__._id = {$in:req.__query_ids__};
+        if(req.__query_ids__ instanceof Array && value && req.__query_ids__.filter(function(id){return id.toString() == value;}).length == 0)
             result = null;
         else result = controller.actions[action].call(req.context,req,res,value);
-        if (result == null) return _.defer(dfd.reject,"Not found");
         Q.when(result).
             then(function(obj){
+                if (obj == null) return dfd.reject("Not found");
                 var _obj = obj;
-                if (obj instanceof Array) {
-                    _obj = new db.QuerySet(target.model);
-                    _obj.push.apply(_obj,obj);
-                    _obj.c = controller;
+                if (obj.model && obj.model.model == obj.model && target.model != obj.model){
+                    target = obj.model;
+                    controller = target.model.c;
+                };
+                if (obj instanceof db.QuerySet){
+                    _obj = obj;
                 }
-                else {
-                    if (!(obj instanceof target.model))
-                        _obj = new target.model(obj);
-                }
+                else
+                    if (obj instanceof Array) {
+                        _obj = new db.QuerySet(target.model,result);
+                        _obj.c = controller;
+                    }
+                    else {
+                        if (!(obj instanceof target.model))
+                            _obj = new target.model(obj);
+                    }
                 dfd.resolve(_obj)}
             ,dfd.reject);
     }
@@ -111,10 +107,12 @@ function do_action(dfd,req,res,controller,action,target,value){
 function target_is_model(dfd,req,res,value,action,target){
     var controller = null;
     if (target.model.s && value in target.model.s){
-        controller = target.model.s[value].c;
+        target = target.model.s[value];
         value = null;
     }
-    else controller = target.c;
+    else if (target.model.o && value in target.model.o)
+        target = target.model.o[value];
+    controller = target.c;
     action = (action == "get" && !value)?"index":action;
     if (_.isArray(target.permissions) && target.permissions.indexOf("all") == -1){
         if (target.permissions.indexOf(action) == -1){
@@ -125,27 +123,21 @@ function target_is_model(dfd,req,res,value,action,target){
         return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
     }
 
-    req.context.__controller__ = controller;
-    req.context.__target__ = target;
-    req.context.__action__ = action;
-    req.context.__model__ = target.model;
-    run_dependency(target.model,req,res,function(){
-        if(req.context.__permissions__.indexOf(target.model.model_name) != -1)
+    req.context.$controller = controller;
+    req.context.$target = target;
+    req.context.$action = action;
+    req.context.$model = target.model;
+    run_dependency(target,req,res,function(){
+        if(req.context.$permissions.indexOf(target.model.model_name) != -1)
             return do_action(dfd,req,res,controller,action,target,value);
-        req.context.__permissions__.push(target.model.model_name)
-        get_permissions(target.permissions,req)
+        req.context.$permissions.push(target.model.model_name)
+        get_permissions(controller.permissions,req)
             .then(function(permissions){
                 check_permissions(permissions,controller,action)
                     .then(function(){
-                        get_permissions(controller.permissions,req)
-                            .then(function(permissions){
-                                check_permissions(permissions,controller,action)
-                                    .then(function(){
-                                        do_action(dfd,req,res,controller,action,target,value);
-                                    },dfd.reject)
-                            },dfd.reject)
+                        do_action(dfd,req,res,controller,action,target,value);
                     },dfd.reject)
-            },dfd.reject);
+            },dfd.reject)
     });
 }
 
@@ -166,13 +158,13 @@ function target_is_object(dfd,req,res,value,action,target){
         return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
     }
 
-    req.context.__controller__ = controller;
-    req.context.__target__ = target;
-    req.context.__action__ = action;
-    req.context.__model__ = target.model;
+    req.context.$controller = controller;
+    req.context.$target = target;
+    req.context.$action = action;
+    req.context.$model = target.model;
     run_dependency(target.model,req,res,function(){
-        if(req.context.__permissions__.indexOf(target.model.model_name) != -1) return do_action();
-        req.context.__permissions__.push(target.model.model_name)
+        if(req.context.$permissions.indexOf(target.model.model_name) != -1) return do_action();
+        req.context.$permissions.push(target.model.model_name)
         get_permissions(target.permissions,req)
             .then(function(permissions){
                 check_permissions(permissions,controller,action)
@@ -194,7 +186,7 @@ function get_next_object(req,res,value,action,target){
     var apply_f = null;
     if (target instanceof db.QuerySet){
         apply_f = target_is_model;
-        target.c = req.context.__controller__;
+        target.c = req.context.$controller;
         req.__query_ids__ = target.slice();
     }
     else
@@ -208,25 +200,49 @@ function get_next_object(req,res,value,action,target){
     return dfd.promise;
 }
 
+function decorate_obj(obj,d,t){
+    if (!d) return obj;
+    var new_obj = {};
+    for(var i in d){
+        if (d[i] in obj) new_obj[d[i]] = obj[d[i]];
+    }
+    new_obj._id = obj._id;
+    return new_obj;
+}
+
+function decorate(obj,d,t){
+    if (obj instanceof Array) return obj.map(function(a){return decorate_obj(a,d,t)});
+    else return decorate_obj(obj,d,t);
+}
+
 finalize = function(req,res,target){
     res.writeHead(200, {"Content-Type": "application/json; charset=utf-8"});
     function send(obj){
-        res.end(JSON.stringify(obj));
+        try{
+            var d = req.context.$controller.decorator || req.context.$model.c.decorator;
+            if (!d) return res.end(JSON.stringify(obj));
+            if (typeof d != "function") return res.end(JSON.stringify(decorate(obj,d,target)));
+            Q.when(d()).then(function(d){
+                res.end(JSON.stringify(decorate(obj,d,target)));
+            })
+        }
+        catch(e){
+            console.log(e.stack);
+            res.end("");
+        }
+
+
     }
     if (target instanceof db.QuerySet){
-        target.eval_raw().then(send);
+        send(target.eval_raw());
     }
     else if (target instanceof Array){
-        var ret = [];
-        for(var i in target.slice()){
-            if (_.isObject(target[i].attributes)) ret.push(target[i].attributes);
-            else ret.push(target[i]);
-        }
-        send(ret)
+        send(target.map(function(a){
+            return (_.isObject(a.attributes)? a.attributes:a)
+        }));
     }
     else {
-        if (target.attributes) send(target.attributes);
-        else send(target);
+        send(_.isObject(target.attributes)? target.attributes:target);
     }
 }
 
@@ -237,12 +253,13 @@ errorize = function(req,res,data){
 
 module.exports = function(req,res){
     req.context = {
-        __controller__: null,
-        __target__: null,
-        __action__: null,
-        __model__: null,
-        __middleware__: [],
-        __permissions__: []
+        $controller: null,
+        $target: null,
+        $action: null,
+        $model: null,
+        $middleware: [],
+        $permissions: [],
+        $plugin: []
     };
     var target_action = null;
     delete req.query.__uniq__;
@@ -265,11 +282,11 @@ module.exports = function(req,res){
     if (!(base_token in plugin.url_access)){
         return errorize(req,res,"Unknown target request");
     }
-
+    req.context.$plugin = plugin;
     var model = plugin.url_access[base_token];
     if (req.query.__action__){
-        target_action = req.query._action_;
-        delete req.query._action_;
+        target_action = req.query.__action__;
+        delete req.query.__action__;
     }
 
     function get_target(target){
