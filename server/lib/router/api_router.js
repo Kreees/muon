@@ -206,7 +206,7 @@ function decorate_obj(obj,d,t){
     for(var i in d){
         if (d[i] in obj) new_obj[d[i]] = obj[d[i]];
     }
-    new_obj._id = obj._id;
+    if (d.length > 0) new_obj._id = obj._id;
     return new_obj;
 }
 
