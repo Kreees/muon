@@ -2,22 +2,22 @@ var defs = require("./attr_defaults.js");
 var vals = require("./attr_validation.js");
 var _ = require("underscore");
 
-function get_plugins(){
+function get_plugins(plugin){
     var plugins = {};
     function calculate_plugin(plugin,name) {
         plugins[name] = plugin;
         for(var i in plugin.plugins)
             calculate_plugin(plugin.plugins[i],(name?name+":":"")+i)
     }
-    calculate_plugin(global.m,"");
+    calculate_plugin(plugin,plugin.cfg.name);
     return plugins;
 }
 
 var get_plugins = _.memoize(get_plugins);
 
 module.exports = {
-    get_model_names: function(pack_models){
-        var plugins = get_plugins();
+    get_model_names: function(plugin,pack_models){
+        var plugins = get_plugins(plugin);
         var pack_model_list = [];
         for(var pl_name in plugins){
             var plugin = plugins[pl_name];
@@ -33,13 +33,12 @@ module.exports = {
         return pack_model_list;
 
     },
-    render_models: function(list,callback){
+    render_models: function(plugin,list,callback){
         if (typeof list == "function"){
             callback = list;
         }
-        var ret = [];
-        var plugins = get_plugins();
-
+        var ret = {};
+        var plugins = get_plugins(plugin);
         for(var pl_name in plugins){
             var plugin = plugins[pl_name];
             for(var i in plugin.models){
@@ -50,21 +49,23 @@ module.exports = {
                 var model = plugin.models[i];
                 var defaults = {}
                 for(var j in model.attrs) defaults[j] = model.attrs[j].default || defs[model.attrs[j].type];
-                var host = muon.cfg.protocol+"://";
-                host += muon.cfg.domain||muon.cfg.host||"localhost";
-                if (muon.cfg.port && parseInt(muon.cfg.port) != 80)
-                    host += ":"+muon.cfg.port;
+                var host = m.cfg.protocol+"://";
+                host += m.cfg.domain||m.cfg.host||"localhost";
+                if (m.cfg.port && parseInt(m.cfg.port) != 80)
+                    host += ":"+m.cfg.port;
+                var model_name = (pl_name?pl_name+":":"")+model.model_name;
                 var back_model = {
-                    model_name: (pl_name?pl_name+":":"")+model.model_name,
+                    plugin: pl_name,
+                    model_name: model_name,
                     urlRoot: host+"/apis/"+(model.plugin_name?model.plugin_name+":":"")+model.model.url,
                     defaults: defaults
                 };
-                var back_model_str = "muon.model_"+ i.replace(/\./g,"_");
-                back_model_str += " = muon.Model.extend(";
+                var back_model_str = "m.model_"+ model_name.replace(/[:\.]/g,"_");
+                back_model_str += " = m.Model.extend(";
                 back_model_str += JSON.stringify(back_model)+");";
-                ret.push(back_model_str);
+                ret[(pl_name?pl_name+":":"")+model.model_name] = back_model_str;
             }
         }
-        callback("<script>"+ret.join(" ")+"</script>");
+        callback(ret);
     }
 }

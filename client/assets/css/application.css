@@ -2,6 +2,10 @@
     border-radius: 0 !important;
 }
 
+a[data-toggle='dropdown']{
+    cursor: pointer;
+}
+
 .form-horizontal .control-group {
     margin-bottom: 5px;
     height: 30px !important;

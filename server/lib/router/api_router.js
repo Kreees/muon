@@ -283,6 +283,7 @@ module.exports = function(req,res){
         return errorize(req,res,"Unknown target request");
     }
     req.context.$plugin = plugin;
+    req.context.m = plugin;
     var model = plugin.url_access[base_token];
     if (req.query.__action__){
         target_action = req.query.__action__;

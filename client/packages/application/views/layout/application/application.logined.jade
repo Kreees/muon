@@ -5,7 +5,5 @@ div.container
             ul.nav.pull-right
             ul.nav.pull-right
                 include _nav
-                li
-                    a(data-route='muon_login') Sign In&nbsp;
-                        i.icon-arrow-right
+                li(data-model-view='logined_li',data-projection='logined_user')
     #target

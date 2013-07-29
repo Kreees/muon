@@ -1,0 +1,54 @@
+Error: ENOENT, no such file or directory '/Users/sukharev/WebstormProjects/muon/client/packages/muon:application/package.js'
+    at Object.fs.openSync (fs.js:427:18)
+    at Object.fs.readFileSync (fs.js:284:15)
+    at load_package (/Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:52:28)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:45:33
+    at Object.module.exports.render_template (/Users/sukharev/WebstormProjects/muon/server/lib/utils/templates/template_proc.js:119:27)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:43:52
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:70:13
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:20:67
+    at /Users/sukharev/WebstormProjects/muon/node_modules/underscore/underscore.js:683:19
+    at traverse_dir (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:26:34)
+    at Object.module.exports.tree (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:69:9)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:42:32
+    at Object.module.exports.render_template (/Users/sukharev/WebstormProjects/muon/server/lib/utils/templates/template_proc.js:119:27)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:40:44
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:70:13
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:20:67
+    at /Users/sukharev/WebstormProjects/muon/node_modules/underscore/underscore.js:683:19
+    at traverse_dir (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:26:34)
+    at Object.module.exports.tree (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:69:9)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:39:24
+    at Object.module.exports.render_template (/Users/sukharev/WebstormProjects/muon/server/lib/utils/templates/template_proc.js:119:27)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:37:36
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:70:13
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:20:67
+    at /Users/sukharev/WebstormProjects/muon/node_modules/underscore/underscore.js:683:19
+    at traverse_dir (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:26:34)
+    at Object.module.exports.tree (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:69:9)
+    at view_render (/Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:36:16)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:32:28
+    at Object.module.exports.render_models (/Users/sukharev/WebstormProjects/muon/server/lib/models/model_render.js:68:9)
+    at model_render (/Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:31:23)
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/templates/translation_proc.js:23:13
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:70:13
+    at /Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:20:67
+    at /Users/sukharev/WebstormProjects/muon/node_modules/underscore/underscore.js:683:19
+    at traverse_dir (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:26:34)
+    at Object.module.exports.tree (/Users/sukharev/WebstormProjects/muon/server/lib/utils/fs/fs_ext.js:69:9)
+    at Object.module.exports.render_translation (/Users/sukharev/WebstormProjects/muon/server/lib/utils/templates/translation_proc.js:8:17)
+    at Object.module.exports (/Users/sukharev/WebstormProjects/muon/server/lib/client/package_render.js:68:13)
+    at Object.handle (/Users/sukharev/WebstormProjects/muon/lib/app.js:99:16)
+    at next (/Users/sukharev/WebstormProjects/muon/node_modules/express/node_modules/connect/lib/proto.js:199:15)
+    at next (/Users/sukharev/WebstormProjects/muon/node_modules/express/node_modules/connect/lib/proto.js:174:78)
+    at Object.module.exports.middleware (/Users/sukharev/WebstormProjects/muon/server/server.js:47:40)
+    at Object.handle (/Users/sukharev/WebstormProjects/muon/lib/app.js:88:16)
+    at next (/Users/sukharev/WebstormProjects/muon/node_modules/express/node_modules/connect/lib/proto.js:199:15)
+    at Object.handle (/Users/sukharev/WebstormProjects/muon/lib/app.js:81:13)
+    at next (/Users/sukharev/WebstormProjects/muon/node_modules/express/node_modules/connect/lib/proto.js:199:15)
+    at /Users/sukharev/WebstormProjects/muon/server/server.js:35:29
+    at _fulfilled (/Users/sukharev/WebstormProjects/muon/node_modules/q/q.js:837:54)
+    at resolvedValue.promiseDispatch.done (/Users/sukharev/WebstormProjects/muon/node_modules/q/q.js:867:30)
+    at makePromise.promise.promiseDispatch (/Users/sukharev/WebstormProjects/muon/node_modules/q/q.js:519:13)
+    at /Users/sukharev/WebstormProjects/muon/node_modules/q/q.js:390:39
+    at process._tickCallback (node.js:415:13)

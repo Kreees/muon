@@ -6,7 +6,7 @@
  *
  */
 
-(function(_b_){
+(function(_b_,$){
     function serialize_object(obj) {
         var str = [];
         for(var p in obj)
@@ -14,28 +14,69 @@
         return str.join("&");
     }
 
+    var __Muon_base__ = {
+        __projections__: {},
+        base_package: "application",
+        /**
+         *
+         */
+        packages: {
+            "": {
+                views: {},
+                views_unnamed: {}
+            }
+        },
+        /**
+         * Models list
+         */
+        models: {},
+        plugins: {},
+        /**
+         * Collections list
+         */
+        collections: {},
+        dependencies: [],
+        base_views: {}
+    };
+    function Muon (){ _.extend(this,Object.create(__Muon_base__));};
+    _.extend(Muon.prototype,{
+        get_projection: function(key){
+            return this.__projections__[key];
+        },
+        /**
+         * Projection variable setter
+         * @param {String} key - Projection variable alias
+         * @param {*} val - Projection variable value|reference
+         */
+        set_projection: function(key,val){
+            this.__projections__[key] = val;
+            $(this).trigger("projection_updated."+key)
+        },
+        /**
+         * Projection variable removal
+         *
+         * @param {String} key - Projection variable alias
+         * @returns {*} - Projection variable
+         */
+        remove_projection: function(key){
+            try{
+                var ret = this.__projections__[key];
+                delete this.__projections__[key];
+                $(this).trigger("projection_removed."+key)
+                return ret;
+            }
+            catch(e){
+                console.log(e.message);
+                return;
+            }
+        }
+    });
 
-
-    /**
-     *
-     * @type {{}}
-     * @not_accessable
-     */
-    var __projections__ = {};
-    /**
-     * Base library namespace
-     * @namespace
-     * @name muon
-     */
     var __default_lang__ = document.getElementsByTagName("html")[0].lang || "en";
-    var __debug__ = false;
-    window.__profiles__ = {};
-    window.__routes__ = [];
-    window.__middleware__ = {};
-    var __history__ = [];
-    var __forward_history__ = [];
+    var __debug__ = false, __profiles__ = {}, __routes__ = [],
+        __plugins__ = {}, __history__ = [], __forward_history__ = [];
 
-    window.muon = {
+    window.muon = _.extend(new Muon(),{
         __package_init_data: {},
         is_debug: function(){
             return __debug__;
@@ -50,7 +91,6 @@
                 });
             }
         },
-        base_package: "application",
         set_language: function(lang){
             document.getElementsByTagName("html")[0].lang = lang || __default_lang__;
             var packs = []
@@ -68,63 +108,6 @@
             });
         },
         get_language: function(){ return document.getElementsByTagName("html")[0].lang || __default_lang__ },
-        /**
-         *
-         */
-        packages: {
-            "": {
-                views: {},
-                views_unnamed: {}
-            }
-        },
-        /**
-         * Models list
-         */
-        models: {},
-        /**
-         * Collections list
-         */
-        collections: {},
-        dependencies: [],
-        base_views: {},
-        /**
-         * Projection variable getter
-         *
-         * asdfasdf
-         *
-         * @param {String} key - Projection variable alias
-         * @returns {*} - Projection variable
-         */
-        get_projection: function(key){
-            return __projections__[key];
-        },
-        /**
-         * Projection variable setter
-         * @param {String} key - Projection variable alias
-         * @param {*} val - Projection variable value|reference
-         */
-        set_projection: function(key,val){
-            __projections__[key] = val;
-            $(window.muon).trigger("projection_updated."+key)
-        },
-        /**
-         * Projection variable removal
-         *
-         * @param {String} key - Projection variable alias
-         * @returns {*} - Projection variable
-         */
-        remove_projection: function(key){
-            try{
-                var ret = __projections__[key];
-                delete __projections__[key];
-                $(window.muon).trigger("projection_removed."+key)
-                return ret;
-            }
-            catch(e){
-                console.log(e.message);
-                return;
-            }
-        },
         set_profile: function(profile,flag){
             if (flag === false){ return m.unset_profile(profile); }
             if (profile == "muon") return;
@@ -164,19 +147,34 @@
         },
         has_profile: function(profile){
             return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).
-                            test(document.body.className.split(/\s+/).sort().join("."));
+                test(document.body.className.split(/\s+/).sort().join("."));
         },
         get_profile: function(){
             return document.body.className.split(/\s+/).sort().join(".");
         }
-    };
+    });
     /**
      * Muon namespace shortcut
      * @type {muon}
      */
     window.m = window.muon;
-
+    m.Muon = Muon;
     m.__current_package__ = "";
+
+    function __registerPlugin(plugin){
+        if (plugin in __plugins__) return __plugins__[plugin];
+        var pl_stack = plugin.split(":");
+        var pl_obj = m;
+        for(var i in pl_stack){
+            var pl_name = pl_stack[i];
+            if (pl_name in pl_obj.plugins) {
+                pl_obj = pl_obj.plugins[pl_name];
+                continue;
+            }
+            pl_obj.plugins[pl_name] = {};
+
+        }
+    }
 
     var _view_b = _b_.View.extend;
     var _model_b = _b_.Model.extend;
@@ -548,8 +546,7 @@
                 return View;
             }
             catch(e){
-                if (e.message) throw e;
-                throw Error("Wrong view name:"+view_name+"_"+view_type+":"+context_name);
+                throw Error("Wrong view name:"+view_name+"_"+view_type+":"+context_name+":"+ e.message);
 
             }
         }
@@ -561,20 +558,25 @@
             if (view_name == "data-"+view_type+"-view") view_name = "";
 
             if (projection){
-                $(muon).one("projection_updated."+projection, function(){
+                $(m).one("projection_updated."+projection, function(){
                     if ($(document.body).find(_this).length == 0) return;
                     insert_view.apply(_this,[view_type,pack,parrent_view]);
                 });
-                $(muon).one("projection_removed."+projection,function(){
-                    _this.muon_projection_view.remove();
-                    delete _this.muon_projection_view;
+                $(m).one("projection_removed."+projection,function(){
+                    _this.muon_view.remove();
+                    $(m).one("projection_updated."+projection, function(){
+
+                        if ($(document.body).find(_this).length == 0) return;
+                        console.log("Here");
+                        insert_view.apply(_this,[view_type,pack,parrent_view]);
+                    });
                 });
             }
 
             setTimeout(function(){
-                if (_this.muon_projection_view instanceof m.View){
-                    _this.muon_projection_view.remove();
-                    delete _this.muon_projection_view;
+                if (_this.muon_view instanceof m.View){
+                    _this.muon_view.remove();
+                    delete _this.muon_view;
                 }
                 try{
                     $.when(proc_projection[view_type].call(_this,_this.dataset["context"],m.get_projection(projection))).
@@ -586,8 +588,9 @@
                                 view_attrs.__auto_generated__ = true;
                                 View = View.extend(view_attrs);
                                 View.prototype.package = pack;
-                                _this.muon_projection_view = new View(context);
-                                _this.appendChild(_this.muon_projection_view.el);
+//                                _this.muon_projection_view = new View(context);
+                                new View(context,_this);
+//                                _this.appendChild(_this.muon_projection_view.el);
                             }
                             catch(e){
                                 console.log(parrent_view.template,_this);
@@ -624,8 +627,13 @@
             toString: function(){
                 return this.package+":"+this.view_type+":"+this.template;
             },
-            initialize:function(context){
+            initialize:function(context,_el_){
                 this.context = context || {};
+                if (_el_ && _el_.nodeName) {
+                    this.__forced_element = true;
+                    this.el = _el_;
+                    this.el.muon_view = this;
+                }
                 if (typeof this.init == "function") this.init.apply(this,arguments);
                 this.render();
             },
@@ -677,7 +685,7 @@
                 var $el = $("<"+tagname+" />");
                 this.render_template($el[0]);
                 $el.attr("data-pack",this.package);
-                $el.addClass([this.template?this.template+"_"+this.view_type:"",this.className,this.view_type,"block"].join(" "));
+                $el.addClass([this.template?this.template+"_"+this.view_type:"",this.class_name,this.view_type,"block"].join(" "));
                 if (this.el && this.el.muon_view == this){
                     this.undelegateEvents();
                     this.el.innerHTML = "";
@@ -711,8 +719,10 @@
             remove: function(){
                 delete this.el.muon_view;
                 this.__remove_inner_views();
+                if (this.__forced_element) this.$el.children().remove();
+                else this.$el.remove();
+                this.stopListening();
                 this.trigger("removed");
-                Backbone.View.prototype.remove.call(this);
             },
             reload: function(){
                 this.__remove_inner_views();
@@ -946,13 +956,17 @@
             }
         }
         this.$el.find("[data-model-get]").each(function(){
-            var getter = "get_"+this.dataset.modelGet;
-            if (typeof _this[getter] == "function"){
-                var val = _this[getter]();
+            function set(val){
                 if (!this.dataset["attrType"]) this.innerText = val;
                 else if (this.dataset["attrType"] == "text") this.innerText = val;
                 else if (this.dataset["attrType"] == "html") this.innerHTML = val;
                 else $(this).attr(this.dataset["attrType"],val);
+            }
+            var getter = "get_"+this.dataset.modelGet;
+            if (typeof _this[getter] == "function"){
+                var val = _this[getter]();
+                if (typeof val == "object" && "then" in val) val.then(set.bind(this));
+                else set.call(this,val);
             }
         });
         this.render_data_routes();
@@ -1426,7 +1440,7 @@
             page = page_route.split("/").reverse().join("_");
             if (page.length == 0) page = "index";
         }
-        var surrogate = m.packages[pack].module_obj.surrogate;
+        var surrogate = m.packages[pack].package_obj.surrogate;
         m.router.route(prepare_route(pref,route),pack+"_"+route, function(){
             var _args = arguments;
             var page_to_show = page;
@@ -1502,9 +1516,8 @@
         var fallback_path = "";
         var route = null, full_route = null;
 
-        function proc_loaded_package(mod,trs){
-            m.packages[pack].module_obj = mod;
-            m.packages[pack].translation = trs;
+        function proc_loaded_package(){
+            var mod = m.packages[pack].package_obj;
             m.packages[pack].parent_pack = m.packages[parent_pack||""];
             proc_unhandled_views(pack);
             proc_profiled_views(pack);
@@ -1547,28 +1560,51 @@
                 });
             }
 
-            if (typeof mod.ready == "function") mod.ready.apply(mod.surrogate,[form_pack_application_layout]);
+            if (typeof mod.ready == "function") _.defer(mod.ready.bind(mod.surrogate),form_pack_application_layout);
             else form_pack_application_layout();
         };
 
-        function pack_loaded(resp){
-            if (resp) $("head").append(resp);
+        function pack_loaded(){
+            m.__prev_package__ = m.__current_package__;
+            m.__current_package__ = pack;
+            m.__current_plugin__ = pack.substr(0,pack.lastIndexOf(":"));
+            m.packages[m.__current_package__] = {
+                views: {},
+                views_unnamed: {},
+                router_path: null,
+                loaded: false,
+                translation: {}
+            };
             m.packages[pack].router_path = route;
             m.packages[pack].loaded = true;
-            var __prev__ = m.__current_package__;
-            m.__current_package__ = pack;
-            proc_loaded_package.apply(window, m.__package_init_data[pack]);
-            m.__current_package__ = __prev__;
+            for(var i in m.__package_init_data[pack].models){
+                if (i in m.models) continue;
+                else eval(m.__package_init_data[pack].models[i]);
+            }
+            for(var i in m.__package_init_data[pack].views){
+                $(m.__package_init_data[pack].views[i]).appendTo(document.head);
+            }
+            m.packages[pack].package_obj = m.__package_init_data[pack].package;
+            m.packages[pack].translation = m.__package_init_data[pack].translation;
+            proc_loaded_package();
+            m.__current_package__ = m.__prev_package__;
+            delete m.__prev_package__
         }
 
         var fallback = function(){
             fallback_path = location.pathname;
             if (m.packages[pack] && m.packages[pack].loaded){return;}
-            if (m.__package_init_data[pack]) _.defer(pack_loaded);
-            else $.post("/pack/"+pack+"?lang="+ m.get_language(),{
-                models: _.keys(m.models),
-                dependencies: _.keys(m.dependencies)
-            }).then(pack_loaded);
+            if (m.__package_init_data[pack]) pack_loaded;
+            else {
+                var callback_name = "muon_callback_"+Date.now();
+                m[callback_name] = function(){
+                    pack_loaded()
+                    delete m[callback_name];
+                }
+                var scrpt = $("<script />");
+                scrpt.attr("src","/pack/"+pack+"?muon&lang="+ m.get_language()+"&callback="+callback_name);
+                scrpt.appendTo(document.head);
+            }
         }
 
         _.defer(function(){
@@ -1588,7 +1624,7 @@
 
     m.router = new m.Router();
     m.router.route("/","#{default_pack}",m.require_pack("application",function(){
-        Backbone.history.start(m.__mobile_app__?{}:{pushState:true});
+        _b_.history.start(m.__mobile_app__?{}:{pushState:true});
     }));
     $(function(){
         $("body").addClass("muon").delegate("a[data-route]","click",function(ev){
@@ -1599,4 +1635,4 @@
             m.router.navigate(path,{trigger: true});
         });
     });
-})(Backbone);
+})(Backbone,jQuery);

@@ -1,6 +1,6 @@
 var Q = require("q"),
     _ = require("underscore")
-;
+    ;
 
 module.exports = {
     init: function(cfg){
@@ -14,17 +14,25 @@ module.exports = {
                 return;
             }
             var plugin = plugins.shift();
+            var cfg_obj = cfg.plugins[plugin];
+            delete cfg.plugins[plugin]
+            plugin = plugin.toLocaleUpperCase();
+            cfg.plugins[plugin] = cfg_obj;
             try{
                 cfg.plugins[plugin].parent = cfg.name;
-                var plugin_obj = project_plug_loader(plugin).plugin(cfg.plugins[plugin]);
-                plugin_obj().then(function(scope){
+                var plugin_obj = project_plug_loader(plugin).plugin();;
+                plugin_obj.init(cfg.plugins[plugin]).then(function(scope){
                     plugins_scope[plugin] = scope;
+                    plugins_scope[plugin].plugin_obj = plugin_obj;
                     plugins_scope[plugin].name = plugin;
                     plugins_scope[plugin].cfg = cfg.plugins[plugin];
                     load_plugin();
                 });
             }
-            catch(e){throw e;}
+            catch(e){
+                console.log(e.stack);
+                throw e;
+            }
         }
         load_plugin();
         return dfd.promise;
