@@ -38,8 +38,6 @@ body {
     opacity: .2;
     letter-spacing: 1px;
     cursor: pointer;
-    /*transition: background 1000ms;*/
-    /*-webkit-transition: background 1000ms;*/
 }
 
 body.debug [data-muon]:hover > [data-debug], body.debug [data-muon] > .pinned[data-debug]{
@@ -74,4 +72,26 @@ body.debug .untranslated[data-tr] {
 
 span.highlight {
     color: #D00;
+}
+
+* {
+    border-radius: 0 !important;
+}
+
+a[data-toggle='dropdown'],a[data-route]{
+    cursor: pointer;
+}
+
+.form-horizontal .control-group {
+    margin-bottom: 5px;
+    height: 30px !important;
+}
+
+.form-horizontal .control-group:first-child {
+    margin-top: 20px;
+}
+
+.form-horizontal .control-group.button-group {
+    margin-top: 20px;
+    margin-bottom: 20px;
 }

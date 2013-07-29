@@ -15,7 +15,11 @@ module.exports = function(req,res){
     var ret = {};
     for(var i in packs){
         (function(pack_name){
-            tr_proc.render_translation(pack_name,req.query.lang || m.default_lang,function(trs){
+            var plug_name = pack_name.split(":").slice(0,-1).join(":"),
+                plugin = m.__plugins[plug_name],
+                full_pack_name = pack_name,
+                pack_name = full_pack_name.split(":").pop();
+            tr_proc.render_translation(plugin,pack_name,req.query.lang || m.default_lang,function(trs){
                 counter--;
                 ret[pack_name] = trs;
                 if(counter == 0) res.end(JSON.stringify(ret));

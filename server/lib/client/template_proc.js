@@ -24,7 +24,7 @@ function prepare(pack,name,data){
     var extension_name = name.substr(name.lastIndexOf(".")+1);
     name = name.replace(RegExp("\\."+extension_name+"$"),"");
     var id = name.substr(0,name.lastIndexOf("/"));
-    id = id.split("/").reverse().join("_").toLowerCase();
+    id = id.split("/").reverse().join("_");
     var profile = "muon";
     if (name.indexOf(".") != -1){
         profile = _.uniq(name.split(".").splice(1).concat(["muon"])).sort().join(".");
@@ -57,7 +57,7 @@ function post_proc(pack,name,data){
     if (data.length == 0) return "";
     var extension_name = name.substr(name.lastIndexOf(".")+1);
     var id = name.substr(0,name.lastIndexOf("/"));
-    id = id.split("/").reverse().join("_").toLowerCase();
+    id = id.split("/").reverse().join("_");
     name = name.replace(RegExp("\\."+extension_name+"$"),"");
     var profile = "muon";
     if (name.indexOf(".") != -1){

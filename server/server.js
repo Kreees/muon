@@ -10,7 +10,7 @@ var api_router = require(m.__sys_path+"/server/lib/router/api_router"),
 ;
 
 m.errorize = function(res,statusCode,message){
-  res.writeHead(statusCode,message);
+    res.statusCode = statusCode;
     res.set("Content-Type","text/javascript");
     res.end(JSON.stringify({error: message,statusCode: statusCode}));
 }

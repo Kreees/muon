@@ -4,6 +4,7 @@ var fs = require("fs"),
 
 module.exports = {
     render_translation: function(plugin,pack,lang,callback){
+        console.log(plugin);
         if (!fs.existsSync(plugin.cfg.path+"/client/packages/"+pack+"/tr/"+lang)) lang = 'default';
         fs_proc.tree(plugin.cfg.path+"/client/packages/"+pack+"/tr/"+lang,function(files){
             var ret = {};

@@ -1,0 +1,1 @@
+window.EditableItemModel = muon.ModelView.extend {}

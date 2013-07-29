@@ -17,47 +17,32 @@
     var __Muon_base__ = {
         __projections__: {},
         base_package: "application",
-        /**
-         *
-         */
-        packages: {
-            "": {
-                views: {},
-                views_unnamed: {}
-            }
-        },
-        /**
-         * Models list
-         */
+        packages: {},
         models: {},
         plugins: {},
-        /**
-         * Collections list
-         */
         collections: {},
         dependencies: [],
         base_views: {}
     };
-    function Muon (){ _.extend(this,Object.create(__Muon_base__));};
-    _.extend(Muon.prototype,{
+
+    var __Muon_pack_base__ = {
+        views: {},
+        views_unnamed: {},
+        router_path: null,
+        loaded: false,
+        translation: {}
+    };
+
+    function MuonPlugin (name){ $.extend(true,this,__Muon_base__); this.name = name; };
+    function MuonPackage (name){ $.extend(true,this,__Muon_pack_base__); this.name = name; };
+    _.extend(MuonPlugin.prototype,{
         get_projection: function(key){
             return this.__projections__[key];
         },
-        /**
-         * Projection variable setter
-         * @param {String} key - Projection variable alias
-         * @param {*} val - Projection variable value|reference
-         */
         set_projection: function(key,val){
             this.__projections__[key] = val;
             $(this).trigger("projection_updated."+key)
         },
-        /**
-         * Projection variable removal
-         *
-         * @param {String} key - Projection variable alias
-         * @returns {*} - Projection variable
-         */
         remove_projection: function(key){
             try{
                 var ret = this.__projections__[key];
@@ -65,10 +50,7 @@
                 $(this).trigger("projection_removed."+key)
                 return ret;
             }
-            catch(e){
-                console.log(e.message);
-                return;
-            }
+            catch(e){ return console.log(e.message); }
         }
     });
 
@@ -76,7 +58,7 @@
     var __debug__ = false, __profiles__ = {}, __routes__ = [],
         __plugins__ = {}, __history__ = [], __forward_history__ = [];
 
-    window.muon = _.extend(new Muon(),{
+    window.muon = _.extend(new MuonPlugin(""),{
         __package_init_data: {},
         is_debug: function(){
             return __debug__;
@@ -158,22 +140,27 @@
      * @type {muon}
      */
     window.m = window.muon;
-    m.Muon = Muon;
+    m.MuonPlugin = MuonPlugin;
     m.__current_package__ = "";
+    m.__current_plugin__ = "";
+    m.packages[""] = new MuonPackage("");
+    __plugins__[""] = m;
+    __plugins__[undefined] = m;
 
     function __registerPlugin(plugin){
         if (plugin in __plugins__) return __plugins__[plugin];
         var pl_stack = plugin.split(":");
         var pl_obj = m;
+        var temp_pl_name = "";
         for(var i in pl_stack){
             var pl_name = pl_stack[i];
-            if (pl_name in pl_obj.plugins) {
-                pl_obj = pl_obj.plugins[pl_name];
-                continue;
-            }
-            pl_obj.plugins[pl_name] = {};
-
+            if (pl_name in pl_obj.plugins) { pl_obj = pl_obj.plugins[pl_name]; continue; }
+            temp_pl_name += temp_pl_name?temp_pl_name+":":"" + pl_name;
+            pl_obj.plugins[pl_name] = new MuonPlugin(temp_pl_name);
+            pl_obj = pl_obj.plugins[pl_name];
         }
+        __plugins__[plugin] = pl_obj;
+        return pl_obj;
     }
 
     var _view_b = _b_.View.extend;
@@ -182,8 +169,9 @@
 
     _b_.View.extend = function(obj,common){
         var view_type = (_.isString(obj.view_type))?obj.view_type:this.prototype.view_type;
-        var pack = m.__current_package__ || "application";
-        obj.package = obj.package || pack;
+        obj.package = obj.package || m.__current_package__ || this.prototype.package || m.base_package;
+        obj.plugin = obj.plugin || m.__current_plugin__  || this.prototype.plugin || "";
+        obj.m = __registerPlugin(obj.plugin);
         var new_view = _view_b.apply(this,arguments);
         if (obj.__auto_generated__) return new_view;
         var template = new_view.prototype.template;
@@ -226,6 +214,9 @@
                         var obj = new new_model(attrs,opts);
                         _objs[_id] = obj;
                     }
+                    else {
+                        var obj = _objs[_id];
+                    }
                     if (opts && opts.force_sync) obj.fetch();
                     return _objs[_id];
                 }
@@ -239,9 +230,22 @@
             child.prototype = new_model.prototype;
             child.prototype.constructor = child;
             _.extend(child,new_model);
+
+            child.__objects__ = _objs;
+            child.model_name = model_name;
+
             m.models[model_name] = child;
-            m.models[model_name].__objects__ = _objs;
-            m.models[model_name].model_name = model_name;
+            var plugin_name = model_name.substr(0,model_name.lastIndexOf(":"))
+            var plugin_obj =  __registerPlugin(plugin_name);
+            child.prototype.m = plugin_obj;
+            plugin_obj = __plugins__[""];
+            var plugin_stack = plugin_name.split(":");
+            for(var i in plugin_stack){
+                var shorter_name = model_name.substr(model_name.indexOf(":")+1);
+                if (plugin_stack[i] != "") plugin_obj = plugin_obj.plugins[plugin_stack[i]]
+                plugin_obj.models[shorter_name] = child;
+                plugin_obj["model_"+shorter_name.replace(/[:\.]/g,"_")] = child;
+            }
             return child;
         }
         return new_model;
@@ -457,8 +461,8 @@
             return ret;
         }
         var proc_projection = {
-            collection: function(collection_name,projection){
-                var coll_attrs = attrs_parser(this.dataset["contextAttrs"]);
+            collection: function(el,collection_name,projection){
+                var coll_attrs = attrs_parser(el.dataset["contextAttrs"]);
                 if (typeof coll_attrs.model === "string"){
                     if (!(coll_attrs.model in m.models)) throw Error("Unknown model: "+coll_attrs.model);
                     coll_attrs.model = m.models[coll_attrs.model];
@@ -484,22 +488,22 @@
                 _.defer(dfd.reject,"Wrong projection type")
                 return dfd.promise();
             },
-            model: function(model_name,projection){
-                var model_attrs = attrs_parser(this.dataset["contextAttrs"]);
+            model: function(el,model_name,projection){
+                var model_attrs = attrs_parser(el.dataset["contextAttrs"]);
                 model_attrs.__auto_generated__ = true;
                 if (projection instanceof m.Model) return _.extend(projection,model_attrs);
-                if (!(model_name in m.models)) throw Error("Unknown model name: "+model_name);
-                var Model = m.models[model_name];
-                if (this.dataset["contextAttrs"]) Model = Model.extend(model_attrs);
+                if (!(model_name in m.models) && !(model_name in this.m.models)) throw Error("Unknown model name: "+model_name);
+                var Model = m.models[model_name] || this.m.models[model_name];
+                if (el.dataset["contextAttrs"]) Model = Model.extend(model_attrs);
                 var dfd = $.Deferred();
-                if ((typeof projection == "string" || typeof projection == "number" || projection) && this.dataset.modeltId)
+                if ((typeof projection == "string" || typeof projection == "number" || projection) && el.dataset.modeltId)
                     throw Error("You shouldn't use both projection variable and model Id attribute in one view simultaneously.")
                 if (typeof projection == "string" || typeof projection == "number" ){
                     _.defer(dfd.resolve,new Model(projection,{force_sync: true}));
                     return dfd.promise();
                 }
-                if (typeof this.dataset.modelId == 'string'){
-                    _.defer(dfd.resolve,new Model(this.dataset.modelId,{force_sync: true}));
+                if (typeof el.dataset.modelId == 'string'){
+                    _.defer(dfd.resolve,new Model(el.dataset.modelId,{force_sync: true}));
                     return dfd.promise();
                 }
                 if (_.isObject(projection) || projection === undefined){
@@ -508,14 +512,14 @@
                 _.defer(dfd.reject,"Wrong projection type")
                 return dfd.promise();
             },
-            layout: function(non,projection){
-                return _.extend(projection,attrs_parser(this.dataset["contextAttrs"]));
+            layout: function(el,non,projection){
+                return _.extend(projection,attrs_parser(el.dataset["contextAttrs"]));
             },
-            stack: function(non,projection){
-                return _.extend(projection,attrs_parser(this.dataset["contextAttrs"]));
+            stack: function(el,non,projection){
+                return _.extend(projection,attrs_parser(el.dataset["contextAttrs"]));
             },
-            action: function(non,projection){
-                return _.extend(projection,attrs_parser(this.dataset["contextAttrs"]));
+            action: function(el,non,projection){
+                return _.extend(projection,attrs_parser(el.dataset["contextAttrs"]));
             }
         };
 
@@ -523,17 +527,16 @@
             pack = pack || m.base_package;
             _context_name = _context_name || "";
             pack = pack || m.base_package;
-            _context_name = _context_name.replace(/:/g,".");
             try{
                 var View = null;
                 if (!View && !recursive) View = m.packages[pack].views[view_type][view_name];
                 if (!View && (view_type == "model" || view_type == "collection") && _context_name){
-                    var context_name = _context_name.split("."), _view_name = view_name;
+                    var context_name = _context_name.replace(/:/g,".").split("."), _view_name = view_name;
                     for(var i in context_name) _view_name = _view_name.replace(RegExp("_"+context_name[i]+"$"),"");
                     if (_view_name != view_name) return m.get_view_by_name(view_type,_view_name,_context_name,pack,true);
                 }
                 if (!View && (view_type == "model" || view_type == "collection") && _context_name){
-                    var context_name = _context_name.split(".").reverse().join("_");
+                    var context_name = _context_name.replace(/:/g,".").split(".").reverse().join("_");
                     while(!m.packages[pack].views[view_type][view_name+"_"+context_name] && context_name.length != 0){
                         var prev_name = context_name;
                         context_name = context_name.replace(/^[a-zA-Z0-9]+_/,"");
@@ -546,60 +549,57 @@
                 return View;
             }
             catch(e){
-                throw Error("Wrong view name:"+view_name+"_"+view_type+":"+context_name+":"+ e.message);
+                if (_context_name.indexOf(":") == -1) throw Error("Wrong view name:"+view_name+"_"+view_type+":"+_context_name+":"+ e.message);
+                else return m.get_view_by_name(view_type,view_name,_context_name.substr(_context_name.indexOf(":")+1),pack,true);
 
             }
-        }
+        };
 
-        function insert_view(view_type,pack,parrent_view){
+        function insert_view(el,view_type,pack,parent_view){
             var _this = this;
-            var projection = this.dataset["projection"];
-            var view_name = this.dataset[view_type+"View"];
+            var projection = el.dataset["projection"];
+            var view_name = el.dataset[view_type+"View"];
             if (view_name == "data-"+view_type+"-view") view_name = "";
 
             if (projection){
                 $(m).one("projection_updated."+projection, function(){
-                    if ($(document.body).find(_this).length == 0) return;
-                    insert_view.apply(_this,[view_type,pack,parrent_view]);
+                    if ($(document.body).find(el).length == 0) return;
+                    insert_view.apply(_this,[el,view_type,pack,parent_view]);
                 });
                 $(m).one("projection_removed."+projection,function(){
-                    _this.muon_view.remove();
+                    el.muon_view.remove();
                     $(m).one("projection_updated."+projection, function(){
-
-                        if ($(document.body).find(_this).length == 0) return;
-                        console.log("Here");
-                        insert_view.apply(_this,[view_type,pack,parrent_view]);
+                        if ($(document.body).find(el).length == 0) return;
+                        insert_view.apply(_this,[el,view_type,pack,parent_view]);
                     });
                 });
             }
 
             setTimeout(function(){
-                if (_this.muon_view instanceof m.View){
-                    _this.muon_view.remove();
-                    delete _this.muon_view;
+                if (el.muon_view instanceof m.View){
+                    el.muon_view.remove();
+                    delete el.muon_view;
                 }
                 try{
-                    $.when(proc_projection[view_type].call(_this,_this.dataset["context"],m.get_projection(projection))).
+                    $.when(proc_projection[view_type].call(_this,el,el.dataset["context"],m.get_projection(projection))).
                         then(function(context){
                             try {
                                 context = context || {};
                                 var View = m.get_view_by_name(view_type,view_name,context.model_name,pack);
-                                var view_attrs = attrs_parser(_this.dataset["viewAttrs"]);
+                                var view_attrs = attrs_parser(el.dataset["viewAttrs"]);
                                 view_attrs.__auto_generated__ = true;
-                                View = View.extend(view_attrs);
-                                View.prototype.package = pack;
-//                                _this.muon_projection_view = new View(context);
-                                new View(context,_this);
-//                                _this.appendChild(_this.muon_projection_view.el);
+                                view_attrs.package = pack;
+                                view_attrs.plugin = _this.plugin;
+                                new (View.extend(view_attrs))(context,el);
                             }
                             catch(e){
-                                console.log(parrent_view.template,_this);
+                                console.log(parent_view.template,el);
                                 console.debug(e.stack);
                             }
                         });
                 }
                 catch(e){
-                    console.log(parrent_view.template,_this);
+                    console.log(parent_view.template,el);
                     console.debug(e.stack);
                 }
             },0);
@@ -706,7 +706,7 @@
                 for(var i in m.base_views){
                     var $els = this.$el.find("*[data-"+i+"-view]");
                     $els.each(function(){
-                        insert_view.call(this,i,this.dataset.pack || _this.package,_this);
+                        insert_view.call(_this,this,i,this.dataset.pack || _this.package,_this);
                     });
                 }
                 if ('function' == typeof this.rendered) this.rendered($el);
@@ -857,7 +857,7 @@
          * @private
          * @return {muon.CollectionView|null} asdfasdfklasfd
          */
-        __add_to_collection: function(obj,second){
+        __add_to_collection: function(obj){
             this.__set_empty_flag_();
             var model = obj;
             if (this.target.children("#"+model.id).length == 0){
@@ -1230,7 +1230,7 @@
                 q = q.replace(/\-/g,"\\-");
                 q = q.replace(/\*/g,"[a-zA-Z\\-_]*").replace(/\?/g,"[a-zA-Z\\-_]").replace(/\+/g,"[a-zA-Z\\-_]+");
                 q = q.replace(/\*/,"*?").replace(/\+/,"+?");
-                q = RegExp("^"+q+"_page$");
+                q = new RegExp("^"+q+"_page$");
                 for(var j in layouts){
                     if (already_in.indexOf(j) != -1) continue;
                     if (j.match(q)){
@@ -1359,9 +1359,7 @@
     }
 
     function add_pack_routes(pack,route,mod){
-        mod.surrogate = mod.surrogate || {};
         var flatten_m = function(mid){return flatten_middleware(mid,mod.surrogate);}
-
         mod.middleware = flatten_m(mod.middleware);
         if (m.packages[pack].parent_pack && m.packages[pack].parent_pack.middleware )
             mod.middleware = flatten_m(mod.middleware.concat(m.packages[pack].parent_pack.middleware));
@@ -1380,6 +1378,7 @@
                         throw Error("No route specified for dependency '"+r_obj.package+"' in package "+pack);
                     }
                     var pack_route = prepare_route(route,r_obj.route);
+                    r_obj.package = (m.packages[pack].m.name?m.packages[pack].m.name+":":"")+r_obj.package;
                     m.router.route(pack_route,r_obj.package,m.require_pack(r_obj.package,null,pack));
                 }
                 else {
@@ -1514,11 +1513,14 @@
     m.require_pack = function(pack,callback,parent_pack){
         if (pack in m.packages) return function(){};
         var fallback_path = "";
+        var plugin_name = pack.substr(0,pack.lastIndexOf(":"));
         var route = null, full_route = null;
 
         function proc_loaded_package(){
             var mod = m.packages[pack].package_obj;
             m.packages[pack].parent_pack = m.packages[parent_pack||""];
+            mod.surrogate = mod.surrogate || {};
+            mod.surrogate.m = __plugins__[plugin_name];
             proc_unhandled_views(pack);
             proc_profiled_views(pack);
             if (route){
@@ -1566,29 +1568,39 @@
 
         function pack_loaded(){
             m.__prev_package__ = m.__current_package__;
+            m.__prev_plugin__ = m.__current_plugin__;
             m.__current_package__ = pack;
-            m.__current_plugin__ = pack.substr(0,pack.lastIndexOf(":"));
-            m.packages[m.__current_package__] = {
-                views: {},
-                views_unnamed: {},
-                router_path: null,
-                loaded: false,
-                translation: {}
-            };
-            m.packages[pack].router_path = route;
-            m.packages[pack].loaded = true;
+            m.__current_plugin__ = plugin_name;
+            var pack_obj = new MuonPackage(pack);
+            m.packages[pack] = pack_obj;
+            pack_obj.router_path = route;
+            pack_obj.loaded = true;
+            var plugin_obj = __registerPlugin(m.__current_plugin__);
+            pack_obj.m = plugin_obj;
+            plugin_obj = __plugins__[""];
+            var plugin_stack = plugin_name.split(":");
+            for(var i in plugin_stack){
+                var shorter_name = pack.substr(pack.indexOf(":")+1);
+                if (plugin_stack[i] != "") plugin_obj = plugin_obj.plugins[plugin_stack[i]]
+                plugin_obj.packages[shorter_name] = pack_obj;
+            }
+
             for(var i in m.__package_init_data[pack].models){
                 if (i in m.models) continue;
                 else eval(m.__package_init_data[pack].models[i]);
             }
+
             for(var i in m.__package_init_data[pack].views){
                 $(m.__package_init_data[pack].views[i]).appendTo(document.head);
             }
+
             m.packages[pack].package_obj = m.__package_init_data[pack].package;
             m.packages[pack].translation = m.__package_init_data[pack].translation;
             proc_loaded_package();
             m.__current_package__ = m.__prev_package__;
+            m.__current_plugin__ = m.__prev_plugin__;
             delete m.__prev_package__
+            delete m.__prev_plugin__
         }
 
         var fallback = function(){

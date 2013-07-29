@@ -4,7 +4,7 @@ module.exports = m.rest.extend({
     },
     actions: {
          "get": function(req,res,value){
-             return this.__data__[value];
+             return this.$model.__data__[value];
          }
     }
 });

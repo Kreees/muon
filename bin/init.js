@@ -17,8 +17,9 @@ global.muon = global.m;
 
 
 var fs = require("fs"),
-    fs_ext = require("../server/lib/utils/fs/fs_ext"),
-    load_config = require("../lib/load_config.js");
+    fs_ext = require("../server/lib/utils/fs/fs_ext")
+//    load_config = require("../lib/load_config.js")
+;
 
 var muon_cfg = JSON.parse(fs.readFileSync(__dirname+"/../package.json"));
 
@@ -51,11 +52,11 @@ var dirs = [
     "/client/packages/application/views/layout/",
     "/client/packages/application/views/layout/application/",
     "/client/packages/application/views/layout/page/",
-    "/client/packages/application/views/layout/page/start/",
+    "/client/packages/application/views/layout/page/index/",
     "/client/packages/application/views/model/",
-    "/client/packages/application/views/model/muon/",
-    "/client/packages/application/views/model/muon/project/",
-    "/client/packages/application/views/model/muon/project/config/",
+    "/client/packages/application/views/model/MUON/",
+    "/client/packages/application/views/model/MUON/project/",
+    "/client/packages/application/views/model/MUON/project/project/",
     "/client/packages/application/views/collection/",
     "/client/packages/application/views/stack/",
     "/client/packages/application/views/action/",
@@ -79,11 +80,11 @@ var tr_dirs = [
     "/client/packages/application/tr/#{lang}/layout/",
     "/client/packages/application/tr/#{lang}/layout/application/",
     "/client/packages/application/tr/#{lang}/layout/page/",
-    "/client/packages/application/tr/#{lang}/layout/page/start/",
+    "/client/packages/application/tr/#{lang}/layout/page/index/",
     "/client/packages/application/tr/#{lang}/model/",
-    "/client/packages/application/tr/#{lang}/model/muon/",
-    "/client/packages/application/tr/#{lang}/model/muon/project/",
-    "/client/packages/application/tr/#{lang}/model/muon/project/config/",
+    "/client/packages/application/tr/#{lang}/model/MUON/",
+    "/client/packages/application/tr/#{lang}/model/MUON/project/",
+    "/client/packages/application/tr/#{lang}/model/MUON/project/project/",
     "/client/packages/application/tr/#{lang}/collection/",
     "/client/packages/application/tr/#{lang}/stack/",
     "/client/packages/application/tr/#{lang}/action/"
@@ -95,7 +96,7 @@ for(var i in dirs){
 }
 
 for(var i in tr_dirs){
-    var langs = ["default",process.env.LANG.substr(0,2) || "ru","de"];
+    var langs = ["default",process.env.LANG.substr(0,2) || "ru"];
     for(var j in langs){
         var dir = tr_dirs[i].replace(/#\{lang\}/g,langs[j]);
         console.log("Creating: "+dir);

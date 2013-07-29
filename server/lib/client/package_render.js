@@ -11,11 +11,9 @@ module.exports = function (req,res){
         full_pack_name = req.path.replace(/\//g,""),
         pack_name = full_pack_name.split(":").pop();
 
-    console.log(_.keys(m.__plugins));
     try {var pack = require(plugin.cfg.path+"/client/packages/"+pack_name+"/package.js");}
     catch(e){
-        console.log(e, e.stack.join("\n"));
-        return m.errorize(req,404,"Package load error: "+pack_name+" from plugin "+plug_name);
+        return m.errorize(res,404,"Package load error: "+pack_name+" from plugin "+plug_name);
     }
     pack.dependencies = pack.dependencies || [];
     pack.models = pack.models || [];
@@ -52,7 +50,7 @@ module.exports = function (req,res){
     function load_package(){
         callback_text = fs.readFileSync(plugin.cfg.path+"/client/packages/"+pack_name+"/package.js","utf8");
         callback_text = callback_text.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
-        callback_text = "m.__package_init_data['"+pack_name+"'] = {\n"+
+        callback_text = "m.__package_init_data['"+full_pack_name+"'] = {\n"+
             "\"package\": "+callback_text+",\n\n"+
             "\"models\": "+JSON.stringify(models,null,2)+",\n\n"+
             "\"views\": "+JSON.stringify(views,null,2)+",\n\n"+

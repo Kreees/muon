@@ -6,10 +6,10 @@ module.exports = {
     routes: [
         {
             route: "",
-            redirect: "start"
         },
         {
-            route: "start"
+            route: "admin",
+            package: "MUON:admin"
         }
     ],
     surrogate: {}

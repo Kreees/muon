@@ -1,0 +1,1 @@
+m.CollectionView.extend {}
