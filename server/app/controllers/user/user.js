@@ -3,8 +3,12 @@ var Q = require("q");
 var _ = require("underscore");
 
 module.exports = m.rest.extend({
+    dependencies: ["user.session"],
     decorator: [],
-    permissions: ["create","index"],
+    permissions: function(){
+        if (this.user && this.user.id == this.$value) return ["all"];
+        else return ["create","index"];
+    },
     actions: {
         create: function(req,res){
             req.body.password = md5.update(req.body.password).digest("hex");

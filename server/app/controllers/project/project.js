@@ -1,10 +1,11 @@
 module.exports = m.rest.extend({
+    dependencies: [
+        "user.user"
+    ],
     permissions: function(){
-       return ["get"];
+        if (!this.user) return [];
+        if (m.cfg.server_mode != "development" || m.wait_restart) return ["get"];
+        return ["get","edit"];
     },
-    actions: {
-         "get": function(req,res,value){
-             return this.$model.__data__[value];
-         }
-    }
+    actions: {}
 });

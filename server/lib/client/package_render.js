@@ -9,19 +9,22 @@ module.exports = function (req,res){
     var plug_name = req.path.replace(/\//g,"").split(":").slice(0,-1).join(":"),
         plugin = m.__plugins[plug_name],
         full_pack_name = req.path.replace(/\//g,""),
-        pack_name = full_pack_name.split(":").pop();
+        pack_name = full_pack_name.split(":").pop(),
+        package_dir = plugin.cfg.path+"/client/packages/"+pack_name+"/";
 
-    try {var pack = require(plugin.cfg.path+"/client/packages/"+pack_name+"/package.js");}
+    try {var pack = require(package_dir+"package.js");}
     catch(e){
         return m.errorize(res,404,"Package load error: "+pack_name+" from plugin "+plug_name);
     }
-    pack.dependencies = pack.dependencies || [];
+    pack.dependencies = pack.dependencies || ["*"];
+
     pack.models = pack.models || [];
 
     var views = [],
+        dependency = {js:[],css:[]},
         models = null,
         callback_text = null,
-        views_dir = plugin.cfg.path+"/client/packages/"+pack_name+"/views",
+        views_dir = package_dir+"views",
         pack_translation = {};
 
     var pack_model_list = models_render.get_model_names(plugin,pack.models);
@@ -48,14 +51,15 @@ module.exports = function (req,res){
     }
 
     function load_package(){
-        callback_text = fs.readFileSync(plugin.cfg.path+"/client/packages/"+pack_name+"/package.js","utf8");
+        callback_text = fs.readFileSync(package_dir+"package.js","utf8");
         callback_text = callback_text.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
         callback_text = "m.__package_init_data['"+full_pack_name+"'] = {\n"+
             "\"package\": "+callback_text+",\n\n"+
             "\"models\": "+JSON.stringify(models,null,2)+",\n\n"+
             "\"views\": "+JSON.stringify(views,null,2)+",\n\n"+
-            "\"translation\": "+JSON.stringify(pack_translation,null,2)
-            +"\n};";
+            "\"translation\": "+JSON.stringify(pack_translation,null,2)+",\n\n"+
+            "\"dependencies\": "+JSON.stringify(dependency,null,2)+",\n\n"+
+            "\n};";
         if (req.query.callback) callback_text += "\ntry{ m['"+req.query.callback+"']();} catch(e){console.log('Callback f called: '+e.message); console.debug(e.stack)}";
         finalize();
     }
@@ -64,5 +68,32 @@ module.exports = function (req,res){
         res.end(callback_text);
     }
 
-    tr_proc.render_translation(plugin,pack_name,req.query.lang || m.default_lang,model_render);
+    fs_ext.tree(package_dir+"dependency/",function(files){
+        function proc_file(){
+            var prev_views = m.app.get("views");
+
+            if (files.length == 0){
+                m.app.set("views",prev_views);
+                return tr_proc.render_translation(plugin,pack_name,req.query.lang || m.default_lang,model_render);
+            }
+            var file = files.shift();
+            var extension = file.substr(file.lastIndexOf(".")+1);
+            function data_rendered(e,data){
+                if (e){
+//                    m.log(e);
+                    return proc_file();
+                }
+                if (["coffee","js"].indexOf(extension) != -1) dependency.js.push(data);
+                else dependency.css.push(data);
+                proc_file();
+            }
+            if (["coffee","less"].indexOf(extension) != -1){
+                m.app.set("views",package_dir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
+                m.app.render(file.substr(file.lastIndexOf("/")+1),{},data_rendered);
+            }
+            else fs.readFile(file,"utf8",data_rendered);
+        }
+        proc_file();
+    },["/_"],[".js",".css",".coffee",".less"]);
+
 };

@@ -46,23 +46,23 @@ var rest = {
         }
     },
     extend: function(extend_obj){
-        var _rest = {
-            "actions": _.clone(rest.actions)
-        };
+        var new_obj = _.clone(this);
+        new_obj["actions"] =  _.clone(this.actions || {});
         (function(object){
             for(var i in object){
                 if (i == "extend") continue;
                 if (i == "actions"){
-                    _.extend(_rest.actions,object.actions);
+                    _.extend(new_obj.actions,object.actions);
                 }
                 else {
-                    _rest[i] = object[i];
+                    new_obj[i] = object[i];
                 }
             }
         })(extend_obj);
-        _rest.super = rest;
-        return _rest;
+        new_obj.super = rest;
+        new_obj.extend = this.extend;
+        return new_obj;
     }
 };
-global.m.rest = rest;
+m.rest = rest;
 module.exports = rest;

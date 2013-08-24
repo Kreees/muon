@@ -11,11 +11,10 @@ m.objId = function(a){
     else return ObjectID(a);
 }
 
-function log_args(){console.log(arguments);}
 function $(obj){
     if (!obj.model.__collection){
         var collection_name = (obj.model.plugin_name?obj.model.plugin_name.toUpperCase()+"_":"")+obj.model.model_name.replace(/\./g,"_");
-        obj.model.__collection = global.m.db.collection(collection_name);
+        obj.model.__collection = m.db.collection(collection_name);
     }
     return obj.model.__collection;
 }
@@ -30,11 +29,19 @@ var db_queryset = function(model,data){
     }
 }
 
+m.QuerySet = db_queryset;
+
 db_queryset.prototype = [];
 _.extend(db_queryset.prototype,
 {
     del: function(){
-        return this.model.db.remove({_id: {$in: this.slice()}});
+        var _this = this;
+        var dfd = Q.defer();
+        $(this).remove({_id: {$in: this.slice()}},{},function(e,_){
+            if (e) dfd.reject(e);
+            else dfd.resolve(_this);
+        });
+        return dfd.promise;
     },
     eval: function(){
         var ret = [];
@@ -77,7 +84,7 @@ var db_model_extend = {
         });
         return dfd.promise;
     }
-}
+};
 
 var db_objet_extend = {
     save: function(){
@@ -89,7 +96,7 @@ var db_objet_extend = {
                 if (!a) return dfd.reject("Can't create new object of "+_this.model.model_name);
                 _this.attributes = a[0];
                 _this.id = _this.attributes._id.toString();
-                dfd.resolve(_this);
+                return dfd.resolve(_this);
             });
         }
         else {
@@ -106,7 +113,7 @@ var db_objet_extend = {
         var dfd = Q.defer();
         var _this = this;
         if (this.id) {
-            $(this).remove({_id: new ObjectID(this.id)},{},function(e,data){
+            $(this).remove({_id: new ObjectID(this.id)},{},function(e,_){
                 if (e) dfd.reject(e);
                 else dfd.resolve(_this);
             });
@@ -120,7 +127,7 @@ var db_objet_extend = {
     set: function(key,val){
         if ('object' == typeof key){
             _.extend(this.attributes,key);
-            if ("_id" in this.attributes) this.id = this.attributes._id.toString();
+            if (this.attributes._id) this.id = this.attributes._id.toString();
         }
         else{
             this.attributes[key] = val;

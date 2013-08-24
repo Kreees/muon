@@ -4,13 +4,7 @@ module.exports = {
     models: ["*"],
     middleware: [],
     routes: [
-        {
-            route: "",
-        },
-        {
-            route: "admin",
-            package: "MUON:admin"
-        }
+        {route: ""}
     ],
     surrogate: {}
 }

@@ -1,12 +1,11 @@
 var app = m.app,
     fs = require("fs"),
-    path = m.path,
     _ = require("underscore")
 ;
 
 var pre_wrapper = {
-    "less": "#{profile}.#{id}[data-pack='#{pack}'] {position: relative;#{data}}",
-    "css": "#{profile}.#{id}[data-pack='#{pack}'] {position: relative;#{data}}"
+    "less": "#{profile} .#{id}[data-pack='#{pack}'] {position: relative;#{data}}",
+    "css": "#{profile} .#{id}[data-pack='#{pack}'] {position: relative;#{data}}"
 };
 
 var post_wrapper = {
@@ -30,7 +29,6 @@ function prepare(pack,name,data){
         profile = _.uniq(name.split(".").splice(1).concat(["muon"])).sort().join(".");
         name = name.split(".")[0];
     }
-    if (/^_/.test(name.split("/")[name.split("/").length-1])) return "";
     if (extension_name in pre_wrapper){
         data = pre_wrapper[extension_name]
             .replace("#{data}",data.replace(/\n/g,"\n\t"))
@@ -45,11 +43,6 @@ function prepare(pack,name,data){
 }
 
 function media_query_proc(data){
-    var last_index_of = 0;
-    var index_of = 0;
-    for(index_of = data.indexOf("@media",last_index_of); index_of != -1;){
-        // TODO
-    }
     return data;
 }
 
@@ -86,30 +79,47 @@ function post_proc(pack,name,data){
 }
 
 function exec(name,base_dir,pack,callback){
-    var template_name = name.replace(path+"/","");
     var views_name = name.replace(base_dir+"/","");
-    var extension_name = template_name.substr(template_name.lastIndexOf("."));
-    var short_name = template_name.substr(template_name.lastIndexOf("/")+1);
+    var extension_name = views_name.substr(views_name.lastIndexOf("."));
+    var short_name = views_name.substr(views_name.lastIndexOf("/")+1);
     if (/^_/.test(short_name)) return callback(name,"");
     if (extension_name in m.app.engines){
         var prev_tmpl_path = m.app.get("views");
-        m.app.set("views",name.split("/").slice(0,-1).join("/"));
+        var template_path = name.split("/").slice(0,-1).join("/");
+        m.app.set("views",template_path);
+        var uniq = Math.floor(Math.random()*99999999+100000000);
+        var tempfile_name = template_path+"/temp_"+uniq+"_"+short_name;
+        fs.writeFileSync(tempfile_name,
+            prepare(pack,views_name,fs.readFileSync(name,"utf-8")),"utf-8");
         try {
-            m.app.render(short_name,function(e,data){
-                m.app.set("views",prev_tmpl_path);
-                if (e) throw e;
-                callback(name,post_proc(pack,views_name,data));
+            m.app.render("temp_"+uniq+"_"+short_name,function(e,data){
+                try{
+                    m.app.set("views",prev_tmpl_path);
+                    if (e) throw e;
+                    fs.unlinkSync(tempfile_name);
+                    callback(name,post_proc(pack,views_name,data));
+                }
+                catch(e){
+                    m.app.set("views",prev_tmpl_path);
+                    fs.unlinkSync(tempfile_name);
+                    console.log("Error on tempalte: ",name);
+                    m.log(e.stack);
+                    throw e;
+                }
             });
         }
         catch(e){
             m.app.set("views",prev_tmpl_path);
+            if (fs.existsSync(tempfile_name)) fs.unlinkSync(tempfile_name);
             console.log("Error on tempalte: ",name);
-            console.log(e.stack);
+            m.log(e.stack);
             throw e;
         }
         return;
     }
-    else callback(name,post_proc(pack,views_name,prepare(pack,views_name,fs.readFileSync(name,"utf-8"))));
+    else{
+        callback(name,post_proc(pack,views_name,prepare(pack,views_name,fs.readFileSync(name,"utf-8"))));
+    }
 }
 
 module.exports = {

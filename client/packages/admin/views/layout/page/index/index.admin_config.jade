@@ -1,0 +1,15 @@
+h3
+    span Welcome to admin section of&nbsp;
+    a(data-pack='application',data-route='/')
+        span(data-model-view="get_attr",data-view-attrs="attr_name: project_name",data-projection="admin.config")
+    span  project
+p Now your project runs in&nbsp;
+    strong(data-model-view="get_attr",data-view-attrs="attr_name: server_mode",data-projection="admin.config")
+    | &nbsp;mode
+p Project path:&nbsp;
+    strong(data-model-view="get_attr",data-view-attrs="attr_name: path",data-projection="admin.config")
+p.need_restart
+    span.highlight Server waits to be restarted
+div.cfg_container
+    div(data-model-view='config_project',data-projection='admin.config')
+    div.glass.need_restart

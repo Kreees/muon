@@ -1,0 +1,16 @@
+ul.topnav {
+  li + ul.subnav {
+    display: none;
+  }
+
+  li.active + ul.subnav {
+    margin-right: -15px;
+    display: block;
+    background-color: #eee;
+    & > li.active {
+      border-left: 2px solid #aaa;
+      margin-left: -15px;
+      padding-left: 15px;
+    }
+  }
+}

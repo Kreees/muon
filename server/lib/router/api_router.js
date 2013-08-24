@@ -77,25 +77,32 @@ function do_action(dfd,req,res,controller,action,target,value){
         else result = controller.actions[action].call(req.context,req,res,value);
         Q.when(result).
             then(function(obj){
-                if (obj == null) return dfd.reject("Not found");
-                var _obj = obj;
-                if (obj.model && obj.model.model == obj.model && target.model != obj.model){
-                    target = obj.model;
-                    controller = target.model.c;
-                };
-                if (obj instanceof db.QuerySet){
-                    _obj = obj;
-                }
-                else
+                try{
+                    if (obj == null) return dfd.reject("Not found");
+                    var _obj = obj;
+                    if (obj.model && obj.model.model == obj.model && target.model != obj.model){
+                        target = obj.model;
+                        controller = target.model.c;
+                    };
+                    if (obj instanceof db.QuerySet){
+                        _obj = obj;
+                    }
+                    else
                     if (obj instanceof Array) {
                         _obj = new db.QuerySet(target.model,result);
                         _obj.c = controller;
                     }
                     else {
-                        if (!(obj instanceof target.model))
+                        if (!(obj instanceof target.model)){
                             _obj = new target.model(obj);
+                        }
                     }
-                dfd.resolve(_obj)}
+                    dfd.resolve(_obj)
+                }
+                catch(e){
+                    dfd.reject("Internal error: "+ e.message);
+                }
+            }
             ,dfd.reject);
     }
     catch(e){
@@ -127,6 +134,7 @@ function target_is_model(dfd,req,res,value,action,target){
     req.context.$target = target;
     req.context.$action = action;
     req.context.$model = target.model;
+    req.context.$value = value;
     run_dependency(target,req,res,function(){
         if(req.context.$permissions.indexOf(target.model.model_name) != -1)
             return do_action(dfd,req,res,controller,action,target,value);
@@ -219,7 +227,7 @@ finalize = function(req,res,target){
     res.writeHead(200, {"Content-Type": "application/json; charset=utf-8"});
     function send(obj){
         try{
-            var d = req.context.$controller.decorator || req.context.$model.c.decorator;
+            var d = req.context.$decorator || req.context.$controller.decorator || req.context.$model.c.decorator;
             if (!d) return res.end(JSON.stringify(obj));
             if (typeof d != "function") return res.end(JSON.stringify(decorate(obj,d,target)));
             Q.when(d()).then(function(d){
@@ -275,6 +283,7 @@ module.exports = function(req,res){
     var plugin = global.m;
     var plugin_stack = base_token.split(":");
     base_token = plugin_stack.pop();
+
     for(var i in plugin_stack) {
         if (plugin_stack[i] in plugin.plugins) plugin = plugin.plugins[plugin_stack[i]];
         else return errorize(req,res,"Unknown plugin name");

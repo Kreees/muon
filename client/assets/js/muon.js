@@ -91,41 +91,45 @@
         },
         get_language: function(){ return document.getElementsByTagName("html")[0].lang || __default_lang__ },
         set_profile: function(profile,flag){
-            if (flag === false){ return m.unset_profile(profile); }
             if (profile == "muon") return;
-            if (m.has_profile(profile)) return;
-            var className = document.body.className.split(/\s+/);
-            className = className.concat(profile.split("."));
-            document.body.className = className.sort().join(" ");
-            var profiles_to_filter = _.keys(__profiles__).filter(function(p){
-                return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
-            });
-            profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
-            if (profiles_to_filter.length == 0) return;
-            var templates = [];
-            for(var i in profiles_to_filter){
-                templates = templates.concat(__profiles__[profiles_to_filter[i]]);
-            }
-            $("[data-muon]").filter(templates.join(",")).each(function(){
-                if (this.muon_view instanceof m.View) this.muon_view.reload();
-            });
+            _.defer(function(){
+                if (flag === false){ return m.remove_profile(profile); }
+                if (m.has_profile(profile)) return;
+                var className = document.body.className.split(/\s+/);
+                className = className.concat(profile.split("."));
+                document.body.className = className.sort().join(" ");
+                var profiles_to_filter = _.keys(__profiles__).filter(function(p){
+                    return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
+                });
+                profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
+                if (profiles_to_filter.length == 0) return;
+                var templates = [];
+                for(var i in profiles_to_filter){
+                    templates = templates.concat(__profiles__[profiles_to_filter[i]]);
+                }
+                $("[data-muon]").filter(templates.join(",")).each(function(){
+                    if (this.muon_view instanceof m.View) this.muon_view.reload();
+                });
+            })
         },
-        unset_profile: function(profile){
+        remove_profile: function(profile){
             if (profile == "muon") return;
-            if (!m.has_profile(profile)) return;
-            var profiles_to_filter = _.keys(__profiles__).filter(function(p){
-                return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
-            });
-            profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
-            if (profiles_to_filter.length == 0) return;
-            var templates = [];
-            for(var i in profiles_to_filter){
-                templates = templates.concat(__profiles__[profiles_to_filter[i]]);
-            }
-            $("body").removeClass(profile);
-            $("[data-muon]").filter(templates.join(",")).each(function(){
-                if (this.muon_view instanceof m.View) this.muon_view.reload();
-            });
+            _.defer(function(){
+                if (!m.has_profile(profile)) return;
+                var profiles_to_filter = _.keys(__profiles__).filter(function(p){
+                    return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
+                });
+                profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
+                if (profiles_to_filter.length == 0) return;
+                var templates = [];
+                for(var i in profiles_to_filter){
+                    templates = templates.concat(__profiles__[profiles_to_filter[i]]);
+                }
+                $("body").removeClass(profile);
+                $("[data-muon]").filter(templates.join(",")).each(function(){
+                    if (this.muon_view instanceof m.View) this.muon_view.reload();
+                });
+            })
         },
         has_profile: function(profile){
             return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).
@@ -186,6 +190,7 @@
             m.packages[m.__current_package__].views_unnamed[view_type].push(new_view);
         }
         new_view.prototype.super = this.prototype.constructor.prototype;
+        new_view.profiles = [];
         if (view_type && !m.base_views[view_type]) m.base_views[view_type] = new_view;
         return new_view;
     }
@@ -562,17 +567,19 @@
             if (view_name == "data-"+view_type+"-view") view_name = "";
 
             if (projection){
-                $(m).one("projection_updated."+projection, function(){
+                var m_plugin = m.get_projection(projection)?m:parent_view.m;
+                $(m_plugin).one("projection_updated."+projection, function(){
                     if ($(document.body).find(el).length == 0) return;
-                    insert_view.apply(_this,[el,view_type,pack,parent_view]);
+                    insert_view.apply(_this,[el,view_type,pack,parent_view,m_plugin]);
                 });
-                $(m).one("projection_removed."+projection,function(){
+                $(m_plugin).one("projection_removed."+projection,function(){
                     el.muon_view.remove();
-                    $(m).one("projection_updated."+projection, function(){
+                    $(m_plugin).one("projection_updated."+projection, function(){
                         if ($(document.body).find(el).length == 0) return;
-                        insert_view.apply(_this,[el,view_type,pack,parent_view]);
+                        insert_view.apply(_this,[el,view_type,pack,parent_view,m_plugin]);
                     });
                 });
+                projection = m_plugin.get_projection(projection);
             }
 
             setTimeout(function(){
@@ -581,7 +588,7 @@
                     delete el.muon_view;
                 }
                 try{
-                    $.when(proc_projection[view_type].call(_this,el,el.dataset["context"],m.get_projection(projection))).
+                    $.when(proc_projection[view_type].call(_this,el,el.dataset["context"],projection)).
                         then(function(context){
                             try {
                                 context = context || {};
@@ -683,21 +690,24 @@
                 var tagname = this.tag_name || "div";
                 var _this = this;
                 var $el = $("<"+tagname+" />");
+                this.pre_template_render && this.pre_template_render();
                 this.render_template($el[0]);
-                $el.attr("data-pack",this.package);
-                $el.addClass([this.template?this.template+"_"+this.view_type:"",this.class_name,this.view_type,"block"].join(" "));
                 if (this.el && this.el.muon_view == this){
-                    this.undelegateEvents();
                     this.el.innerHTML = "";
                     $(this.el).append($el.children());
-                    this.$el = $(this.el);
-                    this.delegateEvents();
                 }
                 else {
-                    this.setElement($el[0]);
+                    this.el = $el[0];
                 }
+                this.$el = $(this.el);
+                this.$ = this.$el.find.bind(this.$el);
+                this.undelegateEvents();
+                this.delegateEvents()
+                this.post_template_render && this.post_template_render();
+                this.$el.addClass([this.template?this.template+"_"+this.view_type:"",this.class_name,this.view_type,"block"].join(" "));
                 this.el.muon_view = this;
                 this.el.dataset.muon = "";
+                this.el.dataset.pack = this.package;
                 render_focus.call(this);
                 this.render_data_routes();
                 this.render_translation();
@@ -709,7 +719,7 @@
                         insert_view.call(_this,this,i,this.dataset.pack || _this.package,_this);
                     });
                 }
-                if ('function' == typeof this.rendered) this.rendered($el);
+                this.rendered && this.rendered($el);
             },
             __remove_inner_views: function(){
                 this.$("[dat-muon]").each(function(){
@@ -719,14 +729,16 @@
             remove: function(){
                 delete this.el.muon_view;
                 this.__remove_inner_views();
-                if (this.__forced_element) this.$el.children().remove();
+                if (this.__forced_element){
+                    this.undelegateEvents();
+                    this.$el.children().remove();
+                }
                 else this.$el.remove();
                 this.stopListening();
                 this.trigger("removed");
             },
             reload: function(){
                 this.__remove_inner_views();
-                this.undelegateEvents()
                 this.render();
                 this.__reset__ && this.__reset__();
                 this.trigger("reloaded");
@@ -931,6 +943,24 @@
 
     });
 
+    function set_get_element_value(view,getter){
+        function set(val){
+            if (!this.dataset["attrType"]){
+                if (this.tagName == "INPUT" || this.tagName == "SELECT") $(this).val(val);
+                else this.innerText = val;
+            }
+            else if (this.dataset["attrType"] == "text") this.innerText = val;
+            else if (this.dataset["attrType"] == "html") this.innerHTML = val;
+            else $(this).attr(this.dataset["attrType"],val);
+        }
+        if (typeof view["get_"+getter] == "function"){
+            var val = view["get_"+getter]();
+            if (typeof val == "object" && "then" in val) val.then(set.bind(this));
+            else set.call(this,val);
+        }
+        else set.call(this,view.model.get(getter));
+    }
+
     function update_model_view(attrs){
         var _this = this;
         if (this.$el.find("[data-model-attr]").length != 0){
@@ -955,19 +985,8 @@
                 });
             }
         }
-        this.$el.find("[data-model-get]").each(function(){
-            function set(val){
-                if (!this.dataset["attrType"]) this.innerText = val;
-                else if (this.dataset["attrType"] == "text") this.innerText = val;
-                else if (this.dataset["attrType"] == "html") this.innerHTML = val;
-                else $(this).attr(this.dataset["attrType"],val);
-            }
-            var getter = "get_"+this.dataset.modelGet;
-            if (typeof _this[getter] == "function"){
-                var val = _this[getter]();
-                if (typeof val == "object" && "then" in val) val.then(set.bind(this));
-                else set.call(this,val);
-            }
+        this.$el.find("[data-model-get],[data-model-set]").each(function(){
+            set_get_element_value.call(this,_this,this.dataset.modelGet || this.dataset.modelSet);
         });
         this.render_data_routes();
     }
@@ -988,15 +1007,19 @@
                 var setter = this.dataset.modelSet;
                 var _this = this;
                 var int = null;
-                $(this).keypress(function(){
-                    clearTimeout(int);
-                    int = setTimeout(function(){$(_this).trigger("change")},300);
-                });
-                $(this).change(function(){
-                    if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val());
-                    else view.model.set(setter,$(this).val());
-                });
-
+                view.listenTo(view.model,"sync",function(){
+                    set_get_element_value.call(_this,view,setter);
+                })
+                if (!(this.dataset.silent || view.silent)){
+                    $(this).keyup(function(){
+                        clearTimeout(int);
+                        int = setTimeout(function(){$(_this).trigger("change")},150);
+                    });
+                    $(this).change(function(){
+                        if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val());
+                        else view.model.set(setter,$(this).val());
+                    });
+                }
             });
             this.$el.attr("id",this.model.id);
         },
@@ -1008,6 +1031,21 @@
                 delete window[this.sync_name];
             }
             muon.View.prototype.remove.call(this);
+        },
+        destroy: function(){
+            return this.model.destroy();
+        },
+        save: function(){
+            var view = this;
+            this.$el.find("[data-model-set]").each(function(){
+                var setter = this.dataset.modelSet;
+                if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val());
+                else view.model.set(setter,$(this).val());
+            });
+            return view.model.save();
+        },
+        fetch: function(){
+            return this.model.fetch();
         }
     });
 
@@ -1031,6 +1069,7 @@
         __reset__: function(){
             for(var i in this.blocks){
                 var block = this.blocks[i];
+                block.reload();
                 this.$("#"+i).html("");
                 this.$("#"+i).append(block.$el);
             }
@@ -1089,7 +1128,11 @@
         __reset__: function(){
             for(var i in this.views){
                 var view = this.views[i];
-                if (view instanceof m.View) this.$target.append(view.$el);
+                if (view instanceof m.View){
+                    view.reload();
+                    this.$target.append(view.$el);
+                }
+                if (this.current == i) view.trigger("view_shown");
             }
         },
         add: function(alias,view){
@@ -1155,12 +1198,12 @@
                 }
             }
             function _proceed_(){
-                _this.views[name].trigger("stack_show");
+                _this.views[name].trigger("view_shown");
                 if ('function' == typeof _this.post_show) _this.post_show();
             }
             if ('function' == typeof this.before_show) this.before_show();
             if (_this.previous != undefined && _this.previous != null){
-                _this.views[_this.previous].trigger("stack_hide");
+                _this.views[_this.previous].trigger("view_hidden");
                 _hide_();
             }
             else _show_();
@@ -1585,6 +1628,14 @@
                 plugin_obj.packages[shorter_name] = pack_obj;
             }
 
+            for(var i in m.__package_init_data[pack].dependencies.css){
+                var css = m.__package_init_data[pack].dependencies.css[i];
+                $("<style />").text(css).appendTo("head");
+            }
+            for(var i in m.__package_init_data[pack].dependencies.js){
+                eval(m.__package_init_data[pack].dependencies.js[i]);
+            }
+
             for(var i in m.__package_init_data[pack].models){
                 if (i in m.models) continue;
                 else eval(m.__package_init_data[pack].models[i]);
@@ -1635,10 +1686,10 @@
 
 
     m.router = new m.Router();
-    m.router.route("/","#{default_pack}",m.require_pack("application",function(){
-        _b_.history.start(m.__mobile_app__?{}:{pushState:true});
-    }));
     $(function(){
+        m.router.route("/","#{default_pack}",m.require_pack("application",function(){
+            _b_.history.start(m.__mobile_app__?{}:{pushState:true});
+        }));
         $("body").addClass("muon").delegate("a[data-route]","click",function(ev){
             ev.preventDefault();
             this.href = this.href || this.dataset.route;

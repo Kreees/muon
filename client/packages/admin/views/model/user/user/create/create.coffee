@@ -21,12 +21,10 @@ m.ModelView.extend {
       password: @pass.val()
     }).then(=>
       window.some = this;
+      m.remove_profile("first_user")
       new @m.model_user_session().save({login:@email.val(),password:md5(@pass.val())}).then( ->
-        console.log(3)
-        m.unset_profile("first_user")
         m.set_profile("logined")
       )
-      console.log(4)
     )
   "check": ->
     clearTimeout(@check_int)

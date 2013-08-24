@@ -10,9 +10,7 @@ m.ActionView.extend {
       password: md5(@$("#pass").val())
       remember: @$("#remember")[0].checked
     }).then(=>
-      console.log(1);
-      m.set_projection("logined_user",new @m.models["user.user"]("me",{force_sync:true}));
-      console.log(2);
+      this.m.set_projection("admin.logined",new @m.models["user.user"]("me",{force_sync:true}));
       m.set_profile("logined");
     ,@error.bind(this));
   error: (e)->

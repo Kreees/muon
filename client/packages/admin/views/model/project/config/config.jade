@@ -1,0 +1,62 @@
+form.form-horizontal
+    h6 Server settings
+    div.control-group
+        label.control-label Server mode
+        div.controls
+            select.input(type='text',data-model-set="server_mode")
+                option(value='development') Development
+                option(value='production') Production
+            span.help-inline
+    div.control-group
+        label.control-label Protocol
+        div.controls
+            select.input(type='text',data-model-set="protocol",data-silent)
+                option(value='http') HTTP
+                option(value='https') HTTPS
+    div.control-group
+        label.control-label Listenting address
+        div.controls
+            input(type='text',data-model-set="host",title='Default address is 127.0.0.1 or localhost')
+            span.help-inline
+    div.control-group
+        label.control-label Listenting port
+        div.controls
+            input(type='text',data-model-set="port",title='Default port is 8000')
+            span.help-inline
+    h6 Database settings
+    div.control-group
+        label.control-label Host
+        div.controls
+            input(type='text',data-model-set="db_host",title='Default address is 127.0.0.1 or localhost')
+            span.help-inline
+    div.control-group
+        label.control-label Port
+        div.controls
+            input(type='text',data-model-set="db_port",title='Empty for default MongoDB port')
+            span.help-inline
+    div.control-group
+        label.control-label Name
+        div.controls
+            input(type='text',data-model-set="db_name")
+            span.help-inline
+    div.control-group
+        label.control-label User
+        div.controls
+            input(type='text',data-model-set='db_user',title="Empty when DB doesn't require authentication")
+            span.help-inline
+    div.control-group
+        label.control-label Password
+        div.controls
+            input(type='text',data-model-set="db_pass",title="Empty when DB doesn't require authentication")
+            span.help-inline
+    h6 Other settings
+    div.control-group
+        label.control-label Language
+        div.controls
+            input(type='text',data-model-set="lang")
+            span.help-inline
+    br
+    div.control-group
+        div.controls
+            button.btn#save Save
+            button.btn.btn-inverse#revert Revert

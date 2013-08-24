@@ -1,0 +1,40 @@
+div.row
+    div.span3
+        div.row
+            div.span3
+                div(data-model-view='logined',data-projection="admin.logined")
+        div.row
+            div.span3
+                ul.nav.nav-list.topnav
+                    li.nav-header Profile
+                    li(data-page="profile_page_layout")
+                        a(data-route='/profile') Edit Profile
+                    li#logout
+                        a Log out
+                    li.nav-header Admin section
+                    li(data-page="index_page_layout")
+                        a(data-route="/") General settings
+                    li(data-page="client_page_layout")
+                        a(data-route="/client") Client inspector
+                    ul.offset1.nav.nav-list.subnav
+                        li(data-page="pages_client_page_layout")
+                            a(data-route='/client/pages') Pages
+                        li(data-page="views_client_page_layout")
+                            a(data-route='/client/views') Views
+                        li(data-page="packages_client_page_layout")
+                            a(data-route='/client/packages') Packages
+                    li(data-page="server_page_layout")
+                        a(data-route="/server") Server management
+                    ul.offset1.nav.nav-list.subnav
+                        li(data-page="models_server_page_layout")
+                            a(data-route='/server/models') Models
+                        li(data-page="plugins_server_page_layout")
+                            a(data-route='/server/plugins') Plugins
+                    li(data-page="data_page_layout")
+                        a(data-route="/data") Database
+                    li(data-page="logs_page_layout")
+                        a(data-route="/logs") Server logs
+                    li(data-page="users_page_layout")
+                        a(data-route="/users") User managment
+
+    div.span9#target

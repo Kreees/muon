@@ -30,7 +30,10 @@ module.exports = {
                                 "session_id": md5.update(obj[0]+new Date().toISOString()).digest("hex"),
                                 "expires": req.body.remember?new Date(Date.now() + 1000*3600*24*365*10):new Date(Date.now() + 1000*3600*6)
                             }).save().then(function(a){
-                                    res.cookie("muon.session.id", a.get("session_id"),req.body.remember?{expires: new Date(Date.now() + 1000000000000)}:{});
+                                    res.cookie(
+                                        "muon.session.id",
+                                        a.get("session_id"),
+                                        req.body.remember?{expires: new Date(Date.now() + 1000000000000)}:{});
                                     dfd.resolve(a)
                                 },dfd.reject);
                         }
@@ -38,8 +41,8 @@ module.exports = {
             }
             return dfd.promise;
         },
-        "delete": function(req,res,value){
-
+        "delete": function(){
+            return;
         }
     }
 };

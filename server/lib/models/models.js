@@ -97,7 +97,9 @@ module.exports = {
                     model.c = rest;
                 }
                 if (typeof model.c.actions != "object") model.c.actions = {}
+                if (typeof model.c.extend != "function") model.c.extend = rest.extend;
                 // Выполняем привязку скоупов для моделей. Им
+                m.super = model.c;
                 for(var i in model.scopes){
                     var scope_name = model.scopes[i];
                     var c = null;
@@ -149,6 +151,7 @@ module.exports = {
                     object.model_name = model.model_name;
                     object.object_name = object_name;
                 }
+                delete m.super;
             }
 
             var mdir_pref = cfg.path+"/server/app/middleware/";
