@@ -81,7 +81,7 @@
             }
             $.getJSON("/pack_translation",{lang:lang,packs:packs.join(",")}).then(function(obj){
                 for(var i in obj){
-                    if (!(i in obj)) continue;
+                    if (!(i in m.packages)) continue;
                     m.packages[i].translation = obj[i];
                 }
                 $("*[data-muon]").each(function(){
