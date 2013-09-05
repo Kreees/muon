@@ -16,11 +16,12 @@ module.exports = {
             var plugin = plugins.shift();
             var cfg_obj = cfg.plugins[plugin];
             delete cfg.plugins[plugin]
-            plugin = plugin.toLocaleUpperCase();
-            cfg.plugins[plugin] = cfg_obj;
+            var plugin_uppercase = plugin.toLocaleUpperCase();
+            cfg.plugins[plugin_uppercase] = cfg_obj;
             try{
-                cfg.plugins[plugin].parent = cfg.name;
-                var plugin_obj = project_plug_loader(plugin).plugin();;
+                cfg.plugins[plugin_uppercase].parent = cfg.name;
+                var plugin_obj = project_plug_loader(plugin).plugin();
+                plugin = plugin_uppercase;
                 plugin_obj.init(cfg.plugins[plugin]).then(function(scope){
                     plugins_scope[plugin] = scope;
                     plugins_scope[plugin].plugin_obj = plugin_obj;
