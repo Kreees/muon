@@ -96,7 +96,7 @@ for(var i in dirs){
 }
 
 for(var i in tr_dirs){
-    var langs = ["default",process.env.LANG.substr(0,2) || "ru"];
+    var langs = ["default","ru"];
     for(var j in langs){
         var dir = tr_dirs[i].replace(/#\{lang\}/g,langs[j]);
         console.log("Creating: "+dir);
