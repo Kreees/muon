@@ -1,6 +1,6 @@
 {
     "name":"muon",
-    "version":"0.0.7",
+    "version":"0.0.10",
     "description":"client-server web framework for single page application building",
     "license": "MIT",
     "author": {
@@ -32,6 +32,7 @@
         "coffee-script":"*",
         "consolidate":"*",
         "q": "*",
-        "dox":"*"
+        "dox":"*",
+        "mime":"*"
     }
 }

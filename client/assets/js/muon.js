@@ -686,6 +686,13 @@
                         .attr("data-pack",pack_name);
                 });
             },
+            render_src: function(){
+                var _this = this;
+                var inner_src =  this.$el.find("*[data-muon] *[data-src]");
+                this.$el.find("*[data-src]").not(inner_src).each(function(){
+                    this.src = "/pack_src/"+_this.package+"/"+this.dataset["src"]+"?muon";
+                });
+            },
             render:function(){
                 var tagname = this.tag_name || "div";
                 var _this = this;
@@ -710,6 +717,7 @@
                 this.el.dataset.pack = this.package;
                 render_focus.call(this);
                 this.render_data_routes();
+                this.render_src();
                 this.render_translation();
                 this.render_debug_labels();
                 this.__set__ && this.__set__();

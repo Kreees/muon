@@ -6,7 +6,8 @@ var api_router = require(m.__sys_path+"/server/lib/router/api_router"),
     package_translation = require(m.__sys_path+"/server/lib/client/package_translation"),
     package_render = require(m.__sys_path+"/server/lib/client/package_render"),
     client_render = require(m.__sys_path+"/server/lib/client/client_render"),
-    Q = require("q")
+    Q = require("q"),
+    _ = require("underscore")
 ;
 
 m.errorize = function(res,statusCode,message){

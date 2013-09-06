@@ -15,18 +15,15 @@ module.exports = {
             }
             var plugin = plugins.shift();
             var cfg_obj = cfg.plugins[plugin];
-            delete cfg.plugins[plugin]
             var plugin_uppercase = plugin.toLocaleUpperCase();
-            cfg.plugins[plugin_uppercase] = cfg_obj;
             try{
-                cfg.plugins[plugin_uppercase].parent = cfg.name;
+                cfg_obj.parent = cfg.name;
                 var plugin_obj = project_plug_loader(plugin).plugin();
-                plugin = plugin_uppercase;
-                plugin_obj.init(cfg.plugins[plugin]).then(function(scope){
-                    plugins_scope[plugin] = scope;
-                    plugins_scope[plugin].plugin_obj = plugin_obj;
-                    plugins_scope[plugin].name = plugin;
-                    plugins_scope[plugin].cfg = cfg.plugins[plugin];
+                plugin_obj.init(cfg_obj).then(function(scope){
+                    plugins_scope[plugin_uppercase] = scope;
+                    scope.plugin_obj = plugin_obj;
+                    scope.name = plugin_uppercase;
+                    scope.cfg = cfg_obj;
                     load_plugin();
                 });
             }

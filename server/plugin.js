@@ -15,7 +15,7 @@ function init_plugin(cfg){
     plugins.init(cfg).then(
         function(a){
             for(var i in a){
-                if (i in global.m.__plugins) continue;
+                if (i in m.__plugins) continue;
                 global.m.__plugins[i] = a[i];
                 plugin_scope.plugins[i] = a[i];
             }

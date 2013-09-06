@@ -4,7 +4,11 @@ module.exports = {
     models: ["*"],
     middleware: [],
     routes: [
-        {route: ""}
+        {route: ""},
+	{
+	    route: "*a",
+            page: "error"
+	}
     ],
     surrogate: {}
 }
