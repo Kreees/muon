@@ -127,6 +127,13 @@ module.exports = {
         var target = [];
         var counter = templates.length;
         if (counter == 0) callback([]);
+        templates = templates.sort(function(a,b){
+            a = a.split("/").length;
+            b = b.split("/").length;
+            if (a > b) return 1;
+            else if (a == b) return 0;
+            else return -1;
+        });
         for(var i in templates){
             exec(templates[i],base_dir,pack,function(name,data){
                 counter--;

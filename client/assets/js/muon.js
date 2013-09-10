@@ -523,7 +523,7 @@
             stack: function(el,non,projection){
                 return _.extend(projection,attrs_parser(el.dataset["contextAttrs"]));
             },
-            action: function(el,non,projection){
+            widget: function(el,non,projection){
                 return _.extend(projection,attrs_parser(el.dataset["contextAttrs"]));
             }
         };
@@ -730,7 +730,7 @@
                 this.rendered && this.rendered($el);
             },
             __remove_inner_views: function(){
-                this.$("[dat-muon]").each(function(){
+                this.$("[data-muon]").each(function(){
                     if (this.muon_view instanceof m.View) this.muon_view.remove();
                 });
             },
@@ -1057,9 +1057,7 @@
         }
     });
 
-    muon.ActionView = muon.View.extend({
-        view_type: "action"
-    });
+    muon.WidgetView = muon.View.extend({view_type: "widget"});
 
     muon.LayoutView = muon.View.extend({
         view_type: "layout",
@@ -1170,19 +1168,19 @@
             muon.View.prototype.remove.call(this);
         },
         get: function(name){
-            if(this instanceof m.ApplicationLayoutView) name = name + (/_page$/.test(name)?"":"_page");
+            if(this instanceof m.ApplicationStackView) name = name + (/_page$/.test(name)?"":"_page");
             if (name in this.views)
                 return this.views[name];
             else
-            if(this instanceof m.ApplicationLayoutView) throw Error("Page is not application view: "+name);
+            if(this instanceof m.ApplicationStackView) throw Error("Page is not application view: "+name);
             else throw new Error("View is not in this stacked view: "+name)
         },
         show: function(name){
             var _this = this;
-            if(this instanceof muon.ApplicationLayoutView && !(name in this.views)) name = name + (/_page$/.test(name)?"":"_page");
+            if(this instanceof muon.ApplicationStackView && !(name in this.views)) name = name + (/_page$/.test(name)?"":"_page");
             if (this.current == name) return;
             if (!(name in this.views)){
-                if(this instanceof muon.ApplicationLayoutView) throw Error("Page is not in application view: "+name);
+                if(this instanceof muon.ApplicationStackView) throw Error("Page is not in application view: "+name);
                 else throw Error("View is not in this stacked view: "+name);
             }
 
@@ -1220,18 +1218,17 @@
     /**
      * Класс преставления приложения
      *
-     * @name ApplicationLayoutView
+     * @name ApplicationStackView
      * @namespace muon
      */
 
-    muon.ApplicationLayoutView = muon.StackView.extend({
+    muon.ApplicationStackView = muon.StackView.extend({
         template: "application",
-        view_type: "layout",
         __set__:function(){
             /**
-             * Если ранее __application_view__ не был задан значит это самый первый созданный ApplicationLayoutView объект
+             * Если ранее __application_view__ не был задан значит это самый первый созданный ApplicationStackView объект
              */
-            if (!(m.__application_view__ instanceof muon.ApplicationLayoutView))
+            if (!(m.__application_view__ instanceof muon.ApplicationStackView))
                 m.__application_view__ = this;
             muon.StackView.prototype.__set__.apply(this);
         },
@@ -1258,7 +1255,7 @@
         add: function(alias,view){
             if (!view && typeof alias == "string"){
                 if (alias in this.pack().views.layout)this.views[alias] = alias;
-                else throw Error("Can't add not PageLayoutView instance to ApplicationLayoutView: "+view.template+"_"+view.view_type);
+                else throw Error("Can't add not PageLayoutView instance to ApplicationStackView: "+view.template+"_"+view.view_type);
                 return;
             }
             if (!view) {
@@ -1266,7 +1263,7 @@
                 alias = view.template;
             }
             if (!(view instanceof muon.PageLayoutView)){
-                throw Error("Can't add not PageLayoutView instance to ApplicationLayoutView: "+view.template+"_"+view.view_type);
+                throw Error("Can't add not PageLayoutView instance to ApplicationStackView: "+view.template+"_"+view.view_type);
             }
             this.views[alias] = view;
             view.$el.hide();
@@ -1312,7 +1309,7 @@
          * @private
          */
         __set__: function(){
-            if (this.context instanceof muon.ApplicationLayoutView){
+            if (this.context instanceof muon.ApplicationStackView){
                 this.$el.append(this.context.$el);
             }
             muon.LayoutView.prototype.__set__.call(this)
@@ -1494,17 +1491,17 @@
         m.router.route(prepare_route(pref,route),pack+"_"+route, function(){
             var _args = arguments;
             var page_to_show = page;
-            var app_layout = m.packages[pack].app_layout;
+            var app_view = m.packages[pack].app_view;
             surrogate.current_page = undefined;
-            try{surrogate.current_page = app_layout.get(page_to_show+(/_page$/.test(page_to_show)?"":"_page"));}
+            try{surrogate.current_page = app_view.get(page_to_show+(/_page$/.test(page_to_show)?"":"_page"));}
             catch(e){}
             router_middleware(middleware.slice(),function(){
                 handler && handler.apply(surrogate,_args);
                 do {
-                    try{app_layout.show(page_to_show);}
+                    try{app_view.show(page_to_show);}
                     catch(e){break;}
-                    page_to_show = app_layout.__parent_app_page;
-                } while(app_layout = app_layout.__parent_app_layout);
+                    page_to_show = app_view.__parent_app_page;
+                } while(app_view = app_view.__parent_app_view);
             });
         });
     }
@@ -1539,7 +1536,7 @@
             if (m.packages[pack].views[type] && m.packages[pack].views[type][name]) return;
             var view_class_obj = null;
             if (name == "application" && type == "layout")
-                view_class_obj = m.ApplicationLayoutView;
+                view_class_obj = m.ApplicationStackView;
             else if (name.match(/_page$/) && type == "layout")
                 view_class_obj = m.PageLayoutView;
             else if (type in m.base_views)
@@ -1586,27 +1583,27 @@
                 add_pack_routes(pack,route,mod);
             }
             function form_pack_application_layout(){
-                mod.use_app_layout = mod.use_app_layout || true;
-                if (mod.use_app_layout){
-                    var app_layout_class = null;
-                    if (m.packages[pack].views.layout && m.packages[pack].views.layout.application)
-                        app_layout_class = m.packages[pack].views.layout.application;
+                mod.use_app_view = mod.use_app_view || true;
+                if (mod.use_app_view){
+                    var app_view_class = null;
+                    if (m.packages[pack].views.layout && m.packages[pack].views.stack.application)
+                        app_view_class = m.packages[pack].views.stack.application;
                     else
-                        app_layout_class = m.ApplicationLayoutView.extend({package:pack})
-                    var app_layout = m.packages[pack].app_layout = new app_layout_class;
-                    if (m.__application_view__ == app_layout) app_layout.$el.appendTo("body");
+                        app_view_class = m.ApplicationStackView.extend({package:pack})
+                    var app_view = m.packages[pack].app_view = new app_view_class;
+                    if (m.__application_view__ == app_view) app_view.$el.appendTo("body");
                     else {
                         if (m.packages[parent_pack]
-                            && m.packages[parent_pack].app_layout instanceof m.ApplicationLayoutView)
+                            && m.packages[parent_pack].app_view instanceof m.ApplicationStackView)
                         {
                             var page = new m.PageLayoutView();
-                            var page_name = app_layout.__parent_app_page = "m_page_"+getUniq();
-                            app_layout.__parent_app_layout = m.packages[parent_pack].app_layout;
-                            page.el.appendChild(app_layout.el);
-                            app_layout.__parent_app_layout.add(page_name,page);
+                            var page_name = app_view.__parent_app_page = "m_page_"+getUniq();
+                            app_view.__parent_app_view = m.packages[parent_pack].app_view;
+                            page.el.appendChild(app_view.el);
+                            app_view.__parent_app_view.add(page_name,page);
                         }
                     }
-                    app_layout.add_pages(mod.pages || ["*"]);
+                    app_view.add_pages(mod.pages || ["*"]);
                 }
                 _.defer(function(){
                     Backbone.history.loadUrl();

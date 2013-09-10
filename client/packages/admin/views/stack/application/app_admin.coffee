@@ -1,4 +1,4 @@
-m.ApplicationLayoutView.extend {
+m.ApplicationStackView.extend {
   target: "target"
   events: {
     "click li#logout": "logout"

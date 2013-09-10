@@ -1,1 +1,0 @@
-window.InfoAction = muon.ActionView.extend {}

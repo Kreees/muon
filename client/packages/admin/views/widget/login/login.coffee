@@ -1,4 +1,4 @@
-m.ActionView.extend {
+m.WidgetView.extend {
   events: {
     "click button#login": "login"
   }
