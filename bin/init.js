@@ -50,7 +50,6 @@ var dirs = [
     "/client/packages/application",
     "/client/packages/application/views/",
     "/client/packages/application/views/layout/",
-    "/client/packages/application/views/layout/application/",
     "/client/packages/application/views/layout/page/",
     "/client/packages/application/views/layout/page/index/",
     "/client/packages/application/views/layout/page/error/",
@@ -60,7 +59,8 @@ var dirs = [
     "/client/packages/application/views/model/MUON/project/project/",
     "/client/packages/application/views/collection/",
     "/client/packages/application/views/stack/",
-    "/client/packages/application/views/action/",
+    "/client/packages/application/views/stack/application/",
+    "/client/packages/application/views/widget/",
     "/client/packages/application/tr/",
     "/client/packages/application/dependency/",
     "/client/packages/application/cache/",
@@ -79,7 +79,6 @@ var dirs = [
 var tr_dirs = [
     "/client/packages/application/tr/#{lang}/",
     "/client/packages/application/tr/#{lang}/layout/",
-    "/client/packages/application/tr/#{lang}/layout/application/",
     "/client/packages/application/tr/#{lang}/layout/page/",
     "/client/packages/application/tr/#{lang}/layout/page/index/",
     "/client/packages/application/tr/#{lang}/layout/page/error/",
@@ -89,7 +88,8 @@ var tr_dirs = [
     "/client/packages/application/tr/#{lang}/model/MUON/project/project/",
     "/client/packages/application/tr/#{lang}/collection/",
     "/client/packages/application/tr/#{lang}/stack/",
-    "/client/packages/application/tr/#{lang}/action/"
+    "/client/packages/application/tr/#{lang}/stack/application/",
+    "/client/packages/application/tr/#{lang}/widget/"
 ];
 
 for(var i in dirs){
