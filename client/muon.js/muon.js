@@ -6,7 +6,7 @@
  *
  */
 
-(function(_b_,$){
+(function(_b_){
     function serialize_object(obj) {
         var str = [];
         for(var p in obj)
@@ -14,9 +14,12 @@
         return str.join("&");
     }
 
+//    var $ = function(){
+    // DOM Function
+//    }
+
     var __Muon_base__ = {
         __projections__: {},
-        base_package: "application",
         packages: {},
         models: {},
         plugins: {},
@@ -33,33 +36,50 @@
         translation: {}
     };
 
-    function MuonPlugin (name){ $.extend(true,this,__Muon_base__); this.name = name; };
-    function MuonPackage (name){ $.extend(true,this,__Muon_pack_base__); this.name = name; };
+    var __sync_names__ = {};
+
+    var __default_lang__ = document.getElementsByTagName("html")[0].lang || "en";
+    var __debug__ = false, __profiles__ = {}, __routes__ = [],
+        __plugins__ = {}, __history__ = [], __forward_history__ = [];
+
+    var __views_arr__ = [];
+    var __models_arr__ = [];
+
+    function __m_deep_extend__(dst,src){
+        for(var i in src){
+            if (src[i] instanceof Function) { dst[i] = src[i]; continue; }
+            if (src[i] instanceof Array) { dst[i] = src[i].slice(); continue; }
+            if (src[i] instanceof Object) { dst[i] = Object.create(src[i]); __m_deep_extend__(dst[i],src[i]); continue;}
+            dst[i] = src[i];
+        }
+    }
+
+    function MuonPlugin (name){ __m_deep_extend__(this,__Muon_base__); this.name = name; };
+    function MuonPackage (name){ __m_deep_extend__(this,__Muon_pack_base__); this.name = name; };
+
     _.extend(MuonPlugin.prototype,{
         get_projection: function(key){
             return this.__projections__[key];
         },
         set_projection: function(key,val){
             this.__projections__[key] = val;
-            $(this).trigger("projection_updated."+key)
+            $(this).trigger("projection_updated."+key);
         },
         remove_projection: function(key){
             try{
                 var ret = this.__projections__[key];
                 delete this.__projections__[key];
-                $(this).trigger("projection_removed."+key)
+                $(this).trigger("projection_removed."+key);
                 return ret;
             }
-            catch(e){ return console.log(e.message); }
+            catch(e){ return console.log(e.message, e.stack);}
         }
     });
 
-    var __default_lang__ = document.getElementsByTagName("html")[0].lang || "en";
-    var __debug__ = false, __profiles__ = {}, __routes__ = [],
-        __plugins__ = {}, __history__ = [], __forward_history__ = [];
-
-    window.muon = _.extend(new MuonPlugin(""),{
+    var m = _.extend(new MuonPlugin(""),{
         __package_init_data: {},
+        __base_package__: "application",
+        __static_app__: false,
         is_debug: function(){
             return __debug__;
         },
@@ -67,7 +87,7 @@
             __debug__ = !!arg;
             if (!__debug__) $("body").removeClass("debug");
             else{
-                $("body").addClass("debug");
+                /debug/.test(document.body.className) && (document.body.className += " debug");
                 $("*[data-muon]").each(function(){
                     if (this.muon_view instanceof m.View) this.muon_view.render_debug_labels();
                 });
@@ -75,21 +95,25 @@
         },
         set_language: function(lang){
             document.getElementsByTagName("html")[0].lang = lang || __default_lang__;
-            var packs = []
+            var packs = [];
             for(var i in m.packages){
                 packs.push(i);
             }
-            $.getJSON("/pack_translation",{lang:lang,packs:packs.join(",")}).then(function(obj){
+            $.getJSON("/pack_translation/"+lang,{packs:packs.join(",")}).then(function(obj){
+                console.log(obj);
                 for(var i in obj){
                     if (!(i in m.packages)) continue;
                     m.packages[i].translation = obj[i];
                 }
                 $("*[data-muon]").each(function(){
-                    if (this.muon_view instanceof m.View) this.muon_view.render_translation();
+                    if (this.muon_view instanceof m.View) {
+                        console.log(this.muon_view);
+                        this.muon_view.render_translation();
+                    }
                 });
             });
         },
-        get_language: function(){ return document.getElementsByTagName("html")[0].lang || __default_lang__ },
+        get_language: function(){ return document.getElementsByTagName("html")[0].lang || __default_lang__; },
         set_profile: function(profile,flag){
             if (profile == "muon") return;
             _.defer(function(){
@@ -101,7 +125,7 @@
                 var profiles_to_filter = _.keys(__profiles__).filter(function(p){
                     return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
                 });
-                profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
+                profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p);});
                 if (profiles_to_filter.length == 0) return;
                 var templates = [];
                 for(var i in profiles_to_filter){
@@ -110,7 +134,7 @@
                 $("[data-muon]").filter(templates.join(",")).each(function(){
                     if (this.muon_view instanceof m.View) this.muon_view.reload();
                 });
-            })
+            });
         },
         remove_profile: function(profile){
             if (profile == "muon") return;
@@ -119,7 +143,7 @@
                 var profiles_to_filter = _.keys(__profiles__).filter(function(p){
                     return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
                 });
-                profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p)});
+                profiles_to_filter = profiles_to_filter.filter(function(p){return m.has_profile(p);});
                 if (profiles_to_filter.length == 0) return;
                 var templates = [];
                 for(var i in profiles_to_filter){
@@ -129,7 +153,7 @@
                 $("[data-muon]").filter(templates.join(",")).each(function(){
                     if (this.muon_view instanceof m.View) this.muon_view.reload();
                 });
-            })
+            });
         },
         has_profile: function(profile){
             return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).
@@ -139,11 +163,7 @@
             return document.body.className.split(/\s+/).sort().join(".");
         }
     });
-    /**
-     * Muon namespace shortcut
-     * @type {muon}
-     */
-    window.m = window.muon;
+
     m.MuonPlugin = MuonPlugin;
     m.__current_package__ = "";
     m.__current_plugin__ = "";
@@ -173,7 +193,7 @@
 
     _b_.View.extend = function(obj,common){
         var view_type = (_.isString(obj.view_type))?obj.view_type:this.prototype.view_type;
-        obj.package = obj.package || m.__current_package__ || this.prototype.package || m.base_package;
+        obj.package = obj.package || m.__current_package__ || this.prototype.package || m.__base_package__;
         obj.plugin = obj.plugin || m.__current_plugin__  || this.prototype.plugin || "";
         obj.m = __registerPlugin(obj.plugin);
         var new_view = _view_b.apply(this,arguments);
@@ -193,16 +213,17 @@
         new_view.profiles = [];
         if (view_type && !m.base_views[view_type]) m.base_views[view_type] = new_view;
         return new_view;
-    }
+    };
 
     _b_.Model.extend = function model_extend(obj,common){
-        var model_name = ""
+        var model_name = "";
         if (typeof obj.model_name == 'string'){
             model_name = ((this.prototype.model_name?this.prototype.model_name+".":"")+obj.model_name).replace(/\.+/,".");
         }
         else model_name = this.prototype.model_name;
         if (obj.urlRoot && obj.urlRoot.indexOf("0.0.0.0") != -1){
-            obj.urlRoot = obj.urlRoot.replace("0.0.0.0",location.hostname);
+            obj.urlRoot = obj.urlRoot.replace(/0\.0\.0\.0(:\d+)?/, m.__domain__?m.__domain__:location.host);
+            if (m.__protocol__) obj.urlRoot = obj.urlRoot.replace(/^http:\/\//, m.__protocol__+"://");
         }
         var new_model = _model_b.apply(this,arguments);
         new_model.model_name = model_name;
@@ -240,14 +261,14 @@
             child.model_name = model_name;
 
             m.models[model_name] = child;
-            var plugin_name = model_name.substr(0,model_name.lastIndexOf(":"))
+            var plugin_name = model_name.substr(0,model_name.lastIndexOf(":"));
             var plugin_obj =  __registerPlugin(plugin_name);
             child.prototype.m = plugin_obj;
             plugin_obj = __plugins__[""];
             var plugin_stack = plugin_name.split(":");
             for(var i in plugin_stack){
                 var shorter_name = model_name.substr(model_name.indexOf(":")+1);
-                if (plugin_stack[i] != "") plugin_obj = plugin_obj.plugins[plugin_stack[i]]
+                if (plugin_stack[i] != "") plugin_obj = plugin_obj.plugins[plugin_stack[i]];
                 plugin_obj.models[shorter_name] = child;
                 plugin_obj["model_"+shorter_name.replace(/[:\.]/g,"_")] = child;
             }
@@ -255,7 +276,7 @@
         }
         return new_model;
 
-    }
+    };
 
     _b_.Collection.extend = function(obj,common){
         var collection_url = (_.isString(obj.url))?obj.url:this.prototype.url;
@@ -264,24 +285,18 @@
         if (_.isString(collection_url)) m.collections[collection_url] = new_coll;
         new_coll.prototype.super = this.prototype.constructor.prototype;
         return new_coll;
-    }
-
-    $(document).ready(function(){
-        m.set_debug(__debug__);
-    })
+    };
 
     function getUniq(){
         return Math.floor(Math.random()*9*Math.pow(10,9)+Math.pow(10,9));
     }
 
-    Backbone.ajax = function(request){
-        request.url += (request.url.indexOf("?") == -1?"?":"&")+"__uniq__="+getUniq();
-        return $.ajax.apply(Backbone,arguments);
-    }
+//    _b_.ajax = function(request){
+//        request.url += (request.url.indexOf("?") == -1?"?":"&");
+//        return $.ajax.apply(_b_,arguments);
+//    };
 
-    window.current_ts = (new Date()).valueOf();
-
-    muon.Model = Backbone.Model.extend({
+    m.Model = _b_.Model.extend({
             idAttribute: "_id",
             initialize: function(data,options){
                 var _this = this;
@@ -299,7 +314,7 @@
             fetch: function(args){
                 var dfd = $.Deferred();
                 var _this = this;
-                Backbone.Model.prototype.fetch.call(this,{
+                _b_.Model.prototype.fetch.call(this,{
                     success: function(){
                         if (args) if ('function' === typeof args.success) args.success.apply(_this,arguments);
                         dfd.resolve(_this);
@@ -308,13 +323,13 @@
                         if (args) if ('error' === typeof args.error) args.error.apply(_this,arguments);
                         dfd.reject(arguments);
                     }
-                })
+                });
                 return dfd.promise();
             },
             save: function(obj,args){
                 var dfd = $.Deferred();
                 var _this = this;
-                Backbone.Model.prototype.save.call(this,obj,{
+                _b_.Model.prototype.save.call(this,obj,{
                     success: function(){
                         if (args) if ('function' === typeof args.success) args.success.apply(_this,arguments);
                         dfd.resolve(_this);
@@ -323,25 +338,25 @@
                         if (args) if ('error' === typeof args.error) args.error.apply(_this,arguments);
                         dfd.reject(arguments);
                     }
-                })
+                });
                 return dfd.promise();
             },
             action: function(action,args_obj,opts){
                 var _this = this;
-                args_obj = args_obj || {}
+                args_obj = args_obj || {};
                 args_obj.__action__ = action;
                 opts = opts || {};
                 var s = opts.success,
                     e = opts.error;
-                opts.success = function(){s && s.apply(_this,arguments)}
-                opts.error = function(){e && e.apply(_this,arguments)}
+                opts.success = function(){s && s.apply(_this,arguments);};
+                opts.error = function(){e && e.apply(_this,arguments);};
                 opts.data = args_obj;
                 return $.ajax((typeof this.url == "function")?this.url():this.url,opts);
             },
             destroy: function(args){
                 var dfd = $.Deferred();
                 var _this = this;
-                Backbone.Model.prototype.destroy.call(this,{
+                _b_.Model.prototype.destroy.call(this,{
                     success: function(){
                         if (args) if ('function' === typeof args.success) args.success.apply(_this,arguments);
                         delete _this.constructor.__objects__[_this.id];
@@ -358,7 +373,7 @@
         {
             collection: function(obj_search_params){
                 obj_search_params = serialize_object(obj_search_params || {});
-                if (obj_search_params) obj_search_params = "?_action_=search&"+obj_search_params;
+                if (obj_search_params) obj_search_params = "?__action__=search&"+obj_search_params;
                 return new m.Collection([],{
                     url: this.prototype.urlRoot+obj_search_params,
                     model: this
@@ -371,25 +386,24 @@
      * Об
      * @type {*}
      */
-
-    muon.Collection = Backbone.Collection.extend({
+    m.Collection = _b_.Collection.extend({
         initialize: function(models,options){
             options = options || {};
             for(var i in options) this[i] = options[i];
             if (typeof this.model === "string"){
-                if (!(this.model in muon.models)) throw Error("Unknown model: "+this.model);
-                this.model = muon.models[this.model];
+                if (!(this.model in m.models)) throw Error("Unknown model: "+this.model);
+                this.model = m.models[this.model];
             }
             this.model_name = this.model.model_name || this.model.prototype.model_name;
             this.set_comparator(this.comparator);
             var _ = this;
-            this.sync_name = "col_"+Math.floor(Math.random()*10000)
-            window[this.sync_name] = this;
+            this.sync_name = "col_"+Math.floor(Math.random()*10000);
+            __sync_names__[this.sync_name] = this;
             setTimeout(function(){
-                for(var i in window){
-                    if ((window[i] == _) && (i != _.sync_name)){
+                for(var i in __sync_names__){
+                    if ((__sync_names__[i] == _) && (i != _.sync_name)){
                         _.keep = true;
-                        delete window[_.sync_name];
+                        delete __sync_names__[_.sync_name];
                         _.sync_name = i;
                     }
                 }
@@ -407,7 +421,7 @@
                     if (a.get(_c) == b.get(_c)) return 0;
                     if (a.get(_c) > b.get(_c)) return -1;
                     else return 1;
-                }
+                };
             }
             else this.comparator = c;
             this.sort();
@@ -415,7 +429,7 @@
         fetch: function(args){
             var dfd = $.Deferred();
             var _this = this;
-            Backbone.Collection.prototype.fetch.call(this,{
+            _b_.Collection.prototype.fetch.call(this,{
                 success: function(){
                     if (args) if ('function' === typeof args.success) args.success.apply(_this,arguments);
                     dfd.resolve(_this);
@@ -424,19 +438,19 @@
                     if (args) if ('error' === typeof args.success) args.error.apply(_this,arguments);
                     dfd.reject(arguments);
                 }
-            })
+            });
             return dfd.promise();
         }
     });
 
-    (function(muon){
+    (function(m){
         function profile_sort(a,b){
             if (a.split(".").length > b.split(".").length) return -1;
             if (a.split(".").length < b.split(".").length) return 1;
             return 0;
         }
 
-        muon.template_for_view = function(view) {
+        m.template_for_view = function(view) {
             var selector = view.template+"_"+view.view_type;
             var profile = "muon";
             view.constructor.profiles = view.constructor.profiles.sort(profile_sort);
@@ -448,11 +462,11 @@
                 }
             }
             selector = "script#"+selector+"_template";
-            selector += "[type='text/muon-template'][data-pack='"+view.package+"']"
+            selector += "[type='text/muon-template'][data-pack='"+view.package+"']";
             selector += "[data-profile='"+profile+"']";
             if (document.querySelectorAll) return document.querySelector(selector);
             else return $(selector)[0];
-        }
+        };
 
         function attrs_parser(attrs){
             var ret = {};
@@ -490,7 +504,7 @@
                     coll.fetch();
                     return coll;
                 }
-                _.defer(dfd.reject,"Wrong projection type")
+                _.defer(dfd.reject,"Wrong projection type");
                 return dfd.promise();
             },
             model: function(el,model_name,projection){
@@ -499,10 +513,10 @@
                 if (projection instanceof m.Model) return _.extend(projection,model_attrs);
                 if (!(model_name in m.models) && !(model_name in this.m.models)) throw Error("Unknown model name: "+model_name);
                 var Model = m.models[model_name] || this.m.models[model_name];
-                if (el.dataset["contextAttrs"]) Model = Model.extend(model_attrs);
+                if (el.dataset.contextAttrs) Model = Model.extend(model_attrs);
                 var dfd = $.Deferred();
-                if ((typeof projection == "string" || typeof projection == "number" || projection) && el.dataset.modeltId)
-                    throw Error("You shouldn't use both projection variable and model Id attribute in one view simultaneously.")
+                if ((typeof projection == "string" || typeof projection == "number" || projection) && el.dataset.modelId)
+                    throw Error("You shouldn't use both projection variable and model Id attribute in one view simultaneously.");
                 if (typeof projection == "string" || typeof projection == "number" ){
                     _.defer(dfd.resolve,new Model(projection,{force_sync: true}));
                     return dfd.promise();
@@ -512,9 +526,9 @@
                     return dfd.promise();
                 }
                 if (_.isObject(projection) || projection === undefined){
-                    return new Model()
+                    return new Model();
                 }
-                _.defer(dfd.reject,"Wrong projection type")
+                _.defer(dfd.reject,"Wrong projection type");
                 return dfd.promise();
             },
             layout: function(el,non,projection){
@@ -529,9 +543,9 @@
         };
 
         m.get_view_by_name = function(view_type,view_name,_context_name,pack,recursive){
-            pack = pack || m.base_package;
+            pack = pack || m.__base_package__;
             _context_name = _context_name || "";
-            pack = pack || m.base_package;
+            pack = pack || m.__base_package__;
             try{
                 var View = null;
                 if (!View && !recursive) View = m.packages[pack].views[view_type][view_name];
@@ -560,26 +574,34 @@
             }
         };
 
+        function check_presence_in_dom(el){
+            while (el.parentElement) {
+                if (el.parentElement == document.body) return true;
+                else el = el.parentElement;
+            }
+            return false;
+        }
+
         function insert_view(el,view_type,pack,parent_view){
             var _this = this;
             var projection = el.dataset["projection"];
             var view_name = el.dataset[view_type+"View"];
             if (view_name == "data-"+view_type+"-view") view_name = "";
-
             if (projection){
                 var m_plugin = m.get_projection(projection)?m:parent_view.m;
                 $(m_plugin).one("projection_updated."+projection, function(){
-                    if ($(document.body).find(el).length == 0) return;
+                    if (!check_presence_in_dom(el)) return;
                     insert_view.apply(_this,[el,view_type,pack,parent_view,m_plugin]);
                 });
                 $(m_plugin).one("projection_removed."+projection,function(){
-                    el.muon_view.remove();
+                    if (el.muon_view instanceof m.View) el.muon_view.remove();
                     $(m_plugin).one("projection_updated."+projection, function(){
-                        if ($(document.body).find(el).length == 0) return;
+                        if (!check_presence_in_dom(el)) return;
                         insert_view.apply(_this,[el,view_type,pack,parent_view,m_plugin]);
                     });
                 });
                 projection = m_plugin.get_projection(projection);
+                if (projection === undefined) return;
             }
 
             setTimeout(function(){
@@ -618,7 +640,7 @@
             var translation = this.pack().translation[this.template+"_"+this.view_type+":"+el.dataset.tr];
             if (m.is_debug() && !translation) {$(el).addClass("untranslated");}
             else {$(el).removeClass("untranslated");}
-            return translation || (m.is_debug()?"untranslated":"")
+            return translation || (m.is_debug()?"untranslated":"");
         }
 
         function render_focus(){
@@ -628,13 +650,14 @@
             });
         }
 
-        m.View = Backbone.View.extend({
+        m.View = _b_.View.extend({
             tag_name: "div",
             profiles: [],
             toString: function(){
                 return this.package+":"+this.view_type+":"+this.template;
             },
             initialize:function(context,_el_){
+                __views_arr__.push(this);
                 this.context = context || {};
                 if (_el_ && _el_.nodeName) {
                     this.__forced_element = true;
@@ -658,7 +681,7 @@
                 this.debug_label.click(function(){
                     $(this).toggleClass("pinned");
                     $(this).parent().toggleClass("pinned");
-                })
+                });
                 this.render_translation();
             },
             render_translation: function(){
@@ -692,6 +715,12 @@
                 this.$el.find("*[data-src]").not(inner_src).each(function(){
                     this.src = "/pack_src/"+_this.package+"/"+this.dataset["src"]+"?muon";
                 });
+                if (m.__static_app__)
+                    ["src","href"].map(function(a){
+                        $("["+a+"]",_this.el).each(function(){
+                            if (!/^\/\//.test($(this).attr(a))) $(this).attr(a,$(this).attr(a).replace(/^\//,""));
+                        });
+                    });
             },
             render:function(){
                 var tagname = this.tag_name || "div";
@@ -709,15 +738,15 @@
                 this.$el = $(this.el);
                 this.$ = this.$el.find.bind(this.$el);
                 this.undelegateEvents();
-                this.delegateEvents()
+                this.delegateEvents();
                 this.post_template_render && this.post_template_render();
-                this.$el.addClass([this.template?this.template+"_"+this.view_type:"",this.class_name,this.view_type,"block"].join(" "));
+                this.$el.addClass([this.class_name,this.view_type,"block"].join(" "));
                 this.el.muon_view = this;
-                this.el.dataset.muon = "";
+                this.el.dataset.muon = this.template?this.template+"_"+this.view_type:"";
                 this.el.dataset.pack = this.package;
                 render_focus.call(this);
-                this.render_data_routes();
                 this.render_src();
+                this.render_data_routes();
                 this.render_translation();
                 this.render_debug_labels();
                 this.__set__ && this.__set__();
@@ -752,6 +781,7 @@
                 this.trigger("reloaded");
             },
             pack: function(){return m.packages[this.package];},
+            surrogate: function(){return m.packages[this.package].package_obj.surrogate;},
             focus: function(el){
                 var el = this.$("[data-focus='"+el+"']");
                 if (!el.length) return;
@@ -759,54 +789,12 @@
             },
             trigger: function(){
                 this.$el.trigger.apply(this.$el,arguments);
-                Backbone.View.prototype.trigger.apply(this.$el,arguments);
+                _b_.View.prototype.trigger.apply(this.$el,arguments);
             }
         });
-    })(muon);
+    })(m);
 
-
-    /**
-     * В данном файле описаны базовые классы представлений
-     *
-     * @file
-     * @name views.js
-     * @author Kreees
-     * @version 0.1
-     *
-     * @namespace muon
-     */
-
-    /**
-     * Раздел посвященный формированию представлений
-     *
-     *
-     * @topic
-     * @name views
-     * @type {*}
-     */
-
-    /**
-     * Данный раздел посвящен трололо
-     *
-     * @subtopic
-     * @name View Inline Rendering
-     * @topic views
-     *
-     */
-
-    /**
-     * Представление коллекций
-     *
-     *  Examples:
-     *      muon.some = 1;
-     *
-     * @class
-     * @name CollectionView
-     * @namespace muon
-     * @type {*}
-     */
-
-    muon.CollectionView = muon.View.extend({
+    m.CollectionView = m.View.extend({
         /**
          *  Атрибут определяет категорию
          *
@@ -829,7 +817,7 @@
             this.listenTo(collection,"add",this.__add_to_collection);
             this.listenTo(collection,"remove",this.__remove_from_collection);
             this.listenTo(collection,"sort",this.__sorted);
-            muon.View.prototype.initialize.apply(this,arguments);
+            m.View.prototype.initialize.apply(this,arguments);
         },
         /**
          * Redefines basic muon.View 'remove' method
@@ -837,9 +825,9 @@
          *
          */
         remove: function(){
-            if (!this.collection.keep) delete window[this.collection.sync_name];
+            if (!this.collection.keep) delete __sync_names__[this.collection.sync_name];
             delete this.collection;
-            muon.View.prototype.remove.call(this)
+            m.View.prototype.remove.call(this);
         },
         /**
          * Executes CollectionView specific context on view mapping
@@ -850,7 +838,7 @@
          */
         __set__:function(){
             this.target = this.target?this.$("#"+this.target):this.$el;
-            this._keep_children = this.target.children()
+            this._keep_children = this.target.children();
             this._keep_children_length = this._keep_children.length;
             this.__update_collection(this.collection);
         },
@@ -898,7 +886,7 @@
         __remove_from_collection: function(obj){
             this.__set_empty_flag_();
             if (obj.id in this.child_models)
-                this.child_models[obj.id].remove()
+                this.child_models[obj.id].remove();
         },
         /**
          *
@@ -911,15 +899,15 @@
             if (!this.model_view){
                 throw Error("No model view specified");
             }
-            var in_collection = []
+            var in_collection = [];
             for(var i in collection.models){
                 var model = collection.models[i];
-                in_collection.push("#"+model.id)
+                in_collection.push("#"+model.id);
             }
             var to_remove = this.target.children().not(in_collection.join(", "));
             this._keep_children.each(function(){
                 to_remove = to_remove.not(this);
-            })
+            });
             to_remove.each(function(){
                 _.child_models[$(this).attr("id")].remove();
                 delete _.child_models[$(this).attr("id")];
@@ -984,7 +972,7 @@
                         }
                     }
                     catch(e){
-                        attr_val = attr_val.toString()
+                        attr_val = attr_val.toString();
                     }
                     if (!this.dataset["attrType"]) this.innerText = attr_val;
                     else if (this.dataset["attrType"] == "text") this.innerText = attr_val;
@@ -999,17 +987,17 @@
         this.render_data_routes();
     }
 
-    muon.ModelView = muon.View.extend({
+    m.ModelView = m.View.extend({
         view_type: "model",
         initialize: function(model){
             var _this = this;
             this.model = model;
             this.listenTo(model,"change",this.__update__);
             this.listenTo(model,"destroy",_this.remove);
-            muon.View.prototype.initialize.apply(this,arguments);
+            m.View.prototype.initialize.apply(this,arguments);
         },
         __set__: function(){
-            update_model_view.call(this,this.model.attributes)
+            update_model_view.call(this,this.model.attributes);
             var view = this;
             this.$el.find("[data-model-set]").each(function(){
                 var setter = this.dataset.modelSet;
@@ -1017,11 +1005,11 @@
                 var int = null;
                 view.listenTo(view.model,"sync",function(){
                     set_get_element_value.call(_this,view,setter);
-                })
+                });
                 if (!(this.dataset.silent || view.silent)){
                     $(this).keyup(function(){
                         clearTimeout(int);
-                        int = setTimeout(function(){$(_this).trigger("change")},150);
+                        int = setTimeout(function(){$(_this).trigger("change");},150);
                     });
                     $(this).change(function(){
                         if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val());
@@ -1032,13 +1020,13 @@
             this.$el.attr("id",this.model.id);
         },
         __update__:function(a,b,c){
-            update_model_view.call(this,this.model.changedAttributes())
+            update_model_view.call(this,this.model.changedAttributes());
         },
         remove: function(){
             if (!this.model.collection){
-                delete window[this.sync_name];
+                delete __sync_names__[this.sync_name];
             }
-            muon.View.prototype.remove.call(this);
+            m.View.prototype.remove.call(this);
         },
         destroy: function(){
             return this.model.destroy();
@@ -1048,7 +1036,7 @@
             this.$el.find("[data-model-set]").each(function(){
                 var setter = this.dataset.modelSet;
                 if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val());
-                else view.model.set(setter,$(this).val());
+                else view.model.set(setter,$(this).val(),{silent: true});
             });
             return view.model.save();
         },
@@ -1057,13 +1045,13 @@
         }
     });
 
-    muon.WidgetView = muon.View.extend({view_type: "widget"});
+    m.WidgetView = m.View.extend({view_type: "widget"});
 
-    muon.LayoutView = muon.View.extend({
+    m.LayoutView = m.View.extend({
         view_type: "layout",
         initialize:function(blocks){
             this.blocks = blocks || {};
-            muon.View.prototype.initialize.apply(this,arguments);
+            m.View.prototype.initialize.apply(this,arguments);
         },
         __set__:function(){
             for(var i in this.blocks){
@@ -1084,7 +1072,7 @@
             if (alias in this.blocks)
                 return this.blocks[alias];
             else
-                throw new Error("View is not in layout.")
+                throw new Error("View is not in layout.");
         },
         remove_el: function(id){
             if (id in this.blocks){
@@ -1110,7 +1098,7 @@
             for(var i in this.blocks){
                 if (this.blocks[i]) this.blocks[i].remove();
             }
-            muon.View.prototype.remove.call(this);
+            m.View.prototype.remove.call(this);
         }
     });
     /**
@@ -1119,17 +1107,17 @@
      * Представления помещаемые в стек объекта
      * @type {*}
      */
-    muon.StackView = muon.View.extend({
+    m.StackView = m.View.extend({
         view_type: "stack",
         show_action_time: 500,
         initialize: function(){
             this.views = {};
-            muon.View.prototype.initialize.apply(this,arguments);
+            m.View.prototype.initialize.apply(this,arguments);
         },
         __set__:function(){
             if (this.target) this.$target = this.$("#"+this.target);
             else this.$target = this.$el;
-            this.$target.addClass('')
+            this.$target.addClass('');
         },
         __reset__: function(){
             for(var i in this.views){
@@ -1142,11 +1130,11 @@
             }
         },
         add: function(alias,view){
-            if (alias instanceof muon.View){
+            if (alias instanceof m.View){
                 view = alias;
                 alias = view.template;
             }
-            if (!(view instanceof muon.View)) throw Error(View.toString()+" is not proper View object");
+            if (!(view instanceof m.View)) throw Error(View.toString()+" is not proper View object");
             this.views[alias] = view;
             this.listenTo(view,"removed",function(){
                 delete this.views[alias];
@@ -1163,24 +1151,22 @@
         },
         remove: function(){
             for(var i in this.views){
-                if (this.views[i] instanceof muon.View) this.views[i].remove();
+                if (this.views[i] instanceof m.View) this.views[i].remove();
             }
-            muon.View.prototype.remove.call(this);
+            m.View.prototype.remove.call(this);
         },
         get: function(name){
-            if(this instanceof m.ApplicationStackView) name = name + (/_page$/.test(name)?"":"_page");
             if (name in this.views)
                 return this.views[name];
             else
             if(this instanceof m.ApplicationStackView) throw Error("Page is not application view: "+name);
-            else throw new Error("View is not in this stacked view: "+name)
+            else throw new Error("View is not in this stacked view: "+name);
         },
         show: function(name){
             var _this = this;
-            if(this instanceof muon.ApplicationStackView && !(name in this.views)) name = name + (/_page$/.test(name)?"":"_page");
             if (this.current == name) return;
             if (!(name in this.views)){
-                if(this instanceof muon.ApplicationStackView) throw Error("Page is not in application view: "+name);
+                if(this instanceof m.ApplicationStackView) throw Error("Page is not in application view: "+name);
                 else throw Error("View is not in this stacked view: "+name);
             }
 
@@ -1204,11 +1190,13 @@
                 }
             }
             function _proceed_(){
+                _this.views[name].view_shown && _this.views[name].view_shown()
                 _this.views[name].trigger("view_shown");
                 if ('function' == typeof _this.post_show) _this.post_show();
             }
             if ('function' == typeof this.before_show) this.before_show();
             if (_this.previous != undefined && _this.previous != null){
+                _this.views[name].view_hidden && _this.views[name].view_hidden()
                 _this.views[_this.previous].trigger("view_hidden");
                 _hide_();
             }
@@ -1222,49 +1210,45 @@
      * @namespace muon
      */
 
-    muon.ApplicationStackView = muon.StackView.extend({
+    m.ApplicationStackView = m.StackView.extend({
         template: "application",
         __set__:function(){
             /**
              * Если ранее __application_view__ не был задан значит это самый первый созданный ApplicationStackView объект
              */
-            if (!(m.__application_view__ instanceof muon.ApplicationStackView))
+            if (!(m.__application_view__ instanceof m.ApplicationStackView))
                 m.__application_view__ = this;
-            muon.StackView.prototype.__set__.apply(this);
+            m.StackView.prototype.__set__.apply(this);
         },
         get: function(name){
-            var prev_name = name;
-            if (this.views[name+"_page"] == name+"_page") name += "_page";
+            name += /_page$/.test(name)?"":"_page";
             if (this.views[name] == name){
                 var view = new (this.pack().views.layout[name]);
                 this.views[name] = view;
                 this.$target.append(view.$el);
             }
-            return m.StackView.prototype.get.call(this,prev_name);
+            return m.StackView.prototype.get.call(this,name);
         },
         show: function(name){
-            var prev_name = name;
-            if (this.views[name+"_page"] == name+"_page") name += "_page";
+            name += /_page$/.test(name)?"":"_page";
             if (this.views[name] == name){
                 var view = new (this.pack().views.layout[name]);
                 this.views[name] = view;
                 this.$target.append(view.$el);
             }
-            m.StackView.prototype.show.call(this,prev_name);
+            m.StackView.prototype.show.call(this,name);
         },
         add: function(alias,view){
             if (!view && typeof alias == "string"){
-                if (alias in this.pack().views.layout)this.views[alias] = alias;
+                alias += /_page$/.test(alias)?"":"_page";
+                if (alias in this.pack().views.layout) this.views[alias] = alias;
                 else throw Error("Can't add not PageLayoutView instance to ApplicationStackView: "+view.template+"_"+view.view_type);
                 return;
             }
-            if (!view) {
-                view = alias || {};
-                alias = view.template;
-            }
-            if (!(view instanceof muon.PageLayoutView)){
+            if (!view) view = alias;
+            if (!(view instanceof m.PageLayoutView))
                 throw Error("Can't add not PageLayoutView instance to ApplicationStackView: "+view.template+"_"+view.view_type);
-            }
+            if (!view) alias = view.template;
             this.views[alias] = view;
             view.$el.hide();
             this.$target.append(view.$el);
@@ -1276,14 +1260,14 @@
                 var per_page_in = [];
                 var q = pages[i];
                 q = q.replace(/\-/g,"\\-");
-                q = q.replace(/\*/g,"[a-zA-Z\\-_]*").replace(/\?/g,"[a-zA-Z\\-_]").replace(/\+/g,"[a-zA-Z\\-_]+");
+                q = q.replace(/\*/g,"[a-zA-Z0-9\\-_]*").replace(/\?/g,"[a-zA-Z0-9\\-_]").replace(/\+/g,"[a-zA-Z0-9\\-_]+");
                 q = q.replace(/\*/,"*?").replace(/\+/,"+?");
                 q = new RegExp("^"+q+"_page$");
                 for(var j in layouts){
                     if (already_in.indexOf(j) != -1) continue;
                     if (j.match(q)){
                         per_page_in.push(j);
-                        already_in.push(j)
+                        already_in.push(j);
                         this.add(j);
                     }
                 }
@@ -1298,7 +1282,7 @@
      * @class
      * @type {*}
      */
-    muon.PageLayoutView = muon.LayoutView.extend({
+    m.PageLayoutView = m.LayoutView.extend({
         /**
          * Переопределение метода __set__ класса View {@link muon.View#__set__}
          *
@@ -1309,10 +1293,10 @@
          * @private
          */
         __set__: function(){
-            if (this.context instanceof muon.ApplicationStackView){
+            if (this.context instanceof m.ApplicationStackView){
                 this.$el.append(this.context.$el);
             }
-            muon.LayoutView.prototype.__set__.call(this)
+            m.LayoutView.prototype.__set__.call(this);
         }
     });
     $.ajaxSetup({
@@ -1343,27 +1327,34 @@
         if (options.trigger) this.loadUrl(fragment);
     };
 
-    m.Router = Backbone.Router.extend({
+    m.Router = _b_.Router.extend({
         initialize: function(){
             for(var i in this.routes){
                 __routes__.push({route:i,callback:this[this.routes[i]]});
             }
         },
+        history: function(){
+            return __history__.slice();
+        },
         route: function(r,n,c){
-            __routes__ = __routes__.filter(function(o){return (o.route != r)});
+            __routes__ = __routes__.filter(function(o){return (o.route != r);});
             __routes__.push({route:r,callback:c});
-            Backbone.Router.prototype.route.apply(this,arguments);
+            _b_.Router.prototype.route.apply(this,arguments);
         },
         routes: {},
+        path: function(){
+            return m.__static_app__?"/"+location.hash.replace(/^#/,""):location.pathname;
+        },
         reload: function(){
-            return this.navigate(location.pathname,{replace: true,trigger:true});
+            return this.navigate(this.path(),{replace: true,trigger:true});
         },
         navigate: function(url,opts){
+            var _this = m.router;
             _.defer(function(){
                 opts = opts || {};
                 if (!("trigger" in opts)) opts.trigger = true;
                 if (!(opts && opts.history_nav)){
-                    __history__.push(location.pathname);
+                    __history__.push(_this.path());
                     __forward_history__ = [];
                 }
                 if (url.match(/^\//)){
@@ -1372,7 +1363,7 @@
                 }
                 else {
                     _b_.Router.prototype.navigate.apply(this,
-                        [location.pathname +(location.pathname.match(/\/$/)?"":"/")+ url,opts]);
+                        [_this.path() +(_this.path().match(/\/$/)?"":"/")+ url,opts]);
                 }
             });
         },
@@ -1382,14 +1373,14 @@
                 return false;
             }
             else {
-                __forward_history__.unshift(location.pathname);
+                __forward_history__.unshift(this.path());
                 _.defer(this.navigate,__history__.pop(),{replace:true,trigger:true,history_nav: true});
             }
             return true;
         },
         forward: function(){
             if (__forward_history__.length == 0) return false;
-            __history__.push(location.pathname);
+            __history__.push(this.path());
             _.defer(this.navigate,__forward_history__.shift(),{replace:true,trigger:true,history_nav: true});
             return true;
         }
@@ -1403,11 +1394,11 @@
     };
 
     var to_regexp = function(route){
-        return _.isRegExp(route)?route:Backbone.Router.prototype._routeToRegExp(route);
-    }
+        return _.isRegExp(route)?route:_b_.Router.prototype._routeToRegExp(route);
+    };
 
     function add_pack_routes(pack,route,mod){
-        var flatten_m = function(mid){return flatten_middleware(mid,mod.surrogate);}
+        var flatten_m = function(mid){return flatten_middleware(mid,mod.surrogate);};
         mod.middleware = flatten_m(mod.middleware);
         if (m.packages[pack].parent_pack && m.packages[pack].parent_pack.middleware )
             mod.middleware = flatten_m(mod.middleware.concat(m.packages[pack].parent_pack.middleware));
@@ -1458,11 +1449,12 @@
                 .then(_.partial(router_middleware,middleware,callback),m.router.back);
         }
         catch(e){
+            console.log(e.message);
             m.router.back();
         }
     }
 
-    window.prepare_route = function(sections){
+    var prepare_route = function(sections){
         if (!_.isArray(sections)) sections = [].slice.call(arguments);
         var route = "";
         while (sections.length){
@@ -1472,16 +1464,16 @@
             route += (route?"/":"")+section;
         }
         return RegExp("^"+route+"$");
-    }
+    };
 
     function add_route(pack,pref,route,handler,middleware,page){
         if (route === ""){
             m.router.route(prepare_route(pref),pack+"_"+route+"_redirect", function(){
-                m.router.navigate(location.pathname+"/",{trigger:true,replace:true});
+                m.router.navigate(m.router.path()+"/",{trigger:true,replace:true});
             });
         }
         if (!_.isString(page)){
-            var page_route = to_regexp(route).toString().replace(/(^\/\^)|(\$\/$)/g,"")
+            var page_route = to_regexp(route).toString().replace(/(^\/\^)|(\$\/$)/g,"");
             page_route = page_route.substr(0,(page_route.indexOf("(") == -1)?page_route.length:page_route.indexOf("("));
             page_route = page_route.replace(/(^\/)|(\/$)/g,"");
             page = page_route.split("/").reverse().join("_");
@@ -1498,8 +1490,8 @@
             router_middleware(middleware.slice(),function(){
                 handler && handler.apply(surrogate,_args);
                 do {
-                    try{app_view.show(page_to_show);}
-                    catch(e){break;}
+                    try{ app_view.show(page_to_show); }
+                    catch(e){console.log(e.stack);break;}
                     page_to_show = app_view.__parent_app_page;
                 } while(app_view = app_view.__parent_app_view);
             });
@@ -1507,17 +1499,19 @@
     }
 
     function add_redirect(pack,pref,route,redirect_url){
-        function redirect(){m.router.navigate(redirect_url,{trigger:true,replace:true})}
+        function redirect(){
+            m.router.navigate(redirect_url,{trigger:true,replace:true});
+        }
         if (route === ""){
             m.router.route(prepare_route(pref),pack+"_"+route+"_redirect", function(){
-                m.router.navigate(location.pathname+"/",{trigger:true,replace:true});
+                m.router.navigate(m.router.path()+"/",{trigger:true,replace:true});
             });
         }
         m.router.route(prepare_route(pref,route),pack+"_"+route,redirect);
     }
 
     function flatten_middleware(middl,surrogate){
-        return _.flatten([middl]).filter(function(m){return typeof m == "function";}).map(function(f){return _.bind(f,surrogate)});
+        return _.flatten([middl]).filter(function(m){return typeof m == "function";}).map(function(f){return _.bind(f,surrogate);});
     }
 
     function proc_unhandled_views(pack){
@@ -1535,7 +1529,7 @@
             name = name.replace(RegExp("_"+type+"$"),"");
             if (m.packages[pack].views[type] && m.packages[pack].views[type][name]) return;
             var view_class_obj = null;
-            if (name == "application" && type == "layout")
+            if (name == "application" && type == "stack")
                 view_class_obj = m.ApplicationStackView;
             else if (name.match(/_page$/) && type == "layout")
                 view_class_obj = m.PageLayoutView;
@@ -1543,7 +1537,7 @@
                 view_class_obj = m.base_views[type];
             if (!view_class_obj) return;
             view_class_obj.extend({template: name,package:pack});
-        })
+        });
     }
 
     function proc_profiled_views(pack){
@@ -1555,7 +1549,7 @@
             m.packages[pack].views[type][name].profiles.push(this.dataset.profile);
             if (!(__profiles__[this.dataset.profile] instanceof Array)) __profiles__[this.dataset.profile] = [];
             __profiles__[this.dataset.profile].push("."+name+"_"+type+"[data-pack='"+pack+"']");
-        })
+        });
     }
 
     m.require_pack = function(pack,callback,parent_pack){
@@ -1572,7 +1566,7 @@
             proc_unhandled_views(pack);
             proc_profiled_views(pack);
             if (route){
-                Backbone.history.handlers = Backbone.history.handlers.filter(function(obj){
+                _b_.history.handlers = _b_.history.handlers.filter(function(obj){
                     if (obj.route.toString() == to_regexp(route).toString() ||
                         obj.route.toString() == to_regexp(full_route).toString()) return false;
                     return true;
@@ -1586,10 +1580,10 @@
                 mod.use_app_view = mod.use_app_view || true;
                 if (mod.use_app_view){
                     var app_view_class = null;
-                    if (m.packages[pack].views.layout && m.packages[pack].views.stack.application)
+                    if (m.packages[pack].views.stack && m.packages[pack].views.stack.application)
                         app_view_class = m.packages[pack].views.stack.application;
                     else
-                        app_view_class = m.ApplicationStackView.extend({package:pack})
+                        app_view_class = m.ApplicationStackView.extend({package:pack});
                     var app_view = m.packages[pack].app_view = new app_view_class;
                     if (m.__application_view__ == app_view) app_view.$el.appendTo("body");
                     else {
@@ -1597,16 +1591,17 @@
                             && m.packages[parent_pack].app_view instanceof m.ApplicationStackView)
                         {
                             var page = new m.PageLayoutView();
-                            var page_name = app_view.__parent_app_page = "m_page_"+getUniq();
+                            var page_name = app_view.__parent_app_page = "m_"+getUniq()+"_page";
                             app_view.__parent_app_view = m.packages[parent_pack].app_view;
                             page.el.appendChild(app_view.el);
                             app_view.__parent_app_view.add(page_name,page);
                         }
                     }
+                    window.a = app_view_class;
                     app_view.add_pages(mod.pages || ["*"]);
                 }
                 _.defer(function(){
-                    Backbone.history.loadUrl();
+                    _b_.history.loadUrl();
                 });
             }
 
@@ -1629,7 +1624,7 @@
             var plugin_stack = plugin_name.split(":");
             for(var i in plugin_stack){
                 var shorter_name = pack.substr(pack.indexOf(":")+1);
-                if (plugin_stack[i] != "") plugin_obj = plugin_obj.plugins[plugin_stack[i]]
+                if (plugin_stack[i] != "") plugin_obj = plugin_obj.plugins[plugin_stack[i]];
                 plugin_obj.packages[shorter_name] = pack_obj;
             }
 
@@ -1655,31 +1650,31 @@
             proc_loaded_package();
             m.__current_package__ = m.__prev_package__;
             m.__current_plugin__ = m.__prev_plugin__;
-            delete m.__prev_package__
-            delete m.__prev_plugin__
+            delete m.__prev_package__;
+            delete m.__prev_plugin__;
         }
 
         var fallback = function(){
-            fallback_path = location.pathname;
+            fallback_path = m.router.path();
             if (m.packages[pack] && m.packages[pack].loaded){return;}
-            if (m.__package_init_data[pack]) pack_loaded;
+            if (m.__package_init_data[pack]) pack_loaded();
             else {
                 var callback_name = "muon_callback_"+Date.now();
                 m[callback_name] = function(){
-                    pack_loaded()
+                    pack_loaded();
                     delete m[callback_name];
-                }
+                };
                 var scrpt = $("<script />");
-                scrpt.attr("src","/pack/"+pack+"?muon&lang="+ m.get_language()+"&callback="+callback_name);
+                scrpt.attr("src","/pack/"+pack+"?muon&lang="+ m.get_language()+"&m_callback="+callback_name);
                 scrpt.appendTo(document.head);
             }
-        }
+        };
 
         _.defer(function(){
             var routes = _.where(__routes__,{callback:fallback});
             if (routes.length != 0){
                 route = routes[0].route;
-                full_route = prepare_route([route,"/*a"])
+                full_route = prepare_route([route,"/*a"]);
                 m.router.route(full_route,getUniq(),fallback);
             }
             else _.defer(fallback);
@@ -1687,13 +1682,16 @@
         });
 
         return fallback;
-    }
-
+    };
 
     m.router = new m.Router();
     $(function(){
+        if (m.__static_app__ && !/^file/.test(location.protocol) && location.pathname.replace(/^\//,"")){
+            location.pathname = "/";
+            return;
+        }
         m.router.route("/","#{default_pack}",m.require_pack("application",function(){
-            _b_.history.start(m.__mobile_app__?{}:{pushState:true});
+            _b_.history.start(m.__static_app__?{}:{pushState:true});
         }));
         $("body").addClass("muon").delegate("a[data-route]","click",function(ev){
             ev.preventDefault();
@@ -1703,4 +1701,6 @@
             m.router.navigate(path,{trigger: true});
         });
     });
-})(Backbone,jQuery);
+
+    window.muon = window.m = m;
+})(Backbone);

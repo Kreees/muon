@@ -7,5 +7,6 @@ module.exports = function(req,res,base_dir){
     if (fs.existsSync(m.path+"/client/assets/index.html")) file = m.path+"/client/assets/index.html";
     file = fs.readFileSync(file,"utf8");
     file = file.replace(/#{lang}/, m.cfg.lang);
+    res.set("Content-Type","text/html");
     res.end(file);
 };

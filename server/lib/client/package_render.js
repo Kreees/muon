@@ -60,7 +60,7 @@ module.exports = function (req,res){
             "\"translation\": "+JSON.stringify(pack_translation,null,2)+",\n\n"+
             "\"dependencies\": "+JSON.stringify(dependency,null,2)+",\n\n"+
             "\n};";
-        if (req.query.callback) callback_text += "\ntry{ m['"+req.query.callback+"']();} catch(e){console.log('Callback f called: '+e.message); console.debug(e.stack)}";
+        if (req.query.m_callback) callback_text += "\ntry{ m['"+req.query.m_callback+"']();} catch(e){console.log('Callback f called: '+e.message); console.debug(e.stack)}";
         finalize();
     }
     function finalize(){
@@ -71,7 +71,6 @@ module.exports = function (req,res){
     fs_ext.tree(package_dir+"dependency/",function(files){
         function proc_file(){
             var prev_views = m.app.get("views");
-
             if (files.length == 0){
                 m.app.set("views",prev_views);
                 return tr_proc.render_translation(plugin,pack_name,req.query.lang || m.default_lang,model_render);

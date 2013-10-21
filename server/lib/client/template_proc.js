@@ -4,19 +4,29 @@ var app = m.app,
 ;
 
 var pre_wrapper = {
-    "less": "#{profile} .#{id}[data-pack='#{pack}'] {position: relative;#{data}}",
-    "css": "#{profile} .#{id}[data-pack='#{pack}'] {position: relative;#{data}}"
+    "less": "#{profile} [data-pack='#{pack}'][data-muon$='#{id}'] {position: relative;#{data}}",
+    "css": "#{profile} [data-pack='#{pack}'][data-muon$='#{id}'] {position: relative;#{data}}"
 };
 
+//var post_wrapper = {
+//    "less": "<!-- #{pack}:#{name} --><style data-pack='#{pack}'>#{data}</style>",
+//    "css": "<!-- #{pack}:#{name} --><style data-pack='#{pack}'>#{data}</style>",
+//    "js": "<!-- #{pack}:#{name} --><script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
+//    "coffee": "<!-- #{pack}:#{name} --><script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
+//    "jade": "<!-- #{pack}:#{name} --><script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>",
+//    "html": "<!-- #{pack}:#{name} --><script #{profile} data-pack='#{pack}' type='text/muon-template'id='#{id}_template'>#{data}</script>",
+//    "jqote": "<!-- #{pack}:#{name} --><script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>"
+//}
+
 var post_wrapper = {
-    "less": "<!-- #{pack}:#{name} --><style data-pack='#{pack}'>#{data}</style>",
-    "css": "<!-- #{pack}:#{name} --><style data-pack='#{pack}'>#{data}</style>",
-    "js": "<!-- #{pack}:#{name} --><script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
-    "coffee": "<!-- #{pack}:#{name} --><script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
-    "jade": "<!-- #{pack}:#{name} --><script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>",
-    "html": "<!-- #{pack}:#{name} --><script #{profile} data-pack='#{pack}' type='text/muon-template'id='#{id}_template'>#{data}</script>",
-    "jqote": "<!-- #{pack}:#{name} --><script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>"
-}
+    "less": "<style data-pack='#{pack}'>#{data}</style>",
+    "css": "<style data-pack='#{pack}'>#{data}</style>",
+    "js": "<script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
+    "coffee": "<script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
+    "jade": "<script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>",
+    "html": "<script #{profile} data-pack='#{pack}' type='text/muon-template'id='#{id}_template'>#{data}</script>",
+    "jqote": "<script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>"
+};
 
 function prepare(pack,name,data){
     if (data.length == 0) return "";
@@ -69,7 +79,6 @@ function post_proc(pack,name,data){
             data = data.replace(/\.extend\(\{\s*/,
                     ".extend({\n\t    template:'"+id.replace(/_[a-zA-Z0-9]+$/g,"")+"',\n\t    ")
                 .replace(/,[\s\n]*\}/g,"\n\t  }");
-
         }
         if (["jade","html","jqote"].indexOf(extension_name) != -1){
             data = data.replace(/#\{profile\}/g,profile?"data-profile='"+profile+"'":"");
@@ -91,30 +100,14 @@ function exec(name,base_dir,pack,callback){
         var tempfile_name = template_path+"/temp_"+uniq+"_"+short_name;
         fs.writeFileSync(tempfile_name,
             prepare(pack,views_name,fs.readFileSync(name,"utf-8")),"utf-8");
-        try {
-            m.app.render("temp_"+uniq+"_"+short_name,function(e,data){
-                try{
-                    m.app.set("views",prev_tmpl_path);
-                    if (e) throw e;
-                    fs.unlinkSync(tempfile_name);
-                    callback(name,post_proc(pack,views_name,data));
-                }
-                catch(e){
-                    m.app.set("views",prev_tmpl_path);
-                    fs.unlinkSync(tempfile_name);
-                    console.log("Error on tempalte: ",name);
-                    m.log(e.stack);
-                    throw e;
-                }
-            });
-        }
-        catch(e){
+        m.app.render("temp_"+uniq+"_"+short_name,function(e,data){
             m.app.set("views",prev_tmpl_path);
-            if (fs.existsSync(tempfile_name)) fs.unlinkSync(tempfile_name);
-            console.log("Error on tempalte: ",name);
-            m.log(e.stack);
-            throw e;
-        }
+            fs.unlinkSync(tempfile_name);
+            setTimeout(function(){callback(name,e?"":post_proc(pack,views_name,data));},0);
+            if (e){
+                m.log("Error on tempalte: ",name);
+            };
+        });
         return;
     }
     else{
@@ -138,9 +131,12 @@ module.exports = {
             exec(templates[i],base_dir,pack,function(name,data){
                 counter--;
                 target.push(data);
-                if (counter == 0){
-                    callback(target.filter(function(a){return !!a;}));
+                try{
+                    if (counter == 0){
+                        callback(target.filter(function(a){return !!a;}));
+                    }
                 }
+                catch(e) {console.log(e);}
             })
         }
     }

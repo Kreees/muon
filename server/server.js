@@ -33,7 +33,8 @@ function init_server(next){
                     models.init(m.cfg).then(
                         function(a){
                             for(var i in a) m[i] = a[i];
-                            next();
+                                try { next(); }
+                                catch(e){ m.kill(e.message) }
                         },function(e){ throw Error("Models load error!");})
                 },function(e){ throw Error("Plugins load error!");})
         },function(){ throw Error("Database load error!");});

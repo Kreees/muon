@@ -34,6 +34,7 @@ m.QuerySet = db_queryset;
 db_queryset.prototype = [];
 _.extend(db_queryset.prototype,
 {
+    __query_set__: true,
     del: function(){
         var _this = this;
         var dfd = Q.defer();
@@ -146,7 +147,6 @@ module.exports = {
         model.db = _.clone(db_model_extend);
         model.db.model = model;
     },
-    QuerySet: db_queryset,
     init: function(db_name){
         var dfd = Q.defer();
         if (global.m.db){

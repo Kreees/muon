@@ -1,6 +1,6 @@
 {
     "name":"muon",
-    "version":"0.0.14",
+    "version":"0.1.0",
     "description":"client-server web framework for single page application building",
     "license": "MIT",
     "author": {
@@ -19,7 +19,8 @@
     },
     "main": "./module.js",
     "bin":{
-        "muon-init": "./bin/init.js"
+        "muon-init": "./bin/init.js",
+        "render-client": "./bin/render_client.js"
     },
     "dependencies": {
         "ejs": "*",
@@ -33,6 +34,11 @@
         "consolidate":"*",
         "q": "*",
         "dox":"*",
-        "mime":"*"
+        "mime":"*",
+        "tar": "*",
+        "fstream":"*",
+        "cheerio": "*",
+        "httpsync":"*",
+        "zombie":"*"
     }
 }

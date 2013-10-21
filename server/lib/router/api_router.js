@@ -1,5 +1,4 @@
 var rest = require(global.m.__sys_path+"/server/lib/controllers/rest.js").run,
-    db = require(global.m.__sys_path+"/server/lib/utils/db/database.js"),
     _ = require("underscore"),
     Q = require("q")
 ;
@@ -43,9 +42,9 @@ function get_permissions(permissions,req){
 }
 
 function run_dependency(target,req,res,next){
-    if (req.context.$middleware.indexOf(target.model_name) != -1) return next();
+    if (req.context.middleware.indexOf(target.model_name) != -1) return next();
     var deps = (target.c.dependencies || []).slice();
-    req.context.$middleware.push(target.model_name);
+    req.context.middleware.push(target.model_name);
     var plug_models = m.__plugins[target.model.plugin_name].models;
     function _run_(){
         if (deps.length == 0){
@@ -65,7 +64,7 @@ function do_action(dfd,req,res,controller,action,target,value){
     try {
         var result;
         req.__compiled_where__ = controller.where || {}
-        for(var i in req.context.$where)
+        for(var i in req.context.where)
             if (!(i in req.__compiled_where__)) req.__compiled_where__[i] = req.context.__where__[i];
         for(var i in req.__compiled_where__){
             var empty_flag = true; break;
@@ -74,7 +73,15 @@ function do_action(dfd,req,res,controller,action,target,value){
         if(req.__query_ids__ instanceof Array) req.__compiled_where__._id = {$in:req.__query_ids__};
         if(req.__query_ids__ instanceof Array && value && req.__query_ids__.filter(function(id){return id.toString() == value;}).length == 0)
             result = null;
-        else result = controller.actions[action].call(req.context,req,res,value);
+        else{
+            try{
+                result = controller.actions[action].call(req.context,req,res,value);
+            }
+            catch(e){
+                return dfd.reject("Internal server error: "+ e.message);
+            }
+        }
+
         Q.when(result).
             then(function(obj){
                 try{
@@ -84,12 +91,9 @@ function do_action(dfd,req,res,controller,action,target,value){
                         target = obj.model;
                         controller = target.model.c;
                     };
-                    if (obj instanceof db.QuerySet){
-                        _obj = obj;
-                    }
-                    else
-                    if (obj instanceof Array) {
-                        _obj = new db.QuerySet(target.model,result);
+                    if (obj.__query_set__){ _obj = obj; }
+                    else if (obj instanceof Array) {
+                        _obj = new m.QuerySet(target.model,result);
                         _obj.c = controller;
                     }
                     else {
@@ -130,15 +134,15 @@ function target_is_model(dfd,req,res,value,action,target){
         return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
     }
 
-    req.context.$controller = controller;
-    req.context.$target = target;
-    req.context.$action = action;
-    req.context.$model = target.model;
-    req.context.$value = value;
+    req.context.controller = controller;
+    req.context.target = target;
+    req.context.action = action;
+    req.context.model = target.model;
+    req.context.value = value;
     run_dependency(target,req,res,function(){
-        if(req.context.$permissions.indexOf(target.model.model_name) != -1)
+        if(req.context.permissions.indexOf(target.model.model_name) != -1)
             return do_action(dfd,req,res,controller,action,target,value);
-        req.context.$permissions.push(target.model.model_name)
+        req.context.permissions.push(target.model.model_name)
         get_permissions(controller.permissions,req)
             .then(function(permissions){
                 check_permissions(permissions,controller,action)
@@ -166,13 +170,13 @@ function target_is_object(dfd,req,res,value,action,target){
         return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
     }
 
-    req.context.$controller = controller;
-    req.context.$target = target;
-    req.context.$action = action;
-    req.context.$model = target.model;
+    req.context.controller = controller;
+    req.context.target = target;
+    req.context.action = action;
+    req.context.model = target.model;
     run_dependency(target.model,req,res,function(){
-        if(req.context.$permissions.indexOf(target.model.model_name) != -1) return do_action();
-        req.context.$permissions.push(target.model.model_name)
+        if(req.context.permissions.indexOf(target.model.model_name) != -1) return do_action();
+        req.context.permissions.push(target.model.model_name)
         get_permissions(target.permissions,req)
             .then(function(permissions){
                 check_permissions(permissions,controller,action)
@@ -192,9 +196,9 @@ function target_is_object(dfd,req,res,value,action,target){
 function get_next_object(req,res,value,action,target){
     var dfd = Q.defer();
     var apply_f = null;
-    if (target instanceof db.QuerySet){
+    if (target.__query_set__){
         apply_f = target_is_model;
-        target.c = req.context.$controller;
+        target.c = req.context.controller;
         req.__query_ids__ = target.slice();
     }
     else
@@ -227,7 +231,7 @@ finalize = function(req,res,target){
     res.writeHead(200, {"Content-Type": "application/json; charset=utf-8"});
     function send(obj){
         try{
-            var d = req.context.$decorator || req.context.$controller.decorator || req.context.$model.c.decorator;
+            var d = req.context.decorator || req.context.controller.decorator || req.context.model.c.decorator;
             if (!d) return res.end(JSON.stringify(obj));
             if (typeof d != "function") return res.end(JSON.stringify(decorate(obj,d,target)));
             Q.when(d()).then(function(d){
@@ -241,7 +245,7 @@ finalize = function(req,res,target){
 
 
     }
-    if (target instanceof db.QuerySet){
+    if (target.__query_set__){
         send(target.eval_raw());
     }
     else if (target instanceof Array){
@@ -261,13 +265,14 @@ errorize = function(req,res,data){
 
 module.exports = function(req,res){
     req.context = {
-        $controller: null,
-        $target: null,
-        $action: null,
-        $model: null,
-        $middleware: [],
-        $permissions: [],
-        $plugin: []
+        controller: null,
+        target: null,
+        action: null,
+        model: null,
+        middleware: [],
+        permissions: [],
+        plugin: [],
+        data: {}
     };
     var target_action = null;
     delete req.query.__uniq__;
@@ -291,7 +296,7 @@ module.exports = function(req,res){
     if (!(base_token in plugin.url_access)){
         return errorize(req,res,"Unknown target request");
     }
-    req.context.$plugin = plugin;
+    req.context.plugin = plugin;
     req.context.m = plugin;
     var model = plugin.url_access[base_token];
     if (req.query.__action__){

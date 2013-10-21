@@ -8,7 +8,6 @@
  *
  * @file
  * @name ./bin/init.js
- * @author Kreees
  */
 
 global.m = {};
