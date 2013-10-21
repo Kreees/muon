@@ -320,7 +320,7 @@
                         dfd.resolve(_this);
                     },
                     error: function(){
-                        if (args) if ('error' === typeof args.error) args.error.apply(_this,arguments);
+                        if (args) if ('function' === typeof args.error) args.error.apply(_this,arguments);
                         dfd.reject(arguments);
                     }
                 });
@@ -335,7 +335,7 @@
                         dfd.resolve(_this);
                     },
                     error: function(){
-                        if (args) if ('error' === typeof args.error) args.error.apply(_this,arguments);
+                        if (args) if ('function' === typeof args.error) args.error.apply(_this,arguments);
                         dfd.reject(arguments);
                     }
                 });
@@ -435,7 +435,7 @@
                     dfd.resolve(_this);
                 },
                 error: function(){
-                    if (args) if ('error' === typeof args.success) args.error.apply(_this,arguments);
+                    if (args) if ('function' === typeof args.error) args.error.apply(_this,arguments);
                     dfd.reject(arguments);
                 }
             });
