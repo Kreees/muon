@@ -131,6 +131,7 @@
                 for(var i in profiles_to_filter){
                     templates = templates.concat(__profiles__[profiles_to_filter[i]]);
                 }
+                console.log(__profiles__);
                 $("[data-muon]").filter(templates.join(",")).each(function(){
                     if (this.muon_view instanceof m.View) this.muon_view.reload();
                 });
@@ -291,17 +292,10 @@
         return Math.floor(Math.random()*9*Math.pow(10,9)+Math.pow(10,9));
     }
 
-//    _b_.ajax = function(request){
-//        request.url += (request.url.indexOf("?") == -1?"?":"&");
-//        return $.ajax.apply(_b_,arguments);
-//    };
-
     m.Model = _b_.Model.extend({
             idAttribute: "_id",
-            initialize: function(data,options){
+            initialize: function(data){
                 var _this = this;
-                options = options || {};
-                for(var i in options) this[i] = options[i];
                 this.sync_name = "mod_"+Math.floor(Math.random()*10000);
                 this.on("change:"+this.idAttribute,function(){
                     if (_this.constructor.__objects__){
@@ -1353,7 +1347,7 @@
             _.defer(function(){
                 opts = opts || {};
                 if (!("trigger" in opts)) opts.trigger = true;
-                if (!(opts && opts.history_nav)){
+                if (!(opts && opts.skipHistory)){
                     __history__.push(_this.path());
                     __forward_history__ = [];
                 }
@@ -1369,19 +1363,19 @@
         },
         back: function(){
             if (__history__.length == 0){
-                _.defer(this.navigate,"/",{replace:true,trigger:true,history_nav: true});
+                _.defer(this.navigate,"/",{replace:true,trigger:true,skipHistory: true});
                 return false;
             }
             else {
                 __forward_history__.unshift(this.path());
-                _.defer(this.navigate,__history__.pop(),{replace:true,trigger:true,history_nav: true});
+                _.defer(this.navigate,__history__.pop(),{replace:true,trigger:true,skipHistory: true});
             }
             return true;
         },
         forward: function(){
             if (__forward_history__.length == 0) return false;
             __history__.push(this.path());
-            _.defer(this.navigate,__forward_history__.shift(),{replace:true,trigger:true,history_nav: true});
+            _.defer(this.navigate,__forward_history__.shift(),{replace:true,trigger:true,skipHistory: true});
             return true;
         }
 
@@ -1443,10 +1437,11 @@
     }
 
     function router_middleware(middleware,callback){
+        var surrogate = this;
         if (middleware.length == 0) return callback();
         try {
-            $.when(middleware.shift().call(m.router))
-                .then(_.partial(router_middleware,middleware,callback),m.router.back);
+            $.when(middleware.shift().call(surrogate))
+                .then(_.partial(router_middleware.bind(surrogate),middleware,callback),m.router.back);
         }
         catch(e){
             console.log(e.message);
@@ -1454,7 +1449,7 @@
         }
     }
 
-    var prepare_route = function(sections){
+    function prepare_route(sections){
         if (!_.isArray(sections)) sections = [].slice.call(arguments);
         var route = "";
         while (sections.length){
@@ -1487,7 +1482,7 @@
             surrogate.current_page = undefined;
             try{surrogate.current_page = app_view.get(page_to_show+(/_page$/.test(page_to_show)?"":"_page"));}
             catch(e){}
-            router_middleware(middleware.slice(),function(){
+            router_middleware.call(surrogate,middleware.slice(),function(){
                 handler && handler.apply(surrogate,_args);
                 do {
                     try{ app_view.show(page_to_show); }
@@ -1548,7 +1543,7 @@
             m.packages[pack].views[type][name].profiles = m.packages[pack].views[type][name].profiles || [];
             m.packages[pack].views[type][name].profiles.push(this.dataset.profile);
             if (!(__profiles__[this.dataset.profile] instanceof Array)) __profiles__[this.dataset.profile] = [];
-            __profiles__[this.dataset.profile].push("."+name+"_"+type+"[data-pack='"+pack+"']");
+            __profiles__[this.dataset.profile].push("[data-muon='"+name+"_"+type+"'][data-pack='"+pack+"']");
         });
     }
 

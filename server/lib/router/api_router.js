@@ -139,6 +139,7 @@ function target_is_model(dfd,req,res,value,action,target){
     req.context.action = action;
     req.context.model = target.model;
     req.context.value = value;
+    req.context.id = value;
     run_dependency(target,req,res,function(){
         if(req.context.permissions.indexOf(target.model.model_name) != -1)
             return do_action(dfd,req,res,controller,action,target,value);

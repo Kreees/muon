@@ -79,11 +79,18 @@ var db_model_extend = {
     find: function(where_clause){
         var dfd = Q.defer();
         var _this = this;
-        $(this).find(where_clause).toArray(function(e,data){
-            if (e || !data) dfd.reject(e);
-            else dfd.resolve(new db_queryset(_this.model,data));
+        var a = $(this).find(where_clause);
+        var obj = dfd.promise;
+        obj.sort = function(){a = a.sort.apply(a,arguments); return obj;}
+        obj.skip = function(){a = a.skip.apply(a,arguments); return obj;}
+        obj.limit = function(){a = a.limit.apply(a,arguments); return obj;}
+        _.defer(function(){
+            a.toArray(function(e,data){
+                if (e || !data) dfd.reject(e);
+                else dfd.resolve(new db_queryset(_this.model,data));
+            });
         });
-        return dfd.promise;
+        return obj;
     }
 };
 
