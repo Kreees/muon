@@ -45,69 +45,97 @@ function run_dependency(target,req,res,next){
     if (req.context.middleware.indexOf(target.model_name) != -1) return next();
     var deps = (target.c.dependencies || []).slice();
     req.context.middleware.push(target.model_name);
-    var plug_models = m.__plugins[target.model.plugin_name].models;
-    function _run_(){
+    var native_model = req.context.model;
+    function run(){
         if (deps.length == 0){
-            if (typeof target.model.m == "function") return target.model.m.apply(req.context,[req,res,next]);
-            else return next();
+            if (typeof target.model.m == "function"){
+                req.context.model = target.model;
+                return target.model.m.apply(req.context,[req,res,function(){
+                    req.context.model = native_model;
+                    next();
+                }]);
+            }
+            else{
+                req.context.model = native_model;
+                return next();
+            }
         }
         var dep_name = deps.shift();
+        try{
+            if (dep_name.indexOf(":") != -1){
+                var dep_plugin = dep_name.split(":");
+                dep_name = dep_plugin.pop();
+                dep_plugin = dep_plugin.join(":");
+                plug_models = m.__plugins[dep_plugin].models;
+            }
+            else {
+                var plug_models = m.__plugins[target.model.plugin_name].models;
+            }
+        }
+        catch(e){
+//            console.log(m.__plugins);
+            m.log("here");
+            throw e;
+            return req.end("");
+        }
         if (!(dep_name in plug_models)){
             m.kill("Model dependency '"+dep_name+"' in plugin '"+target.model.plugin_name+"' doesn't exist.")
         }
-        run_dependency(plug_models[dep_name],req,res,_run_);
+        run_dependency(plug_models[dep_name],req,res,run);
     }
-    _run_();
+    run();
+}
+
+function is_empty(obj){
+    for(var i in obj) return false;
 }
 
 function do_action(dfd,req,res,controller,action,target,value){
     try {
-        var result;
-        req.__compiled_where__ = controller.where || {}
-        for(var i in req.context.where)
-            if (!(i in req.__compiled_where__)) req.__compiled_where__[i] = req.context.__where__[i];
-        for(var i in req.__compiled_where__){
-            var empty_flag = true; break;
-        }
-        if (empty_flag) req.__compiled_where__ = {_id: {$nin: []}};
-        if(req.__query_ids__ instanceof Array) req.__compiled_where__._id = {$in:req.__query_ids__};
-        if(req.__query_ids__ instanceof Array && value && req.__query_ids__.filter(function(id){return id.toString() == value;}).length == 0)
-            result = null;
-        else{
-            try{
-                result = controller.actions[action].call(req.context,req,res,value);
-            }
-            catch(e){
-                return dfd.reject("Internal server error: "+ e.message);
-            }
-        }
-
-        Q.when(result).
-            then(function(obj){
+        req.__compiled_where__ = controller.where || {};
+        if (_.isFunction(req.__compiled_where__)) req.__compiled_where__ = req.__compiled_where__.call(req.context,req,res);
+        Q.when(req.__compiled_where__).then(function(where){
+            req.__compiled_where__ = where;
+            if (is_empty(req.__compiled_where__)) req.__compiled_where__ = {_id: {$nin: []}};
+            if(req.__query_ids__ instanceof Array) req.__compiled_where__ = {$and: [{_id: {$in:req.__query_ids__}}, req.__compiled_where__]};
+            if(req.__query_ids__ instanceof Array && value && req.__query_ids__.filter(function(id){return id.toString() == value;}).length == 0)
+                result = null;
+            else{
                 try{
-                    if (obj == null) return dfd.reject("Not found");
-                    var _obj = obj;
-                    if (obj.model && obj.model.model == obj.model && target.model != obj.model){
-                        target = obj.model;
-                        controller = target.model.c;
-                    };
-                    if (obj.__query_set__){ _obj = obj; }
-                    else if (obj instanceof Array) {
-                        _obj = new m.QuerySet(target.model,result);
-                        _obj.c = controller;
-                    }
-                    else {
-                        if (!(obj instanceof target.model)){
-                            _obj = new target.model(obj);
-                        }
-                    }
-                    dfd.resolve(_obj)
+                    result = controller.actions[action].call(req.context,req,res,value);
                 }
                 catch(e){
-                    dfd.reject("Internal error: "+ e.message);
+                    return dfd.reject("Internal server error: "+ e.message);
                 }
             }
-            ,dfd.reject);
+
+            Q.when(result).
+                then(function(obj){
+                    try{
+                        if (obj == null) return dfd.reject("Not found");
+                        var _obj = obj;
+                        if (obj.model && obj.model.model == obj.model && target.model != obj.model){
+                            target = obj.model;
+                            controller = target.model.c;
+                        };
+                        if (obj.__query_set__){ _obj = obj; }
+                        else if (obj instanceof Array) {
+                            _obj = new m.QuerySet(target.model,result);
+                            _obj.c = controller;
+                        }
+                        else {
+                            if (!(obj instanceof target.model)){
+                                _obj = new target.model(obj);
+                            }
+                        }
+                        dfd.resolve(_obj)
+                    }
+                    catch(e){
+                        dfd.reject("Internal error: "+ e.message);
+                    }
+                }
+                ,dfd.reject);
+        })
     }
     catch(e){
         _.defer(dfd.reject,"Internal server error: "+ e.toString());
@@ -282,11 +310,11 @@ module.exports = function(req,res){
     if(req.method == "DELETE") target_action="delete";
     if(req.method == "GET") target_action="get"
 
-    var path = decodeURI(req.path);
+    var path = decodeURI(unescape(req.path));
 
     var tokens = _.compact(path.split(/\//));
     var base_token = tokens.shift();
-    var plugin = global.m;
+    var plugin = m;
     var plugin_stack = base_token.split(":");
     base_token = plugin_stack.pop();
 

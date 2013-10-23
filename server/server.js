@@ -17,9 +17,10 @@ m.errorize = function(res,statusCode,message){
 }
 
 function init_server(next){
-    next = next || function(){}
+    var next = next || function(){}
     m.__plugins = {}
     m.__plugins[""] = m;
+    m.__server_init__ = true;
     Q.when(db.init("mongodb://"+m.cfg.db_host+"/"+m.cfg.db_name)).then(
         function(){
             m.plugins = {};
@@ -33,7 +34,7 @@ function init_server(next){
                     models.init(m.cfg).then(
                         function(a){
                             for(var i in a) m[i] = a[i];
-                                try { next(); }
+                                try { m.__server_init__ = false; next(); }
                                 catch(e){ m.kill(e.message) }
                         },function(e){ throw Error("Models load error!");})
                 },function(e){ throw Error("Plugins load error!");})

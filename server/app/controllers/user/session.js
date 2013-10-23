@@ -1,4 +1,4 @@
-var md5 = require("crypto").createHash("md5"),
+var crypto = require("crypto");
     Q = require("q"),
     _ = require("underscore");
 
@@ -6,6 +6,8 @@ module.exports = {
     permissions: ["create","delete"],
     actions: {
         "create": function(req,res){
+            console.log(req.body);
+            var md5 = crypto.createHash("md5");
             var dfd = Q.defer();
             var _this = this;
             if (req.body.session_id){

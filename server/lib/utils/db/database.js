@@ -148,7 +148,7 @@ var db_objet_extend = {
 module.exports = {
     extend: function(model){
         if ('function' != typeof model){
-            throw Erro("Wrong model object type: should be a function");
+            throw Error("Wrong model object type: should be a function");
         }
         _.extend(model.prototype,db_objet_extend);
         model.db = _.clone(db_model_extend);
