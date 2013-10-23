@@ -15,7 +15,6 @@ module.exports = m.rest.extend({
             var _this = this;
             var args = arguments;
             this.model.db.find({nick:req.body.nick}).then(function(a){
-                console.log(a);
                 if (a.length > 0)
                     return dfd.reject({error: "User with such Nick already exists",statusCode: 1})
                 var md5 = crypto.createHash("md5");
