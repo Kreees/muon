@@ -31,13 +31,13 @@ module.exports = {
         "index": function(type){
             var coll = new m.collections["/apis/doc.doc_item."+type];
             coll.fetch();
-            m.set_projection("doc.index.list", coll);
+            m.setProjection("doc.index.list", coll);
         },
         "abstract_description": function(type,id){
-            m.set_projection("doc.description.summary",new m.models["doc.doc_item."+type](id));
+            m.setProjection("doc.description.summary",new m.models["doc.doc_item."+type](id));
         },
         "file_page": function(name,line){
-            m.set_projection("doc.description.summary",new m.models["doc.doc_item.file"](name));
+            m.setProjection("doc.description.summary",new m.models["doc.doc_item.file"](name));
         }
     },
     ready: function(callback){

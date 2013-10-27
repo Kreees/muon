@@ -21,8 +21,8 @@ var pre_wrapper = {
 var post_wrapper = {
     "less": "<style data-pack='#{pack}'>#{data}</style>",
     "css": "<style data-pack='#{pack}'>#{data}</style>",
-    "js": "<script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
-    "coffee": "<script type='text/javascript' data-pack='#{pack}'>#{data}</script>",
+    "js": "<script type='text/javascript' data-pack='#{pack}' id='#{id}'>#{data}</script>",
+    "coffee": "<script type='text/javascript' data-pack='#{pack}' id='#{id}'>#{data}</script>",
     "jade": "<script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>",
     "html": "<script #{profile} data-pack='#{pack}' type='text/muon-template'id='#{id}_template'>#{data}</script>",
     "jqote": "<script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>"

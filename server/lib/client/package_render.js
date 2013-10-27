@@ -53,7 +53,7 @@ module.exports = function (req,res){
     function load_package(){
         callback_text = fs.readFileSync(package_dir+"package.js","utf8");
         callback_text = callback_text.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
-        callback_text = "m.__package_init_data['"+full_pack_name+"'] = {\n"+
+        callback_text = "m.__packageInitData__['"+full_pack_name+"'] = {\n"+
             "\"package\": "+callback_text+",\n\n"+
             "\"models\": "+JSON.stringify(models,null,2)+",\n\n"+
             "\"views\": "+JSON.stringify(views,null,2)+",\n\n"+
@@ -78,10 +78,7 @@ module.exports = function (req,res){
             var file = files.shift();
             var extension = file.substr(file.lastIndexOf(".")+1);
             function data_rendered(e,data){
-                if (e){
-//                    m.log(e);
-                    return proc_file();
-                }
+                if (e){return proc_file();}
                 if (["coffee","js"].indexOf(extension) != -1) dependency.js.push(data);
                 else dependency.css.push(data);
                 proc_file();
