@@ -1,14 +1,4 @@
 #!/usr/bin/env node
-/**
- *
- * Project initialization command
- * Example: muon-init thing
- *
- * Creates template project directory
- *
- * @file
- * @name ./bin/init.js
- */
 
 global.m = require("../lib/m_init");
 var fs = require("fs"),

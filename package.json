@@ -19,8 +19,10 @@
     },
     "main": "./module.js",
     "bin":{
-        "muon-init": "./bin/init.js",
-        "render-client": "./bin/render_client.js"
+        "m-init": "./bin/init.js",
+        "m-pack-client": "./bin/pack_client.js",
+        "m-gen-sitemap": "./bin/gen_sitemap.js",
+        "m-set-config": "./bin/set_config.js"
     },
     "dependencies": {
         "ejs": "*",
