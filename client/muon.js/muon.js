@@ -255,7 +255,6 @@
 
             child.__objects__ = _objs;
             child.modelName = modelName;
-
             m.models[modelName] = child;
             var pluginName = modelName.substr(0,modelName.lastIndexOf(":"));
             var pluginObject =  __registerPlugin(pluginName);
@@ -1631,7 +1630,9 @@
                 if (views.length == 0) return finalize();
                 var view_data = views.shift();
                 var script_match = "";
-                if ((script_match = view_data.match(/^<script type='text\/javascript'[\s\S]*?>/)) && (m.__serverMode__ != "production"))
+                if ((script_match = view_data.match(/^<script type='text\/javascript'[\s\S]*?>/))
+                    && (m.__serverMode__ != "production")
+                    && (m.__serverMode__ != "sitemap"))
                 {
                     var id = $(script_match[0]).attr("id");
                     var scrpt = document.createElement("script");

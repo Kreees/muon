@@ -57,7 +57,7 @@ module.exports = {
                 var model_name = (pl_name?pl_name+":":"")+model.model_name;
                 var back_model = {
                     plugin: pl_name,
-                    model_name: model_name,
+                    modelName: model_name,
                     urlRoot: host+"/apis/"+(model.plugin_name?model.plugin_name+":":"")+model.model.url,
                     defaults: defaults
                 };

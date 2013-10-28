@@ -94,7 +94,6 @@ module.exports = {
                     model.c = require(mod_path(c_name,cdir_pref));
                 }
                 catch(e) {
-                    m.log(e);
                     model.c = rest;
                 }
                 if (typeof model.c.actions != "object") model.c.actions = {}

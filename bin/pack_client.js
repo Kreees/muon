@@ -13,11 +13,11 @@ var fs = require("fs"),
 var server = require("../server/server.js");
 
 server.init(function(){
-    var args = require("../lib/bin/render_client/load_args");
+    var args = require("../lib/bin/pack_client/load_args");
     if (!fs.existsSync(args.index_file)) m.error(e.message);
 
-    var packages = require("../lib/bin/render_client/get_packages");
-    require("../lib/bin/render_client/get_index")(args,function(index_context){
+    var packages = require("../lib/bin/pack_client/get_packages");
+    require("../lib/bin/pack_client/get_index")(args,function(index_context){
 try{
         var temp_dir = "./"+args.output_name;
         fs.mkdirSync(temp_dir);
