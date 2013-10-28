@@ -218,7 +218,7 @@
         }
         else modelName = this.prototype.modelName;
         if (obj.urlRoot && obj.urlRoot.indexOf("0.0.0.0") != -1){
-            obj.urlRoot = obj.urlRoot.replace(/0\.0\.0\.0(:\d+)?/, m.__domain__?m.__domain__:location.host);
+            obj.urlRoot = obj.urlRoot.replace(/0\.0\.0\.0(:\d+)?/, (m.__domain__ && !m.__domain__.match("0.0.0.0"))?m.__domain__:location.host);
             if (m.__protocol__) obj.urlRoot = obj.urlRoot.replace(/^http:\/\//, m.__protocol__+"://");
         }
         var _newModel = __modelBackboneExtend__.apply(this,arguments);
