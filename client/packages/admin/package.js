@@ -1,7 +1,7 @@
 module.exports = {
     middleware: [
         function(){
-            if (m.has_profile("first_user") || m.has_profile("logined")) return;
+            if (m.hasProfile("first_user") || m.hasProfile("logined")) return;
             var dfd = $.Deferred();
             var a = this.m.models["user.user"].collection();
             a.fetch().then(function(a){
@@ -11,8 +11,8 @@ module.exports = {
             return dfd.promise();
         },
         function(){
-            if (m.has_profile("first_user") || !m.has_profile("logined")) return;
-            if (this.m.get_projection("admin.config")) return;
+            if (m.hasProfile("first_user") || !m.hasProfile("logined")) return;
+            if (this.m.getProjection("admin.config")) return;
             var dfd = $.Deferred();
             var _this = this;
             var config = new this.m.models["project.project"]("config");
@@ -40,8 +40,8 @@ module.exports = {
         {
             route: "server/models",
             callback: function(){
-                m.remove_profile("model_admin");
-                var a = this.m.get_projection("admin.models");
+                m.removeProfile("model_admin");
+                var a = this.m.getProjection("admin.models");
                 if (!a){
                     a = this.m.models["project.server.model"].collection();
                     this.m.setProjection("admin.models",a);
@@ -53,28 +53,28 @@ module.exports = {
         },
         {
             route: "server/plugins",
-            callback: function(){m.remove_profile("server_plugin_admin");},
+            callback: function(){m.removeProfile("server_plugin_admin");},
             routes: { "server/plugins/:name": "server_plugin" }
         },
         {route: "client"},
         {
             route: "client/packages",
-            callback: function(){m.remove_profile("package_admin");},
+            callback: function(){m.removeProfile("package_admin");},
             routes: { "client/packages/:name": "package" }
         },
         {
             route: "client/pages",
-            callback: function(){m.remove_profile("page_admin");},
+            callback: function(){m.removeProfile("page_admin");},
             routes: { "client/pages/:name": "page" }
         },
         {
             route: "client/plugins",
-            callback: function(){m.remove_profile("client_plugin_admin");},
+            callback: function(){m.removeProfile("client_plugin_admin");},
             routes: { "client/plugins/:name": "client_plugin" }
         },
         {
             route: "client/views",
-            callback: function(){m.remove_profile("view_admin");},
+            callback: function(){m.removeProfile("view_admin");},
             routes: { "client/views/:name": "view" }
         },
         {route: "data"},

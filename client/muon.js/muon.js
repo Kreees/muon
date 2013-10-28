@@ -126,7 +126,6 @@
                 for(var i in profilesToFilter){
                     templates = templates.concat(__profiles__[profilesToFilter[i]]);
                 }
-                console.log(__profiles__);
                 $("[data-muon]").filter(templates.join(",")).each(function(){
                     if (this.muonView instanceof m.View) this.muonView.reload();
                 });
@@ -534,13 +533,15 @@
             pack = pack || m.__basePackage__;
             _contextName = _contextName || "";
             pack = pack || m.__basePackage__;
-            try{
+            try{            	            	
                 var View = null;
-                if (!View && !recursive) View = m.packages[pack].views[viewType][viewName];
+                if (!View && !recursive) return m.packages[pack].views[viewType][viewName];
                 if (!View && (viewType == "model" || viewType == "collection") && _contextName){
                     var contextName = _contextName.replace(/:/g,".").split("."), _viewName = viewName;
                     for(var i in contextName) _viewName = _viewName.replace(RegExp("_"+contextName[i]+"$"),"");
-                    if (_viewName != viewName) return m.getViewNameByType(viewType,_viewName,_contextName,pack,true);
+                    if (_viewName != viewName){
+                    	return m.getViewNameByType(viewType,_viewName,_contextName,pack,true);
+                    }
                 }
                 if (!View && (viewType == "model" || viewType == "collection") && _contextName){
                     var contextName = _contextName.replace(/:/g,".").split(".").reverse().join("_");
@@ -552,13 +553,12 @@
                     View = m.packages[pack].views[viewType][viewName+(contextName?"_":"")+contextName];
                 }
                 if (!View && recursive) View = m.packages[pack].views[viewType][viewName];
-                if (!View) throw Error();
+                if (!View) throw Error("not exists");
                 return View;
             }
             catch(e){
                 if (_contextName.indexOf(":") == -1) throw Error("Wrong view name:"+viewName+"_"+viewType+":"+_contextName+":"+ e.message);
                 else return m.getViewNameByType(viewType,viewName,_contextName.substr(_contextName.indexOf(":")+1),pack,true);
-
             }
         };
 
@@ -574,7 +574,7 @@
             var _this = this;
             var projection = el.dataset["projection"];
             var viewName = el.dataset[viewType+"View"];
-            if (viewName == "data-"+viewType+"-view") viewName = "";
+            if (viewName == "data-"+viewType+"-view") viewName = "";            
             if (projection){
                 var mPlugin = m.getProjection(projection)?m:parentView.m;
                 $(mPlugin).one("projection_updated."+projection, function(){
@@ -584,14 +584,13 @@
                 $(mPlugin).one("projection_removed."+projection,function(){
                     if (el.muonView instanceof m.View) el.muonView.remove();
                     $(mPlugin).one("projection_updated."+projection, function(){
-                        if (!checkPresenceInDom(el)) return;
+                        if (!checkPresenceInDom(el)) return;                        
                         insertView.apply(_this,[el,viewType,pack,parentView,mPlugin]);
                     });
                 });
                 projection = mPlugin.getProjection(projection);
                 if (projection === undefined) return;
             }
-
             setTimeout(function(){
                 if (el.muonView instanceof m.View){
                     el.muonView.remove();
