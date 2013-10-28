@@ -4,7 +4,8 @@ m.ApplicationStackView.extend {
     "click li#logout": "logout"
     "view_shown #target > div": "page_shown"
   }
-  page_shown: (ev)->
+  className: "container"
+  pageShown: (ev)->
     page_class = ev.currentTarget.className.split(/\s+/).filter((a)->
       return /_page_layout$/.test(a)
     )[0]
