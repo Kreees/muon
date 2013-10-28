@@ -22,7 +22,7 @@ var c = super_obj.extend({
     },
     actions: {
         "get": function(){
-            return this.$model.__data__.config;
+            return this.model.__data__.config;
         },
         "edit": function(req){
             try{
@@ -31,12 +31,12 @@ var c = super_obj.extend({
 
                 for(var i in attrs){
                     config[attrs[i]] = req.body[attrs[i]];
-                    this.$model.__data__.config[attrs[i]] = req.body[attrs[i]];
+                    this.model.__data__.config[attrs[i]] = req.body[attrs[i]];
                 }
-                this.$model.__data__.config.wait_restart = true;
+                this.model.__data__.config.wait_restart = true;
                 m.wait_restart = true;
                 fs.writeFileSync(m.cfg.path+"/config.json",JSON.stringify(config,null,2),"utf-8");
-                return this.$model.__data__.config;
+                return this.model.__data__.config;
             }
             catch(e){
                 m.kill("Can't save config.js file");

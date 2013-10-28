@@ -14,6 +14,6 @@ m.ApplicationStackView.extend {
     @$("[data-page="+page_class+"]").next().filter("ul").find("li").removeClass("active");
   logout: ->
     new this.m.models["user.session"]("me").destroy().then(=>
-      m.remove_profile("logined")
+      m.removeProfile("logined")
     )
 }

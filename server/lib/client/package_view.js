@@ -16,6 +16,7 @@ module.exports = function (req,res){
     }
 
     var views_dir = package_dir+"views";
+    var base_views_dir = package_dir+"views";
     view_name = view_name.split("/").map(function(a){
         return a.split("_").reverse().join("/");
     }).join("/");
@@ -26,7 +27,6 @@ module.exports = function (req,res){
             var counter = 1;
             while(counter <= view_stack.length){
                 var new_views_dir = views_dir +"/"+view_stack.slice(0,counter).reverse().join("/");
-                console.log(counter,view_stack,new_views_dir);
                 if (fs.existsSync(new_views_dir)) return find_again();
                 new_views_dir = views_dir +"/"+view_stack.slice(0,counter).reverse().join("_");
                 if (fs.existsSync(new_views_dir)) return find_again();
@@ -45,7 +45,7 @@ module.exports = function (req,res){
     }
     function render_view(){
         fs_ext.tree(views_dir+"/"+view_name,function(t){
-            templ_proc.render_template(t,views_dir,full_pack_name,function(r_views){
+            templ_proc.render_template(t,base_views_dir,full_pack_name,function(r_views){
                 r_views = r_views.filter(function(a){
                     return a.match(/^<script type='text\/javascript'/);
                 })[0]

@@ -535,7 +535,7 @@
             pack = pack || m.__basePackage__;
             try{            	            	
                 var View = null;
-                if (!View && !recursive) return m.packages[pack].views[viewType][viewName];
+                if (!View && !recursive) View = m.packages[pack].views[viewType][viewName];
                 if (!View && (viewType == "model" || viewType == "collection") && _contextName){
                     var contextName = _contextName.replace(/:/g,".").split("."), _viewName = viewName;
                     for(var i in contextName) _viewName = _viewName.replace(RegExp("_"+contextName[i]+"$"),"");
@@ -722,6 +722,7 @@
                 }
                 this.$el = $(this.el);
                 this.$ = this.$el.find.bind(this.$el);
+                this.postTemplateRender && this.postTemplateRender(); 
                 this.undelegateEvents();
                 this.delegateEvents();
                 this.$el.addClass([this.className,this.viewType,"block"].join(" "));

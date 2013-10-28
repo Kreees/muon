@@ -83,7 +83,7 @@ function post_proc(pack,name,data){
         if (["jade","html","jqote"].indexOf(extension_name) != -1){
             data = data.replace(/#\{profile\}/g,profile?"data-profile='"+profile+"'":"");
         }
-    }
+    }    
     return data;
 }
 
