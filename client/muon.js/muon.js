@@ -313,6 +313,12 @@
                 });
                 return dfd.promise();
             },
+            get: function(t){
+            	var obj = {value: this.attributes[t]};
+            	try{ obj = JSON.parse(JSON.stringify(obj)); }
+            	catch(e) {return this.attributes[t];}
+            	return obj.value;
+            },
             save: function(obj,args){
                 var dfd = $.Deferred();
                 var _this = this;
