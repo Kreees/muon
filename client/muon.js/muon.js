@@ -457,8 +457,7 @@
             selector = "script#"+selector+"_template";
             selector += "[type='text/muon-template'][data-pack='"+view.package+"']";
             selector += "[data-profile='"+profile+"']";
-            if (document.querySelectorAll) return document.querySelector(selector);
-            else return $(selector)[0];
+            return $(selector)[0];
         };
 
         function _attrsParser(attrs){
@@ -727,7 +726,7 @@
                     this.el = $el[0];
                 }
                 this.$el = $(this.el);
-                this.$ = this.$el.find.bind(this.$el);
+                this.$ = _.bind(this.$el.find,this.$el);
                 this.postTemplateRender && this.postTemplateRender(); 
                 this.undelegateEvents();
                 this.delegateEvents();
@@ -1347,6 +1346,7 @@
                     __history__.push(_this.path());
                     __forwardHistory__ = [];
                 }
+                url = url.replace(RegExp("^http://"+location.host),"");
                 if (url.match(/^\//)){
                     if(url.match(/^\/\//)) location = url;
                     else _b_.Router.prototype.navigate.apply(this,[url,opts]);
@@ -1595,7 +1595,7 @@
                 });
             }
 
-            if (typeof mod.ready == "function") _.defer(mod.ready.bind(mod.surrogate),formPackApplicationLayout);
+            if (typeof mod.ready == "function") _.defer(_.bind(mod.ready,mod.surrogate),formPackApplicationLayout);
             else formPackApplicationLayout();
         };
 
