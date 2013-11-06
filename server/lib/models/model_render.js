@@ -47,7 +47,7 @@ module.exports = {
                     continue;
                 }
                 var model = plugin.models[i];
-                var defaults = {}
+                var defaults = {};
                 for(var j in model.attrs) defaults[j] = model.attrs[j].default || defs[model.attrs[j].type];
                 var host = m.cfg.protocol+"://";
                 if (m.cfg.jsonp && m.cfg.domain) host += m.cfg.domain;
