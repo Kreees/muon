@@ -55,15 +55,24 @@ module.exports = {
                 if (m.cfg.port && parseInt(m.cfg.port) != 80)
                     host += ":"+m.cfg.port;
                 var model_name = (pl_name?pl_name+":":"")+model.model_name;
+                var scheme = {};
+                for(var i in model.attrs){
+                    scheme[i] = {
+                        type: model.attrs[i].type,
+                        null_allowed: (model.attrs[i].null_allowed == undefined)?!!model.attrs[i].null_allowed:true,
+                        values: model.attrs[i].values
+                    }
+                }
                 var back_model = {
                     plugin: pl_name,
                     modelName: model_name,
                     urlRoot: host+"/apis/"+(model.plugin_name?model.plugin_name+":":"")+model.model.url,
-                    defaults: defaults
+                    defaults: defaults,
+                    scheme: scheme
                 };
                 var back_model_str = "m.model_"+ model_name.replace(/[:\.]/g,"_");
                 back_model_str += " = m.Model.extend(";
-                back_model_str += JSON.stringify(back_model)+");";
+                back_model_str += JSON.stringify(back_model)+",{scheme: "+JSON.stringify(scheme)+"});";
                 ret[(pl_name?pl_name+":":"")+model.model_name] = back_model_str;
             }
         }
