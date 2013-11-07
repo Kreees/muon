@@ -1,12 +1,8 @@
-var api_router = require(m.__sys_path+"/server/lib/router/api_router"),
-    doc_router = require(m.__sys_path+"/server/lib/router/doc_router"),
-    db = require(m.__sys_path+"/server/lib/utils/db/database"),
+function req(path){return require(m.__sys_path+"/server/lib/"+path);}
+
+var db = require(m.__sys_path+"/server/lib/utils/db/database"),
     models = require(m.__sys_path+"/server/lib/models/models"),
     plugins = require(m.__sys_path+"/server/lib/plugins/plugins"),
-    package_translation = require(m.__sys_path+"/server/lib/client/package_translation"),
-    package_render = require(m.__sys_path+"/server/lib/client/package_render"),
-    package_view = require(m.__sys_path+"/server/lib/client/package_view"),
-    client_render = require(m.__sys_path+"/server/lib/client/client_render"),
     Q = require("q"),
     _ = require("underscore")
 ;
@@ -43,13 +39,19 @@ function init_server(next){
     return this;
 }
 
+try{
 module.exports = {
     init: init_server,
-    compile_client: client_render,
-    package_render: package_render,
-    package_view: package_view,
-    package_translation: package_translation,
-    middleware: function(req,res,next){next();},
-    api_proc: api_router,
-    docs: doc_router
+    compile_client: req("client/client_render"),
+    compile_muonjs: req("client/muon_render"),
+    package_render: req("client/package_render"),
+    package_view: req("client/package_view"),
+    package_translation: req("client/package_translation"),
+    api_proc: req("router/api_router"),
+    docs_proc: req("router/doc_router")
+}
+}
+catch(e){
+    console.log(e.stack);
+    process.kill();
 }

@@ -53,7 +53,7 @@ module.exports = function (req,res){
     function load_package(){
         callback_text = fs.readFileSync(package_dir+"package.js","utf8");
         callback_text = callback_text.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
-        callback_text = "m.__packageInitData__['"+full_pack_name+"'] = {\n"+
+        callback_text = "m.packageInitData['"+full_pack_name+"'] = {\n"+
             "\"package\": "+callback_text+",\n\n"+
             "\"models\": "+JSON.stringify(models,null,2)+",\n\n"+
             "\"views\": "+JSON.stringify(views,null,2)+",\n\n"+
