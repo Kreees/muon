@@ -20,6 +20,9 @@
     "main": "./module.js",
     "bin":{
         "m-init": "./bin/init.js",
+        "m-start": "./bin/start.js",
+        "m-kill": "./bin/kill.js",
+        "m-test": "./bin/test.js",
         "m-pack-client": "./bin/pack_client.js",
         "m-gen-sitemap": "./bin/gen_sitemap.js",
         "m-set-config": "./bin/set_config.js"
@@ -40,6 +43,7 @@
         "tar": "*",
         "fstream":"*",
         "cheerio": "*",
-        "zombie":"*"
+        "zombie":"*",
+        "optimist":"*"
     }
 }

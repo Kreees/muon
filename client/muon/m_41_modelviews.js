@@ -1,4 +1,4 @@
-function setGetElementValue(view,getter){
+function __setGetElementValue__(view,getter){
     function set(val){
         if (!this.dataset["attrType"]){
             if (this.tagName == "INPUT" || this.tagName == "SELECT") $(this).val(val);
@@ -16,7 +16,7 @@ function setGetElementValue(view,getter){
     else set.call(this,view.model.get(getter));
 }
 
-function updateModelView(attrs){
+function __updateModelView__(attrs){
     var _this = this;
     if (this.$el.find("[data-model-attr]").length != 0){
         for(var i in attrs){
@@ -41,9 +41,9 @@ function updateModelView(attrs){
         }
     }
     this.$el.find("[data-model-get],[data-model-set]").each(function(){
-        setGetElementValue.call(this,_this,this.dataset.modelGet || this.dataset.modelSet);
+        __setGetElementValue__.call(this,_this,this.dataset.modelGet || this.dataset.modelSet);
     });
-    this.__renderDataRoutes__();
+    __renderDataRoutes__.call(this);
 }
 
 m.ModelView = m.View.extend({
@@ -56,14 +56,14 @@ m.ModelView = m.View.extend({
         m.View.prototype.initialize.apply(this,arguments);
     },
     __set__: function(){
-        updateModelView.call(this,this.model.attributes);
+        __updateModelView__.call(this,this.model.attributes);
         var view = this;
         this.$el.find("[data-model-set]").each(function(){
             var setter = this.dataset.modelSet;
             var _this = this;
             var int = null;
             view.listenTo(view.model,"sync",function(){
-                setGetElementValue.call(_this,view,setter);
+                __setGetElementValue__.call(_this,view,setter);
             });
             if (!(this.dataset.silent || view.silent)){
                 $(this).keyup(function(){
@@ -79,7 +79,7 @@ m.ModelView = m.View.extend({
         this.$el.attr("id",this.model.id);
     },
     __update__:function(a,b,c){
-        updateModelView.call(this,this.model.changedAttributes());
+        __updateModelView__.call(this,this.model.changedAttributes());
     },
     remove: function(){
         if (!this.model.collection){
