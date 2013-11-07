@@ -43,7 +43,6 @@
         "tar": "*",
         "fstream":"*",
         "cheerio": "*",
-        "zombie":"*",
         "optimist":"*"
     }
 }
