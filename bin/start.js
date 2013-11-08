@@ -4,9 +4,15 @@ var fs = require("fs");
 var argv = require("optimist").argv;
 
 try{ var muon = require("../module"); }
-catch(e){ console.error("You should run it from the root of your project. Exiting."); return -1;}
-if (!fs.existsSync(process.cwd()+"/.muon")){
+catch(e){
+    console.error("You should run it from the root of your project. Exiting.");
+    console.log("Error: "+e.message);
+    return -1;
+}
+if (!fs.existsSync(".muon")){
     console.error("You should run it from the root of your project. Exiting.")
+    console.log("Error: file .muon does not exists in this directory.");
+    console.log("Error: If you're in the root of muon.js project, try to create this file manually.");
     return -1;
 }
 
@@ -126,4 +132,7 @@ process.env.M_SERVER_DOMAIN = domain;
 
 var server = muon.server();
 server.listen.apply(server,[port,host]);
+server.onready = function(){
+    console.log("Press Ctrl-C to shut down")
+}
 

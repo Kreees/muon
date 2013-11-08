@@ -1,5 +1,15 @@
-require("fs").writeFileSync(".muon",process.pid);
-var Q = require("q");
+var fs = require("fs");
+var cur_pid = parseInt(fs.readFileSync(".muon").toString());
+if (!isNaN(cur_pid)){
+    console.log("Server already running: process id "+cur_pid);
+    process.kill();
+}
+fs.writeFileSync(".muon",process.pid);
+
+process.on('SIGINT', function() {
+    fs.writeFileSync(".muon","");
+    process.kill();
+});
 
 module.exports = {
     "server": function() {
