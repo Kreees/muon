@@ -152,7 +152,6 @@ __onReady__.push(function(){
     function __changeProc__(record){
         for(var i = 0, len = record.length; i < len; i++){
             var rec = record[i];
-            console.log(rec);
         }
     }
     new obs(__changeProc__).observe(document.body,{subtree:true,attributes:true,attributeFilter:[
