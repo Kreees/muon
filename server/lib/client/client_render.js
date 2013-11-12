@@ -9,6 +9,9 @@ module.exports = function(req,res,base_dir){
     var $ = cheerio.load(fs.readFileSync(file,"utf8"));
     $("html").attr("lang",m.cfg.default_lang || "en");
     $("head").append("<script src='/muon.js'></script>");
+    if (m.cfg.server_mode == "testing"){
+        $("head").append("<script src='/jasmin.js'></script>");
+    }
     res.set("Content-Type","text/html");
     res.end($.html());
 };

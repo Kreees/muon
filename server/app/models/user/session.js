@@ -7,7 +7,7 @@ module.exports = {
         "created": {
             type: Date,
             null_allowed: false,
-            default: function(){return new Date();}
+            defaults: function(){return new Date();}
         },
         "session_id": {
             type: "md5",
@@ -16,7 +16,7 @@ module.exports = {
         "last_view": {
             type: Date,
             null_allowed: false,
-            default: function(){return new Date();}
+            defaults: function(){return new Date();}
         }
     },
     objects: ["me"]

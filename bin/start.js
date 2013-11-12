@@ -3,12 +3,14 @@
 var fs = require("fs");
 var argv = require("optimist").argv;
 
-try{ var muon = require("../module"); }
-catch(e){
+
+
+if (!fs.existsSync(__dirname+"/../module.js")){
     console.error("You should run it from the root of your project. Exiting.");
     console.log("Error: "+e.message);
     return -1;
 }
+
 if (!fs.existsSync(".muon")){
     console.error("You should run it from the root of your project. Exiting.")
     console.log("Error: file .muon does not exists in this directory.");
@@ -53,7 +55,7 @@ if (argv.help){
     console.log("Server modes:");
     console_params([,
         "development - Server with live per request reloading, with all debug ",
-//        "testing - Server is launched once to run all defined client- and server-side test modules (requires PhantomJS)",
+        "testing - Server is launched once to run all defined client- and server-side test modules (requires PhantomJS)",
 //        "indexing - Server is launched once to generate 'sitemap.xml' file for searching robots (requires PhantomJS)",
         "production - Clear cached server with automated robot response generation and indexing (requires PhantomJS)",
 //        "production-clear - Clear cached server without PhantomJS dependency",
@@ -98,10 +100,12 @@ if (argv._.length > 1) {
 
 if (error_flag) return -1;
 
+var spawn = require("child_process").spawn;
+
 if (argv.detach || argv.d){
     var out = fs.openSync('./tmp/out.log', 'a');
     var err = fs.openSync('./tmp/error.log', 'a');
-    var spawn = require("child_process").spawn;
+
     try { var cfg = JSON.parse(fs.readFileSync("./config.json").toString()); }
     catch(e){ var cfg = {}; }
     host = host || cfg.host || "0.0.0.0";
@@ -124,15 +128,28 @@ if (argv.detach || argv.d){
     return;
 }
 
-process.env.M_SERVER_MODE = server_mode;
-process.env.M_SERVER_PORT = port;
-process.env.M_SERVER_HOST = host;
-process.env.M_SERVER_PROTO = "http";
-process.env.M_SERVER_DOMAIN = domain;
+function launch(){
+    process.env.M_SERVER_MODE = server_mode;
+    process.env.M_SERVER_PORT = port;
+    process.env.M_SERVER_HOST = host;
+    process.env.M_SERVER_PROTO = "http";
+    process.env.M_SERVER_DOMAIN = domain;
 
-var server = muon.server();
-server.listen.apply(server,[port,host]);
-server.onready = function(){
-    console.log("Press Ctrl-C to shut down")
+    var server = require("../module").server();
+    server.listen.apply(server,[port,host]);
+    server.onready = function(){
+        console.log("Press Ctrl-C to shut down")
+    }
 }
+
+var old_pid = fs.readFileSync(".muon","utf-8");
+if (old_pid.length == 0) launch();
+else {
+    var pkill = spawn("kill",["-16",old_pid],{});
+    pkill.stderr.on("data",function(){
+        fs.writeFileSync(".muon","");
+    });
+    pkill.on("close",launch);
+}
+
 

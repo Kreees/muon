@@ -3,21 +3,21 @@ module.exports = {
        "nick": {
            type: "string",
            null_allowed: false,
-           default: ""
+           defaults: ""
        },
        "password": {
            type: "md5",
            null_allowed: false,
-           default: ""
+           defaults: ""
        },
        "email":{
            type: "email",
            null_allowed: true,
-           default: ""
+           defaults: ""
        },
        "roles": {
            type: ["user.role"],
-           default: []
+           defaults: []
        }
     },
     objects: ["me"]

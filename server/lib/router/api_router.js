@@ -19,6 +19,7 @@ function get_permissions(permissions,req){
     var get_dfd = Q.defer();
     if (permissions === undefined) _.defer(get_dfd.resolve,["all"]);
     else if (_.isFunction(permissions)){
+        req.context.m = req.context.plugin = m.__plugins[req.context.controller.plugin_name];
         Q.when(permissions.call(req.context,req)).then(function(resolved){
             if (typeof resolved == "string"){
                 if (resolved.toLowerCase() == "none") return get_dfd.resolve([]);
@@ -43,13 +44,17 @@ function get_permissions(permissions,req){
 
 function run_dependency(target,req,res,next){
     if (req.context.middleware.indexOf(target.model_name) != -1) return next();
-    var deps = (target.c.dependencies || []).slice();
+    var deps = (target.c.dependencies || []).map(function(a){
+        var pl = target.c.plugin_name;
+        return (pl?pl+":":+"")+a;
+    });
+    if (target.model.super) deps.unshift(target.model.extend);
     req.context.middleware.push(target.model_name);
     var native_model = req.context.model;
     function run(){
         if (deps.length == 0){
             if (typeof target.model.m == "function"){
-                req.context.model = target.model;
+                req.context.m = req.context.plugin = m.__plugins[target.model.plugin_name];
                 return target.model.m.apply(req.context,[req,res,function(){
                     req.context.model = native_model;
                     next();
@@ -72,12 +77,7 @@ function run_dependency(target,req,res,next){
                 var plug_models = m.__plugins[target.model.plugin_name].models;
             }
         }
-        catch(e){
-//            console.log(m.__plugins);
-            m.log("here");
-            throw e;
-            return req.end("");
-        }
+        catch(e){ throw e; }
         if (!(dep_name in plug_models)){
             m.kill("Model dependency '"+dep_name+"' in plugin '"+target.model.plugin_name+"' doesn't exist.")
         }
@@ -93,7 +93,10 @@ function is_empty(obj){
 function do_action(dfd,req,res,controller,action,target,value){
     try {
         req.__compiled_where__ = controller.where || {};
-        if (_.isFunction(req.__compiled_where__)) req.__compiled_where__ = req.__compiled_where__.call(req.context,req,res);
+        if (_.isFunction(req.__compiled_where__)){
+            req.context.m = req.context.plugin = m.__plugins[req.context.controller.plugin_name];
+            req.__compiled_where__ = req.__compiled_where__.call(req.context,req,res);
+        }
         Q.when(req.__compiled_where__).then(function(where){
             req.__compiled_where__ = where;
             if (is_empty(req.__compiled_where__)) req.__compiled_where__ = {_id: {$nin: []}};
@@ -102,6 +105,7 @@ function do_action(dfd,req,res,controller,action,target,value){
                 result = null;
             else{
                 try{
+                    req.context.m = req.context.plugin = m.__plugins[req.context.controller.plugin_name];
                     result = controller.actions[action].call(req.context,req,res,value);
                 }
                 catch(e){
