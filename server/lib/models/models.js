@@ -29,7 +29,6 @@ var surrogate = function(name,descr){
         (descr.super.objects instanceof Array) && (model.objects = descr.super.objects.concat(model.objects));
         (descr.super.scopes instanceof Array) && (model.scopes = descr.super.scopes.concat(model.scopes));
     }
-    console.log(model);
     return model;
 }
 
