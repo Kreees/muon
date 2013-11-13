@@ -55,6 +55,7 @@ function run_dependency(target,req,res,next){
         if (deps.length == 0){
             if (typeof target.model.m == "function"){
                 req.context.m = req.context.plugin = m.__plugins[target.model.plugin_name];
+                req.context.model = target.model;
                 return target.model.m.apply(req.context,[req,res,function(){
                     req.context.model = native_model;
                     next();

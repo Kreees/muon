@@ -6,18 +6,17 @@ var fs_ext = require(global.m.__sys_path+"/server/lib/utils/fs/fs_ext.js"),
     fs = require("fs")
 ;
 
-function Model(obj){
-    this.attributes = {};
-    if ('object' == typeof obj)
-        this.set(obj);
-};
+
 
 var surrogate = function(name,descr){
     if (descr.extend && descr.attrs){
         m.kill("It's not allowed to override extended model attributes");
     }
-    var model = function r(){};
-    model.prototype = Object.create(Model.prototype);
+    var model = function Model(obj){
+	    this.attributes = {};
+	    if ('object' == typeof obj)
+	        this.set(obj);
+	};
     _.extend(model,descr);
     model.scheme = descr.attrs || {};
     model.model = model;
