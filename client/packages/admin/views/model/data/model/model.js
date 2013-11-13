@@ -14,10 +14,10 @@ m.ModelView.extend({
 			if(i == "_id") continue;
 			this.renderAttribute(i).appendTo(this.$(".attributes_wrapper"));
 		}
-		this.$("input.check_null").onclick(function(ev){
-			console.log("tut")
-			console.log(["checkbox ", $(ev.currentTarget).attr("data-attribute")]);
-		});
+		// this.$("input.check_null").onclick(function(ev){
+			// console.log("tut")
+			// console.log(["checkbox ", $(ev.currentTarget).attr("data-attribute")]);
+		// });
 		
 	},
 	renderAttribute: function(attr){
