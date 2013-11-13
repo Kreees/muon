@@ -14,6 +14,11 @@ m.ModelView.extend({
 			if(i == "_id") continue;
 			this.renderAttribute(i).appendTo(this.$(".attributes_wrapper"));
 		}
+		this.$("input.check_null").onclick(function(ev){
+			console.log("tut")
+			console.log(["checkbox ", $(ev.currentTarget).attr("data-attribute")]);
+		});
+		
 	},
 	renderAttribute: function(attr){
 		var value = this.context.get(attr);
@@ -32,7 +37,7 @@ m.ModelView.extend({
 			$('<input></input>').attr({
 				"type":"checkbox",
 				"data-attribute":attr
-			}).appendTo($null);
+			}).addClass("check_null").appendTo($null);
 		}
 		$null.appendTo($el);
 		
