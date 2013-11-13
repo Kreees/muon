@@ -59,7 +59,7 @@ module.exports = {
                 for(var i in model.attrs){
                     scheme[i] = {
                         type: model.attrs[i].type,
-                        null_allowed: (model.attrs[i].null_allowed !== undefined)?!!model.attrs[i].null_allowed:true,
+                        null_allowed: (model.attrs[i].null_allowed == undefined)?!!model.attrs[i].null_allowed:true,
                         values: model.attrs[i].values
                     }
                 }

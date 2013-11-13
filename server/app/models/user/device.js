@@ -3,11 +3,11 @@ module.exports = {
     attrs: {
         "ostype": {
             type: "string",
-            default: "unknown"
+            defaults: "unknown"
         },
         "secret_key": {
             type: "md5",
-            default: function(){return generate_key();}
+            defaults: function(){return generate_key();}
         },
         "program_version": {
             type: "string",
