@@ -1,0 +1,3 @@
+m.ModelView.extend {
+  rendered: ->
+}

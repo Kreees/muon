@@ -112,9 +112,9 @@ function do_action(dfd,req,res,controller,action,target,value){
                     return dfd.reject("Internal server error: "+ e.message);
                 }
             }
-
             Q.when(result).
                 then(function(obj){
+                    if (res.__end_envoked__ === true) return dfd.reject("");
                     try{
                         if (obj == null) return dfd.reject("Not found");
                         var _obj = obj;
@@ -260,7 +260,8 @@ function decorate(obj,d,t){
     else return decorate_obj(obj,d,t);
 }
 
-finalize = function(req,res,target){
+ function finalize(req,res,target){
+    if (res.__end_envoked__) return;
     res.writeHead(200, {"Content-Type": "application/json; charset=utf-8"});
     function send(obj){
         try{
@@ -307,6 +308,12 @@ module.exports = function(req,res){
         plugin: [],
         data: {}
     };
+
+    var end_response = res.end;
+    res.end = function(){
+        res.__end_envoked__ = true;
+        end_response.apply(this,arguments);
+    }
     var target_action = null;
     delete req.query.__uniq__;
     if(req.method == "POST") target_action="create";

@@ -146,37 +146,44 @@ function __getParentMuonView__(el){
     return null;
 }
 
-__onReady__.push(function(){
-    var obs = window.MutationObserver || window.WebKitMutationObserver;
-    if (!obs) return;
-    function __changeProc__(record){
-        for(var i = 0, len = record.length; i < len; i++){
-            var rec = record[i];
-            console.log(rec);
-        }
-    }
-    new obs(__changeProc__).observe(document.body,{subtree:true,attributes:true,attributeFilter:[
-        "data-model-view",
-        "data-collection-view",
-        "data-layout-view",
-        "data-stack-view",
-        "data-widget-view",
-        "data-model-attr",
-        "data-model-set",
-        "data-model-get",
-        "data-attr-type",
-        "data-context",
-        "data-context-attrs",
-        "data-view-attrs",
-        "data-projection"
-    ]});
-
-    new obs(__changeProc__).observe(document.body,{subtree:true,childList:true});
-});
+//__onReady__.push(function(){
+//    var obs = window.MutationObserver || window.WebKitMutationObserver;
+//    if (!obs) return;
+//    function __changeProc__(record){
+//        for(var i = 0, len = record.length; i < len; i++){
+//            var rec = record[i];
+//            console.log(rec);
+//        }
+//    }
+//    new obs(__changeProc__).observe(document.body,{subtree:true,attributes:true,attributeFilter:[
+//        "data-model-view",
+//        "data-collection-view",
+//        "data-layout-view",
+//        "data-stack-view",
+//        "data-widget-view",
+//        "data-model-attr",
+//        "data-model-set",
+//        "data-model-get",
+//        "data-attr-type",
+//        "data-context",
+//        "data-context-attrs",
+//        "data-view-attrs",
+//        "data-projection"
+//    ]});
+//
+//    new obs(__changeProc__).observe(document.body,{subtree:true,childList:true});
+//});
 
 
 function __insertView__(el,viewType,pack,parentView){
     var _this = this;
+    if (!(pack in m.packages)){
+        m.requirePack(pack,function(){
+//            console.log("Here");
+            __insertView__.apply(_this,[el,viewType,pack,parentView]);
+        });
+        return;
+    }
     var projection = el.dataset["projection"];
     var viewName = el.dataset[viewType+"View"];
     if (viewName == "data-"+viewType+"-view") viewName = "";
@@ -184,13 +191,13 @@ function __insertView__(el,viewType,pack,parentView){
         var mPlugin = m.getProjection(projection)?m:parentView.m;
         $(mPlugin).one("projection_updated."+projection, function(){
             if (!__checkPresenceInDom__(el)) return;
-            __insertView__.apply(_this,[el,viewType,pack,parentView,mPlugin]);
+            __insertView__.apply(_this,[el,viewType,pack,parentView]);
         });
         $(mPlugin).one("projection_removed."+projection,function(){
             if (el.muonView instanceof m.View) el.muonView.remove();
             $(mPlugin).one("projection_updated."+projection, function(){
                 if (!__checkPresenceInDom__(el)) return;
-                __insertView__.apply(_this,[el,viewType,pack,parentView,mPlugin]);
+                __insertView__.apply(_this,[el,viewType,pack,parentView]);
             });
         });
         projection = mPlugin.getProjection(projection);

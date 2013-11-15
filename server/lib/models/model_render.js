@@ -59,7 +59,7 @@ module.exports = {
                 for(var i in model.scheme){
                     scheme[i] = {
                         type: model.scheme[i].type,
-                        null_allowed: (model.scheme[i].null_allowed === undefined)?!!model.scheme[i].null_allowed:true,
+                        null_allowed: (model.scheme[i].null_allowed !== undefined)?!!model.scheme[i].null_allowed:true,
                         values: model.scheme[i].values
                     }
                 }

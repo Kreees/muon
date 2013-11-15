@@ -2,9 +2,9 @@ var __routes__ = [];
 
 $.ajaxSetup({beforeSend: function(xhr){xhr.setRequestHeader("Muon-Request","data-request");}});
 
-var History = __b__.History;
+var __History__ = __b__.History;
 __b__.History.prototype.navigate = function(fragment, options) {
-    if (!History.started) return false;
+    if (!__History__.started) return false;
     if (!options || options === true) options = {trigger: options};
     fragment = this.getFragment(fragment || '');
     this.fragment = fragment;
@@ -23,9 +23,7 @@ __b__.History.prototype.navigate = function(fragment, options) {
     if (options.trigger) this.loadUrl(fragment);
 };
 
-
-
-m.Router = __b__.Router.extend({
+var __Router__ = __b__.Router.extend({
     initialize: function(){
         for(var i in this.routes){
             __routes__.push({route:i,callback:this[this.routes[i]]});
@@ -51,9 +49,9 @@ m.Router = __b__.Router.extend({
         _.defer(function(){
             opts = opts || {};
             if (!("trigger" in opts)) opts.trigger = true;
-            if (!(opts && opts.skipHistory)){
+            if (!(opts && opts.skip__History__)){
                 __history__.push(_this.path());
-                __forwardHistory__ = [];
+                __forward__History____ = [];
             }
             url = url.replace(RegExp("^http://"+location.host),"");
             if (url.match(/^\//)){
@@ -68,19 +66,19 @@ m.Router = __b__.Router.extend({
     },
     back: function(){
         if (__history__.length == 0){
-            _.defer(this.navigate,"/",{replace:true,trigger:true,skipHistory: true});
+            _.defer(this.navigate,"/",{replace:true,trigger:true,skip__History__: true});
             return false;
         }
         else {
-            __forwardHistory__.unshift(this.path());
-            _.defer(this.navigate,__history__.pop(),{replace:true,trigger:true,skipHistory: true});
+            __forward__History____.unshift(this.path());
+            _.defer(this.navigate,__history__.pop(),{replace:true,trigger:true,skip__History__: true});
         }
         return true;
     },
     forward: function(){
-        if (__forwardHistory__.length == 0) return false;
+        if (__forward__History____.length == 0) return false;
         __history__.push(this.path());
-        _.defer(this.navigate,__forwardHistory__.shift(),{replace:true,trigger:true,skipHistory: true});
+        _.defer(this.navigate,__forward__History____.shift(),{replace:true,trigger:true,skip__History__: true});
         return true;
     }
 
@@ -96,8 +94,12 @@ var toRegExp = function(route){
     return _.isRegExp(route)?route:__b__.Router.prototype._routeToRegExp(route);
 };
 
+function __flattenMiddleware__(middl,surrogate){
+    return _.flatten([middl]).filter(function(m){return typeof m == "function";}).map(function(f){return _.bind(f,surrogate);});
+}
+
 function addPackRoutes(pack,route,mod){
-    var flattenMiddleware = function(mid){return flattenMiddlewareiddleware(mid,mod.surrogate);};
+    var flattenMiddleware = function(mid){return __flattenMiddleware__(mid,mod.surrogate);};
     mod.middleware = flattenMiddleware(mod.middleware);
     if (m.packages[pack].parentPack && m.packages[pack].parentPack.middleware )
         mod.middleware = flattenMiddleware(mod.middleware.concat(m.packages[pack].parentPack.middleware));
@@ -210,11 +212,7 @@ function addRedirect(pack,pref,route,redirectUrl){
     m.router.route(prepareRoute(pref,route),pack+"_"+route,redirect);
 }
 
-function flattenMiddlewareiddleware(middl,surrogate){
-    return _.flatten([middl]).filter(function(m){return typeof m == "function";}).map(function(f){return _.bind(f,surrogate);});
-}
-
-function procUnhandledViews(pack){
+function __procUnhandledViews__(pack){
     var processed = [];
     $("script[data-pack='"+pack+"'][type='text/muon-template']").each(function(){
         if (processed.indexOf(this) != -1) return;
@@ -240,7 +238,7 @@ function procUnhandledViews(pack){
     });
 }
 
-function procProfiledViews(pack){
+function __procProfiledViews__(pack){
     $("script[data-pack='"+pack+"'][type='text/muon-template'][data-profile]").each(function(){
         var name = this.id.replace(/_template$/,"");
         var type = name.match(/_([a-zA-Z0-9]*?)$/)[1];
@@ -252,31 +250,67 @@ function procProfiledViews(pack){
     });
 }
 
+m.__pendingPackages__ = {};
+
 m.requirePack = function(pack,callback,parentPack){
-    if (pack in m.packages) return function(){};
+    if (pack in m.__pendingPackages__){
+        callback && m.__pendingPackages__[pack].push(callback);
+        return fallback();
+    }
+    callback && (m.__pendingPackages__[pack] = [callback]);
+    callback = function(arg){
+        if (m.__pendingPackages__[pack] instanceof Array)
+            for(var i = 0, len = m.__pendingPackages__[pack].length; i < len; i++)
+                if (typeof m.__pendingPackages__[pack][i] == "function")
+                    try{m.__pendingPackages__[pack][i](arg)} catch(e){}
+    }
     var fallbackPath = "";
     var pluginName = pack.substr(0,pack.lastIndexOf(":"));
     var route = null, fullRoute = null;
 
-    function procLoadedPackage(){
+
+    _.defer(function(){
+        var routes = _.where(__routes__,{callback:fallback});
+        if (routes.length != 0){
+            route = routes[0].route;
+            fullRoute = prepareRoute([route,"/*a"]);
+            m.router.route(fullRoute,__getUniq__(),fallback);
+        }
+        else fallback();
+    });
+
+    function fallback(){
+        fallbackPath = m.router.path();
+        if (m.packages[pack] && m.packages[pack].loaded) packLoaded();
+        else if (m.packageInitData[pack]) packLoaded();
+        else {
+            var callbackName = "mpackcallback"+Date.now();
+            m[callbackName] = function(){
+                packLoaded();
+                delete m[callbackName];
+            };
+
+            try {
+                $("<script src='/pack/"+pack+"?muon&lang="+ m.getLanguage()+"&m_callback="+callbackName+"'/>")
+                    .appendTo(document.head);
+            }
+            catch(e){
+                m.log("Package load error: "+pack+" : "+ e.message);
+                callback(false);
+            }
+        }
+    }
+
+    function postProcLoadedPackage(){
         var mod = m.packages[pack].packageObject;
-        m.packages[pack].parentPack = m.packages[parentPack||""];
-        mod.surrogate = mod.surrogate || {};
-        mod.surrogate.m = __plugins__[pluginName];
-        procUnhandledViews(pack);
-        procProfiledViews(pack);
-        if (route){
+        if (route){            
             __b__.history.handlers = __b__.history.handlers.filter(function(obj){
                 if (obj.route.toString() == toRegExp(route).toString() ||
                     obj.route.toString() == toRegExp(fullRoute).toString()) return false;
                 return true;
             });
-            __routes__ = __routes__.filter(function(obj){
-                return (obj.callback == fallback)?false:true;
-            });
+            __routes__ = __routes__.filter(function(obj){ return (obj.callback == fallback)?false:true; });
             addPackRoutes(pack,route,mod);
-        }
-        function formPackApplicationLayout(){
             mod.useAppView = mod.useAppView || true;
             if (mod.useAppView){
                 var appViewClass = null;
@@ -299,25 +333,34 @@ m.requirePack = function(pack,callback,parentPack){
                 }
                 appView.addPages(mod.pages || ["*"]);
             }
-            _.defer(function(){
-                __b__.history.loadUrl();
-            });
+
+            _.defer(_.bind(__b__.history.loadUrl,__b__.history));
         }
 
-        if (typeof mod.ready == "function") _.defer(_.bind(mod.ready,mod.surrogate),formPackApplicationLayout);
-        else formPackApplicationLayout();
+        callback();
     };
 
-    function packLoaded(){
+    function initPack(){
         var __prevPackage__ = __currentPackage__;
         var __prevPlugin__ = __currentPlugin__;
         __currentPackage__ = pack;
         __currentPlugin__ = pluginName;
+
         var packObject = new m.MuonPackage(pack);
+        var pluginObject = __registerPlugin__(__currentPlugin__);
+
+        var mod = m.packageInitData[pack].package;
         m.packages[pack] = packObject;
+        m.packages[pack].packageObject = mod;
+        m.packages[pack].translation = m.packageInitData[pack].translation;
+        m.packages[pack].parentPack = m.packages[parentPack||""];
+        mod.surrogate = mod.surrogate || {};
+        mod.surrogate.m = __plugins__[pluginName];
+        mod.surrogate.cfg = m.packageInitData[pack].cfg;
+
         packObject.routerPath = route;
         packObject.loaded = true;
-        var pluginObject = __registerPlugin__(__currentPlugin__);
+
         packObject.m = pluginObject;
         pluginObject = __plugins__[""];
         var pluginStack = pluginName.split(":");
@@ -341,76 +384,42 @@ m.requirePack = function(pack,callback,parentPack){
         }
 
         var views = m.packageInitData[pack].views;
+
         function proc_view(){
             if (views.length == 0) return finalize();
             var view_data = views.shift();
-            var script_match = "";
-            if ((script_match = view_data.match(/^<script type='text\/javascript'[\s\S]*?>/))
-                && (__serverMode__ != "production")
-                && (__serverMode__ != "sitemap"))
-            {
-                var id = $(script_match[0]).attr("id");
-                var scrpt = document.createElement("script");
-                scrpt.src = "/pack_view/"+pack+"/"+id+"?muon";
-                scrpt.type = "text/javascript";
-                document.head.appendChild(scrpt);
-                scrpt.onload = proc_view;
-            }
-            else {
-                $(view_data).appendTo(document.head);
-                proc_view();
-            }
+            $(view_data).appendTo(document.head);
+            proc_view();
         }
-
         function finalize() {
-            m.packages[pack].packageObject = m.packageInitData[pack].package;
-            m.packages[pack].translation = m.packageInitData[pack].translation;
-            procLoadedPackage();
+            __procUnhandledViews__(pack);
+            __procProfiledViews__(pack);
             __currentPackage__ = __prevPackage__;
             __currentPlugin__ = __prevPlugin__;
+            if (typeof mod.ready == "function")
+                try { mod.ready.call(mod.surrogate,postProcLoadedPackage); }
+                catch(e){ m.log("Pack load error: ready method error: "+ e.stack()); }
+            else postProcLoadedPackage();
         }
         proc_view();
     }
 
-    var fallback = function(){
-        fallbackPath = m.router.path();
-        if (m.packages[pack] && m.packages[pack].loaded){return;}
-        if (m.packageInitData[pack]) packLoaded();
-        else {
-            var callbackName = "mpackcallback"+Date.now();
-            m[callbackName] = function(){
-                packLoaded();
-                delete m[callbackName];
-            };
-            var scrpt = $("<script />");
-            scrpt.attr("src","/pack/"+pack+"?muon&lang="+ m.getLanguage()+"&m_callback="+callbackName);
-            scrpt.appendTo(document.head);
-        }
-    };
-
-    _.defer(function(){
-        var routes = _.where(__routes__,{callback:fallback});
-        if (routes.length != 0){
-            route = routes[0].route;
-            fullRoute = prepareRoute([route,"/*a"]);
-            m.router.route(fullRoute,__getUniq__(),fallback);
-        }
-        else _.defer(fallback);
-        callback && callback();
-    });
+    function packLoaded(){
+        if (m.packages[pack] instanceof m.MuonPackage) postProcLoadedPackage();
+        else initPack();
+    }
 
     return fallback;
 };
 
-m.router = new m.Router();
+m.router = new __Router__();
 __onReady__.push(function(){
     if (__staticApp__ && !/^file/.test(location.protocol) && location.pathname.replace(/^\//,"")){
         location.pathname = "/";
         return;
     }
-    m.router.route("/","#{default_pack}",m.requirePack("application",function(){
-        __b__.history.start(__staticApp__?{}:{pushState:true});
-    }));
+    m.router.route("/","#{default_pack}",m.requirePack("application"));
+    _.defer(_.bind(__b__.history.start,__b__.history),(__staticApp__?{}:{pushState:true}));
     $("body").addClass("muon").delegate("a[data-route]","click",function(ev){
         ev.preventDefault();
         this.href = this.href || this.dataset.route;

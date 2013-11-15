@@ -55,10 +55,11 @@ module.exports = function (req,res){
         callback_text = callback_text.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
         callback_text = "m.packageInitData['"+full_pack_name+"'] = {\n"+
             "\"package\": "+callback_text+",\n\n"+
-            "\"models\": "+JSON.stringify(models,null,2)+",\n\n"+
-            "\"views\": "+JSON.stringify(views,null,2)+",\n\n"+
-            "\"translation\": "+JSON.stringify(pack_translation,null,2)+",\n\n"+
-            "\"dependencies\": "+JSON.stringify(dependency,null,2)+",\n\n"+
+            "\"models\": "+JSON.stringify(models)+",\n\n"+
+            "\"views\": "+JSON.stringify(views)+",\n\n"+
+            "\"translation\": "+JSON.stringify(pack_translation)+",\n\n"+
+            "\"dependencies\": "+JSON.stringify(dependency)+",\n\n"+
+            "\"cfg\": "+JSON.stringify((plugin.cfg.packages && plugin.cfg.packages[pack_name])?plugin.cfg.packages[pack_name]:{})+",\n\n"+
             "\n};";
         if (req.query.m_callback) callback_text += "\ntry{ m['"+req.query.m_callback+"']();} catch(e){console.log('Callback f called: '+e.message); console.debug(e.stack)}";
         finalize();
