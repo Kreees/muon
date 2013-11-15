@@ -1,10 +1,16 @@
-#model_data_container
-	div.model_data_element
-		label._inline id:
-			a(data-model-attr="_id")
-	#model_data_attributes
-	#model_data_controls
-		input#model_data_save._inline(type="button", value="Save");
-		input#model_data_new._inline(type="button", value="Save New Model");
-		input#model_data_remove._inline(type="button", value="Remove Model");
+._container
+	div.thead
+		span.type_wrap.head Type
+		span.name_wrap.head Name
+		div.value_wrap.head Value
+		div.null_wrap.head Set null
+	.attributes_wrapper
+		div
+			span.type_wrap
+			span.name_wrap id:
+			div.value_wrap(data-model-attr="_id")
+	.controls_wrapper
+		input#save_model._inline(type="button", value="Save");
+		input#save_asnew_model._inline(type="button", value="Save New Model");
+		input#remove_model._inline(type="button", value="Remove Model");
 	#model_data_status

@@ -48,7 +48,7 @@ module.exports = {
                 }
                 var model = plugin.models[i];
                 var defaults = {};
-                for(var j in model.scheme) defaults[j] = model.scheme[j].defaults || defs[model.scheme[j].type];
+                for(var j in model.attrs) defaults[j] = model.attrs[j].default || defs[model.attrs[j].type];
                 var host = m.cfg.protocol+"://";
                 if (m.cfg.jsonp && m.cfg.domain) host += m.cfg.domain;
                 else host += "0.0.0.0";
@@ -56,7 +56,7 @@ module.exports = {
                     host += ":"+m.cfg.port;
                 var model_name = (pl_name?pl_name+":":"")+model.model_name;
                 var scheme = {};
-                for(var i in model.scheme){
+                for(var i in model.attrs){
                     scheme[i] = {
                         type: model.scheme[i].type,
                         null_allowed: (model.scheme[i].null_allowed !== undefined)?!!model.scheme[i].null_allowed:true,

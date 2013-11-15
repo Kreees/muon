@@ -4,7 +4,7 @@ function __setEmptyFlag__(){
 }
 
 function __addToCollection__(obj){
-    this.__setEmptyFlag__();
+    __setEmptyFlag__.call(this);
     var model = obj;
     if (this.target.children("#"+model.id).length == 0){
         var $modelView = new this.modelView(model);
@@ -16,7 +16,7 @@ function __addToCollection__(obj){
 }
 
 function __removeFromCollection__(obj){
-    this.__setEmptyFlag__();
+    __setEmptyFlag__.call(this);
     if (obj.id in this.childModels)
         this.childModels[obj.id].remove();
 }

@@ -1,24 +1,69 @@
 m.ModelView.extend({
 	events:{
-		"click #model_data_save":"save",
-		"click #model_data_new":"saveNewModel",
-		"click #model_data_remove":"removeModel",
+		"click #save_model":"save",
+		"click #save_asnew_model":"saveNewModel",
+		"click #remove_model":"removeModel",
 		"click .model_data_show_subattr":"showSubattr"
 	},
 	rendered: function(){
 		console.log("rendered!!")
 		var atrs = this.context.attributes;
+		window.mm = this.context;
 		if(!this.context.get("_id")) this.$("#model_data_save").hide();
 		for(var i in atrs){
 			if(i == "_id") continue;
-			if("object" == typeof atrs[i] && atrs[i].constructor != String){
-				console.log("object ATTR " +i);
-				// $("<div><label>"+i+":<a> Object <a><label></div>").appendTo(this.$("#model_data_attributes"));
-				this._renderObjAttr(i,atrs[i]).appendTo(this.$("#model_data_attributes"));
-				// this._renderObjAttr(i,atrs[i]).appendTo(this.$("#model_data_attributes"));
-			}else this._renderAttr(i,atrs[i]).appendTo(this.$("#model_data_attributes"));
+			this.renderAttribute(i).appendTo(this.$(".attributes_wrapper"));
 		}
+		// this.$("input.check_null").onclick(function(ev){
+			// console.log("tut")
+			// console.log(["checkbox ", $(ev.currentTarget).attr("data-attribute")]);
+		// });
+		
 	},
+	renderAttribute: function(attr){
+		var value = this.context.get(attr);
+		var sch = this.context.scheme[attr];
+		if(!sch) sch={}; 
+		
+		var $el = $("<div></div>").addClass("attribute_wrap").attr("data-attribute", attr);
+		$("<span></span>").addClass("type_wrap").text(sch.type).appendTo($el);
+		$("<span></span>").addClass("name_wrap").text(attr).appendTo($el);
+		$("<div></div>").addClass("value_wrap").text("Value container").appendTo($el);
+		
+		var $null = $("<div></div>").addClass("null_wrap");
+		
+		if(sch["null_allowed"] && sch["null_allowed"] === true){
+			$("<span></span>").text("null").appendTo($null);
+			$('<input></input>').attr({
+				"type":"checkbox",
+				"data-attribute":attr
+			}).addClass("check_null").appendTo($null);
+		}
+		$null.appendTo($el);
+		
+  		return $el;
+  		
+  		// if("object" == typeof atrs[i] && atrs[i].constructor != String){
+  		
+  		// if("string" == typeof value && value.length > 75){
+  			// $("<textarea></textarea>").attr({
+	  			// "data-model-set": att,
+	  			// "rows":4
+	  		// }).text(value).appendTo($value);
+  		// }else{
+  			// $("<input></input>").attr({
+	  			// "type":"text",
+	  			// "data-model-set": att,
+	  			// "value": value,
+	  			// "size":value.length*1.2
+	  		// }).appendTo(dv);
+  		// }	
+  		
+	},
+	renderElement: function(){
+		
+	},
+	
 	_setObjAttr:function(attr, model){
 		console.log(["SET ATTR ", attr, model]);	
 		console.log([model,this.context]);
@@ -110,27 +155,6 @@ m.ModelView.extend({
 		if(!dv) return cnt;
 		cnt.appendTo(dv);
 		return dv;
-	},
-	_renderAttr: function(att, value){
-  		var dv = $("<div></div>");
-  		if(value == ">") value="";
-  		$("<label></label>").text(att+":").appendTo(dv);
-  		if(value.length > 75){
-  			$("<textarea></textarea>").attr({
-	  			"class":"_inline",
-	  			"data-model-set": att,
-	  			"rows":4
-	  		}).text(value).appendTo(dv);
-  		}else{
-  			$("<input></input>").attr({
-	  			"type":"text",
-	  			"class":"_inline",
-	  			"data-model-set": att,
-	  			"value": value,
-	  			"size":value.length*1.2
-	  		}).appendTo(dv);
-  		}	
-  		return dv;
 	},
 	removeModel: function(){
 	  	if(this.context) this.context.destroy();
