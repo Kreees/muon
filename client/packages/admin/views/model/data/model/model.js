@@ -5,9 +5,10 @@ m.ModelView.extend({
 		"click #remove_model":"removeModel",
 		"click .model_data_show_subattr":"showSubattr"
 	},
-	rendered: function(){
+	postTemplateRender: function(){
 		console.log("rendered!!")
 		var atrs = this.context.attributes;
+		this.originalAttributes = this.context.toJSON();
 		window.mm = this.context;
 		if(!this.context.get("_id")) this.$("#model_data_save").hide();
 		for(var i in atrs){
@@ -21,48 +22,145 @@ m.ModelView.extend({
 		
 	},
 	renderAttribute: function(attr){
+		var _v = this;
+		var _a = attr;
 		var value = this.context.get(attr);
-		var sch = this.context.scheme[attr];
-		if(!sch) sch={}; 
+		var scheme = this.context.scheme[attr];
+		if(!scheme) scheme={}; 
 		
 		var $el = $("<div></div>").addClass("attribute_wrap").attr("data-attribute", attr);
-		$("<span></span>").addClass("type_wrap").text(sch.type).appendTo($el);
+		$("<span></span>").addClass("type_wrap").text(scheme.type).appendTo($el);
 		$("<span></span>").addClass("name_wrap").text(attr).appendTo($el);
-		$("<div></div>").addClass("value_wrap").text("Value container").appendTo($el);
 		
-		var $null = $("<div></div>").addClass("null_wrap");
+		var $vwr=$("<div></div>").addClass("value_wrap").attr("data-attribute_name", attr);
+		this.renderAttrValue(attr, value).appendTo($vwr); 
+		$vwr.appendTo($el);
 		
-		if(sch["null_allowed"] && sch["null_allowed"] === true){
-			$("<span></span>").text("null").appendTo($null);
-			$('<input></input>').attr({
-				"type":"checkbox",
-				"data-attribute":attr
-			}).addClass("check_null").appendTo($null);
-		}
-		$null.appendTo($el);
+		var $nwrp = $("<div></div>").addClass("set_null_wrap").addClass("attr_sets");
+		var $nsetter = $("<input></input>").attr({"type":"button", "data-attribute_name":attr, "value":"null"});
+		if(attr=="src") console.log(scheme["null_allowed"] && scheme["null_allowed"] === true);
+		if(scheme["null_allowed"] && scheme["null_allowed"] === true){}
+		else $nsetter.attr("disabled", "true");
+		$nsetter.click(function(){_v.setNullValue(_a, $vwr);});
+		$nsetter.appendTo($nwrp);
+		$nwrp.appendTo($el);
+		
+		var $dwrp = $("<div></div>").addClass("set_default_wrap").addClass("attr_sets");
+		var $dsetter = $("<input></input>").attr({"type":"button",	"data-attribute_name":attr, "value":"default"});
+		if(this.context.defaults[attr]){}
+		else $dsetter.attr("disabled", true);
+		$dsetter.click(function(){_v.setDefaultValue(_a, $vwr);});
+		$dsetter.appendTo($dwrp);
+		$dwrp.appendTo($el);
+		
+		var $owrp = $("<div></div>").addClass("set_original_wrap").addClass("attr_sets");
+		var $osetter = $("<input></input>").attr({"type":"button", "data-attribute":attr, "value":"original"});
+		$osetter.click(function(){_v.setOriginalValue(_a, $vwr);});
+		$osetter.appendTo($owrp);
+		$owrp.appendTo($el);
 		
   		return $el;
-  		
-  		// if("object" == typeof atrs[i] && atrs[i].constructor != String){
-  		
-  		// if("string" == typeof value && value.length > 75){
-  			// $("<textarea></textarea>").attr({
+	},
+	
+	setNullValue:function(attr, container){
+		this.context.set(attr, null);
+		if(!container){
+			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
+			if(!container){
+				console.log("warning setDefaultValue");
+				return this.renderAttrValue(attr);
+			} 
+		}
+		container.html(this.renderAttrValue(attr));
+	},
+	
+	setDefaultValue:function(attr, container){
+		this.context.set(attr, this.context.defaults[attr]);
+		if(!container){
+			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
+			if(!container){
+				console.log("warning setDefaultValue");
+				return this.renderAttrValue(attr);
+			} 
+		}
+		container.html(this.renderAttrValue(attr));
+	},
+	
+	setOriginalValue:function(attr, container){
+		this.context.set(attr, this.originalAttributes[attr]);
+		if(!container){
+			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
+			if(!container){
+				console.log("warning setDefaultValue");
+				return this.renderAttrValue(attr);
+			} 
+		}
+		container.html(this.renderAttrValue(attr));
+	},
+	
+	renderAttrValue: function(attr){
+		var value = this.model.get(attr);
+		if(value != null && value == undefined) {alert("undefined attribute: "+attr); return $("<div>");}
+		else{ if(value == null) return $("<span>").text("null");}
+		//TODO 
+
+		if(_.isArray(value)) return this.renderArrayValue(attr, value);
+		else{
+			return this.renderItemValue(attr, value);
+		} 
+	},
+	
+	renderItemValue:function(attr, value){
+		var ret = $("<input></input>");
+		if(_.isObject(value)){
+			if(value instanceof m.Model){
+				
+			}
+			ret.attr({
+				"type": "button",
+				"value": "vvv expand vvv",
+				"data-attribute": attr
+			});
+			
+				// $("<textarea></textarea>").attr({
 	  			// "data-model-set": att,
 	  			// "rows":4
 	  		// }).text(value).appendTo($value);
-  		// }else{
-  			// $("<input></input>").attr({
-	  			// "type":"text",
-	  			// "data-model-set": att,
-	  			// "value": value,
-	  			// "size":value.length*1.2
-	  		// }).appendTo(dv);
-  		// }	
-  		
-	},
-	renderElement: function(){
+			
+			return ret;
+		}
+		
+		
+		ret = $("<input></input>").attr({
+	  			"type":"text",
+	  			"value": value,
+	  			"data-model-set": attr,
+	  			"size":value.length*1.2
+	  		});
+		return ret;
+
+		// if(_.isString(value)){
+// 			
+		// }
+		// if(_.isNumber(value)){
+// 			
+		// }
+		// if(_.isDate(value)){
+// 			
+		// }
 		
 	},
+	renderArrayValue: function(attr, value){
+		var ret = $("<input></input>");
+		return ret;
+	},
+	renderVal: function(attr, value){
+		
+	},
+	renderObjVal: function(){
+		
+	},
+	
 	
 	_setObjAttr:function(attr, model){
 		console.log(["SET ATTR ", attr, model]);	

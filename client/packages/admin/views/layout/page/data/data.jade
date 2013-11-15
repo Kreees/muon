@@ -10,13 +10,15 @@
 					#mid_container
 						input#editor_idseach._inline(type="text", size="25", placeholder="find id")
 						input#editor_idseach_button._inline(type="button", value=">")
-					p.header2 Коллекция
-					#filter_container
-						input#editor_filter._inline(type="text", size="25", placeholder="filter {\"attr\":\"value\"}")
-						input#editor_filter_button._inline(type="button", value=">")
-					#coll_container
-						div(data-collection-view="collection_data", data-projection="editor.coll") 
 			.span8
-				#mb_container
-					p.header2 Редактор модели
-					div(data-model-view="model_data", data-projection="editor.model")
+				p.header2 Коллекция
+				#filter_container
+					input#editor_filter._inline(type="text", size="25", placeholder="filter {\"attr\":\"value\"}")
+					input#editor_filter_button._inline(type="button", value=">")
+				#coll_container
+					div(data-collection-view="collection_data", data-projection="editor.coll") 
+			
+		.row
+			#mb_container
+				p.header2 Редактор модели
+				div(data-model-view="model_data", data-projection="editor.model")
