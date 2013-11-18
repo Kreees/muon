@@ -10,6 +10,7 @@ function __setGetElementValue__(view,getter){
     }
     if (typeof view["get_"+getter] == "function"){
         var val = view["get_"+getter]();
+        console.log(this);
         if (typeof val == "object" && "then" in val) val.then(set.bind(this));
         else set.call(this,val);
     }

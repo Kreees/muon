@@ -6,14 +6,17 @@ m.ModelView.extend({
 		"click .model_data_show_subattr":"showSubattr"
 	},
 	postTemplateRender: function(){
-		console.log("rendered!!")
 		var atrs = this.context.attributes;
 		this.originalAttributes = this.context.toJSON();
 		window.mm = this.context;
 		if(!this.context.get("_id")) this.$("#model_data_save").hide();
 		for(var i in atrs){
 			if(i == "_id") continue;
-			this.renderAttribute(i).appendTo(this.$(".attributes_wrapper"));
+			try{
+				this.renderAttribute(i).appendTo(this.$(".attributes_wrapper"));
+			}catch(err){
+				console.log("WARN!: catch error in rendering attribute "+i);
+			}
 		}
 		// this.$("input.check_null").onclick(function(ev){
 			// console.log("tut")
@@ -63,7 +66,7 @@ m.ModelView.extend({
 	},
 	
 	setNullValue:function(attr, container){
-		this.context.set(attr, null);
+		this.model.set(attr, null);
 		if(!container){
 			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
 			if(!container){
@@ -75,7 +78,7 @@ m.ModelView.extend({
 	},
 	
 	setDefaultValue:function(attr, container){
-		this.context.set(attr, this.context.defaults[attr]);
+		this.model.set(attr, this.model.defaults[attr]);
 		if(!container){
 			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
 			if(!container){
@@ -87,7 +90,8 @@ m.ModelView.extend({
 	},
 	
 	setOriginalValue:function(attr, container){
-		this.context.set(attr, this.originalAttributes[attr]);
+		this.model.set(attr, this.originalAttributes[attr]);
+		// console.log(this.originalAttributes[attr]);
 		if(!container){
 			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
 			if(!container){
@@ -95,7 +99,7 @@ m.ModelView.extend({
 				return this.renderAttrValue(attr);
 			} 
 		}
-		container.html(this.renderAttrValue(attr));
+		// container.html(this.renderAttrValue(attr));
 	},
 	
 	renderAttrValue: function(attr){
@@ -106,49 +110,71 @@ m.ModelView.extend({
 
 		if(_.isArray(value)) return this.renderArrayValue(attr, value);
 		else{
-			return this.renderItemValue(attr, value);
+			if(_.isObject(value)){
+				if(value instanceof m.Model){
+				}else{
+					this["get_"+attr] = function(){
+						console.log([attr, "get", value]);
+					 	var jsn = JSON.stringify(this.model.get(attr),null,'\t'),
+							mch = jsn.match(/\t+/g),
+							l = 1;
+						if(mch) l = mch.length+2;
+						this.$('.attribute_wrap[data-attribute='+attr+'] .item_content_edit_wrap textarea').attr({"rows":(l<20?l:20)});
+						return jsn;
+					};
+					this["set_"+attr] = function(value){
+						console.log([attr, "set", value]);
+						$obj = this.$('textarea[data-model-set='+attr+']');
+						try{
+							obj = JSON.parse(value);
+							$obj.removeClass("notvalid");
+							this.model.set(attr, obj);
+						}catch(err){
+							$obj.addClass("notvalid");
+						}
+					}
+				}
+			}
+			return this.renderValueItem(attr, value);
 		} 
 	},
 	
-	renderItemValue:function(attr, value){
-		var ret = $("<input></input>");
-		if(_.isObject(value)){
-			if(value instanceof m.Model){
-				
-			}
-			ret.attr({
-				"type": "button",
-				"value": "vvv expand vvv",
-				"data-attribute": attr
-			});
-			
-				// $("<textarea></textarea>").attr({
-	  			// "data-model-set": att,
-	  			// "rows":4
-	  		// }).text(value).appendTo($value);
-			
+	renderValueItem:function(attr, value){
+		var ret = $("<div>").addClass("value_item_wrap");
+		var view = this;
+		if(_.isString(value)){
+			$("<input></input>").attr({"type":"text","value": value,"data-model-set": attr,"size":value.length*1.2}).appendTo(ret);
 			return ret;
 		}
-		
-		
-		ret = $("<input></input>").attr({
-	  			"type":"text",
-	  			"value": value,
-	  			"data-model-set": attr,
-	  			"size":value.length*1.2
-	  		});
-		return ret;
-
-		// if(_.isString(value)){
-// 			
-		// }
-		// if(_.isNumber(value)){
-// 			
-		// }
-		// if(_.isDate(value)){
-// 			
-		// }
-		
+		if(_.isNumber(value)){
+			$("<input></input>").attr({"type":"text","value": value,"data-model-set": attr,"size":value.length*1.2}).appendTo(ret);
+			return ret;
+		}
+		if(_.isDate(value)){
+			$("<input></input>").attr({"type":"text","value": value,"data-model-set": attr}).appendTo(ret);
+			return ret;
+		}
+		if(_.isObject(value)){
+			if(value instanceof m.Model){
+				ret =  $("<span></span>").text("id: "+ value.id);
+				// ret = $("<span></span>").text("id:").append($("<input></input>").attr({
+					// "type": "text",
+					// "value": value.id,
+					// "data-attribute": attr
+				// }));
+				return ret;
+			}
+			
+			$("<span>").text("Object").appendTo(ret);
+			$("<input></input>").attr({"type": "button","value": "edit"}).appendTo(ret).click(function(){
+				$(ret.find("div.item_content_edit_wrap")[0]).toggle();
+			});
+			$("<div>").addClass("item_content_edit_wrap")
+				.append($("<textarea></textarea>").attr({"data-model-set":attr, "data-attr-type":"html"}))
+				.appendTo(ret);
+			return ret;
+		}
+		console.log("WARN!: Somthing wrong in renderValueItem");
 	},
 	renderArrayValue: function(attr, value){
 		var ret = $("<input></input>");
@@ -263,11 +289,11 @@ m.ModelView.extend({
 		var att = this.context.toJSON();
 		delete att[this.context.idAttribute];
 		nm.set(att);
-		this.$el.find("[data-model-set]").each(function(){
-		    var setter = this.dataset.modelSet;
-		    if (typeof view["set_"+setter] == "function"){ view["set_"+setter]($(this).val(), nm);}
-		    else nm.set(setter,$(this).val());
-		});
+		// this.$el.find("[data-model-set]").each(function(){
+		    // var setter = this.dataset.modelSet;
+		    // if (typeof view["set_"+setter] == "function"){ view["set_"+setter]($(this).val(), nm);}
+		    // else nm.set(setter,$(this).val());
+		// });
 		nm.save({}, {success:function(obj){
 			view.m.setProjection("editor.model", obj);
 		}});
