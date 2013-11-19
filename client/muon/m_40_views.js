@@ -180,7 +180,6 @@ function __insertView__(el,viewType,pack,parentView){
     var _this = this;
     if (!(pack in m.packages)){
         m.requirePack(pack,function(){
-//            console.log("Here");
             __insertView__.apply(_this,[el,viewType,pack,parentView]);
         });
         return;
@@ -299,6 +298,8 @@ function __render__(){
         });
     }
     this.rendered && this.rendered($el);
+    // Render called in the same flow constructor was launched
+    _.defer(_.bind(this.trigger,this),"rendered");
 }
 
 function __renderDebugLabels__(){
@@ -367,11 +368,14 @@ function __removeInnerViews__(){
 }
 
 m.View = __b__.View.extend({
+    one: __b__.View.prototype.once,
     tagName: "div",
     toString: function(){
         return this.package+":"+this.viewType+":"+this.template;
     },
     initialize:function(context,_el_){
+        if (!isFinite(this.__view_index__)) this.__view_index__ = __views__.push(this) - 1
+        else console.log("Already in: "+this.__view_index__);
         this.context = context || {};
         if (_el_ && _el_.nodeName) {
             this.__forcedElement__ = true;
@@ -390,21 +394,32 @@ m.View = __b__.View.extend({
     },
     render: undefined,
     remove: function(){
-        delete this.el.muonView;
+        if (this.__removed) return;
         __removeInnerViews__.call(this);
         if (this.__forcedElement__){
             this.undelegateEvents();
             this.$el.children().remove();
+            $(this.el).removeAttr("data-muon");
         }
-        else this.$el.remove();
+        else this.el.remove();
+        __views__.splice(this.__view_index__,1);
+        delete this.el.muonView;
         this.stopListening();
+        this.__removed = true;
         this.trigger("removed");
     },
     reload: function(){
-        __removeInnerViews__.call(this);
-        __render__.call(this);
-        this.__reset__ && this.__reset__();
-        this.trigger("reloaded");
+        if (this.__reload_flag__) return;
+        this.__reload_flag__ = true;
+        var _this = this;
+        _.defer(function(){
+            __removeInnerViews__.call(_this);
+            __render__.call(_this);
+            _this.__reset__ && _this.__reset__();
+            _this.trigger("reloaded");
+            _this.__reload_flag__ = false;
+        })
+
     },
     pack: function(){return m.packages[this.package];},
     surrogate: function(){return m.packages[this.package].packageObject.surrogate;},
@@ -414,7 +429,8 @@ m.View = __b__.View.extend({
         el.focus();
     },
     trigger: function(){
+        console.log(this.toString(),arguments);
         this.$el.trigger.apply(this.$el,arguments);
-        __b__.View.prototype.trigger.apply(this.$el,arguments);
+        __b__.View.prototype.trigger.apply(this,arguments);
     }
 });

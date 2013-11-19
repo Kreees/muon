@@ -61,6 +61,7 @@ __b__.Model.extend = function _modelExtend(obj,common){
 };
 
 m.Model = __b__.Model.extend({
+        one: __b__.Model.prototype.once,
         idAttribute: "_id",
         initialize: function(data){
             var _this = this;

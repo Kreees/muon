@@ -33,6 +33,7 @@ var __syncNames__ = {},
     __plugins__ = {},
     __history__ = [],
     __forwardHistory__ = [],
+    __views__ = [],
     __currentPackage__ = "",
     __currentPlugin__ = "",
     __onReady__ = [],
@@ -44,6 +45,13 @@ var __syncNames__ = {},
     __collectionBackboneExtend__ = __b__.Collection.extend
 ;
 
+function __getAllViewEls__(){
+    return __views__.map(function(a){return a.el});
+}
+
+window.getAllView = __getAllViewEls__;
+
+window.profiles = __profiles__;
 function __mDeepExtend__(dst,src){
     for(var i in src){
         if (src[i] instanceof Function) { dst[i] = src[i]; continue; }
@@ -129,7 +137,7 @@ var m = _.extend(new    MuonPlugin(""),{
             for(var i in profilesToFilter){
                 templates = templates.concat(__profiles__[profilesToFilter[i]]);
             }
-            $("[data-muon]").filter(templates.join(",")).each(function(){
+            $(__getAllViewEls__()).filter(templates.join(",")).each(function(){
                 if (this.muonView instanceof m.View) this.muonView.reload();
             });
         });
@@ -142,13 +150,13 @@ var m = _.extend(new    MuonPlugin(""),{
                 return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
             });
             profilesToFilter = profilesToFilter.filter(function(p){return m.hasProfile(p);});
+            $("body").removeClass(profile);
             if (profilesToFilter.length == 0) return;
             var templates = [];
             for(var i in profilesToFilter){
                 templates = templates.concat(__profiles__[profilesToFilter[i]]);
             }
-            $("body").removeClass(profile);
-            $("[data-muon]").filter(templates.join(",")).each(function(){
+            $(__getAllViewEls__()).filter(templates.join(",")).each(function(){
                 if (this.muonView instanceof m.View) this.muonView.reload();
             });
         });

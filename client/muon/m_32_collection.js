@@ -8,6 +8,7 @@ __b__.Collection.extend = function(obj,common){
 };
 
 m.Collection = __b__.Collection.extend({
+    one: __b__.Collection.prototype.once,
     initialize: function(models,options){
         options = options || {};
         for(var i in options) this[i] = options[i];
