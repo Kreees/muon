@@ -388,7 +388,14 @@ m.requirePack = function(pack,callback,parentPack){
         function proc_view(){
             if (views.length == 0) return finalize();
             var view_data = views.shift();
-            $(view_data).appendTo(document.head);
+            if (view_data.match(/^<script type='text\/javascript'/) && __serverMode__ == "development"){
+                var id = $(view_data).attr("id");
+                $("<script />").attr({
+                    src: (__staticApp__? "":"/")+"pack_view/"+__currentPackage__+"/"+id+"?muon",
+                    type: "text/javascript"
+                }).appendTo(document.head);
+            }
+            else $(view_data).appendTo(document.head);
             proc_view();
         }
         function finalize() {

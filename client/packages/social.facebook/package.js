@@ -16,11 +16,7 @@ module.exports = {
             });
 
             FB.Event.subscribe('auth.authResponseChange', function(r) {
-                console.log("Here",r.status);
-                if (r.status === 'connected') _this.userAuthorized();
-                else _this.userNotAuthorized();
-            });
-            FB.getLoginStatus(function(r){
+                console.log("Here", r.status);
                 if (r.status === 'connected') _this.userAuthorized();
                 else _this.userNotAuthorized();
             });

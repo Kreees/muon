@@ -8,16 +8,13 @@ m.StackView = m.View.extend({
         if (this.target) this.$target = this.$("#"+this.target);
         else this.$target = this.$el;
         this.$target.addClass('');
-    },
-    __reset__: function(){
         for(var i in this.views){
-            var view = this.views[i];
-            if (view instanceof m.View){
-                view.reload();
-                this.$target.append(view.$el);
-            }
-            if (this.current == i) view.trigger("viewShown");
+            this.$target.append(this.views[i].$el);
+            if (this.current == i) this.views[i].trigger("viewShown");
         }
+    },
+    __unset__: function(){
+        this.$target.html('');
     },
     add: function(alias,view){
         if (alias instanceof m.View){

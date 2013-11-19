@@ -11,12 +11,10 @@ m.LayoutView = m.View.extend({
             this.$el.find("#"+i).append(block.$el);
         }
     },
-    __reset__: function(){
+    __unset__: function(){
+        // Unset method keeps blocks elements and protect them from __removeInnerView__
         for(var i in this.blocks){
-            var block = this.blocks[i];
-            block.reload();
             this.$("#"+i).html("");
-            this.$("#"+i).append(block.$el);
         }
     },
     get: function(alias){
