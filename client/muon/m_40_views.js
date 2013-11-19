@@ -429,7 +429,6 @@ m.View = __b__.View.extend({
         el.focus();
     },
     trigger: function(){
-        console.log(this.toString(),arguments);
         this.$el.trigger.apply(this.$el,arguments);
         __b__.View.prototype.trigger.apply(this,arguments);
     }
