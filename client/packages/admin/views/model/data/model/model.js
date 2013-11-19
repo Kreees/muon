@@ -7,7 +7,9 @@ m.ModelView.extend({
 	},
 	postTemplateRender: function(){
 		var atrs = this.context.attributes;
+		window.view = this;
 		this.originalAttributes = this.context.toJSON();
+		console.log(this.originalAttributes);
 		window.mm = this.context;
 		if(!this.context.get("_id")) this.$("#model_data_save").hide();
 		for(var i in atrs){
@@ -78,27 +80,32 @@ m.ModelView.extend({
 	},
 	
 	setDefaultValue:function(attr, container){
+		if (_.isEqual(this.model.defaults[attr],"")) this.model.set(attr,"");
+		else this.model.set(attr, "  ");
 		this.model.set(attr, this.model.defaults[attr]);
-		if(!container){
-			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
+		console.log(["SET default", attr, this.originalAttributes[attr]]);
+		// if(!container){
+			// container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
 			if(!container){
 				console.log("warning setDefaultValue");
 				return this.renderAttrValue(attr);
 			} 
-		}
-		container.html(this.renderAttrValue(attr));
+		// }
+		// container.html(this.renderAttrValue(attr));
 	},
 	
 	setOriginalValue:function(attr, container){
+		if (_.isEqual(this.originalAttributes[attr],"")) this.model.set(attr,"");
+		else this.model.set(attr, "  ");
 		this.model.set(attr, this.originalAttributes[attr]);
-		// console.log(this.originalAttributes[attr]);
-		if(!container){
-			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
-			if(!container){
-				console.log("warning setDefaultValue");
-				return this.renderAttrValue(attr);
-			} 
-		}
+		console.log(["SET original", attr, this.originalAttributes[attr]]);
+		// if(!container){
+			// container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
+			// if(!container){
+				// console.log("warning setDefaultValue");
+				// return this.renderAttrValue(attr);
+			// } 
+		// }
 		// container.html(this.renderAttrValue(attr));
 	},
 	
@@ -114,12 +121,12 @@ m.ModelView.extend({
 				if(value instanceof m.Model){
 				}else{
 					this["get_"+attr] = function(){
-						console.log([attr, "get", value]);
+						console.log([attr, "get"]);
 					 	var jsn = JSON.stringify(this.model.get(attr),null,'\t'),
 							mch = jsn.match(/\t+/g),
 							l = 1;
 						if(mch) l = mch.length+2;
-						this.$('.attribute_wrap[data-attribute='+attr+'] .item_content_edit_wrap textarea').attr({"rows":(l<20?l:20)});
+						this.$('textarea[data-model-set='+attr+']').attr({"rows":(l<20?l:20)}).removeClass("notvalid");;
 						return jsn;
 					};
 					this["set_"+attr] = function(value){
@@ -128,7 +135,7 @@ m.ModelView.extend({
 						try{
 							obj = JSON.parse(value);
 							$obj.removeClass("notvalid");
-							this.model.set(attr, obj);
+							this.context.set(attr, obj);
 						}catch(err){
 							$obj.addClass("notvalid");
 						}
@@ -170,7 +177,7 @@ m.ModelView.extend({
 				$(ret.find("div.item_content_edit_wrap")[0]).toggle();
 			});
 			$("<div>").addClass("item_content_edit_wrap")
-				.append($("<textarea></textarea>").attr({"data-model-set":attr, "data-attr-type":"html"}))
+				.append($("<textarea></textarea>").attr({"data-model-set":attr}))
 				.appendTo(ret);
 			return ret;
 		}

@@ -1,7 +1,7 @@
 function __setGetElementValue__(view,getter){
     function set(val){
         if (!this.dataset["attrType"]){
-            if (this.tagName == "INPUT" || this.tagName == "SELECT") $(this).val(val);
+            if (this.tagName == "INPUT" || this.tagName == "SELECT" || this.tagName == "TEXTAREA") $(this).val(val);
             else this.innerText = val;
         }
         else if (this.dataset["attrType"] == "text") this.innerText = val;
@@ -10,7 +10,6 @@ function __setGetElementValue__(view,getter){
     }
     if (typeof view["get_"+getter] == "function"){
         var val = view["get_"+getter]();
-        console.log(this);
         if (typeof val == "object" && "then" in val) val.then(set.bind(this));
         else set.call(this,val);
     }
