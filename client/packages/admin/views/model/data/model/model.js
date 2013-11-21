@@ -15,16 +15,203 @@ m.ModelView.extend({
 		for(var i in atrs){
 			if(i == "_id") continue;
 			try{
+				this.initControllers(i);
 				this.renderAttribute(i).appendTo(this.$(".attributes_wrapper"));
+				// this[i+"controller"](i);
 			}catch(err){
 				console.log("WARN!: catch error in rendering attribute "+i);
 			}
 		}
-		// this.$("input.check_null").onclick(function(ev){
-			// console.log("tut")
-			// console.log(["checkbox ", $(ev.currentTarget).attr("data-attribute")]);
-		// });
+	},
+	initControllers: function(attr, flag){
+		var type = this.model.scheme[attr].type;
+		if(type.indexOf("[") == 0){
+			this[attr+"_controller"] = function(attr, cmd, value){
+				if(this.commonController(attr, cmd, value)) return;
+				this.arrayController(attr, cmd, value);
+			}
+			this[attr+"_viewController"] = function(attr, cmd){
+				if(this.commonViewController(attr, cmd)) return;
+				this.arrayViewController(attr, cmd);
+			}
+			var value = this.model.get(attr);
+			for( var i in value){
+				var sub = attr+"_"+i;
+				this.initElementController(sub, type);
+				this[sub+"_viewController"] = this.initElementViewController;
+			}
+			return;
+		}
+		this[attr+"_controller"] = this.commonController;
+		this.initElementController(attr, type);
+		var elemC = this.initElementViewController(attr, type);
+		this[attr+"_viewController"] = function(attr, cmd){
+			if(this.commonViewController(attr, cmd)) return;
+			elemC(attr, cmd);
+		}
+	},
+	initElementController: function(attr, type){
+		switch(type){
+			case "string":
+				break;
+				
+			case "object":
+				this["get_"+attr] = function(){
+					console.log([attr, "get", this]);
+				 	var jsn = JSON.stringify(this.model.get(attr),null,'\t'),
+						mch = jsn.match(/\t+/g),
+						l = 1;
+					if(mch) l = mch.length+2;
+					this.$('textarea[data-model-set='+attr+']').attr({"rows":(l<20?l:20)}).removeClass("notvalid");
+					return jsn;
+				};
+				this["set_"+attr] = function(value){
+					console.log([attr, "set", value]);
+					$obj = this.$('textarea[data-model-set='+attr+']');
+					try{
+						obj = JSON.parse(value);
+						$obj.removeClass("notvalid");
+						this.context.set(attr, obj);
+					}catch(err){
+						$obj.addClass("notvalid");
+					}
+				};
+				return;
+				break;
+			case "number":
+				break;
+			case "date":
+				break;
+			case "model":
+				break;
+		}
+	},
+	commonController: function(attr, cmd, value){
+		switch(cmd){
+			case "null":{
+				if(this.model.scheme[attr]["null-allowed"] == false) return false;
+				this.model.set(attr, null);
+				this[attr+"_viewController"](attr,"null");
+				return true;
+			}
+			case "value":{
+				if(value == undefined) value=null; //TODO new type object
+				this.model.set(attr, value);
+				this[attr+"_viewController"](attr,"value");
+				return true;
+			}
+			case "original":{
+				if (_.isEqual(this.originalAttributes[attr],"")) this.model.set(attr,"");
+				else this.model.set(attr, "  ");
+				this.model.set(attr, this.originalAttributes[attr]);
+				this[attr+"_viewController"](attr,"value");
+				return true;
+			}
+			case "default":{
+				if (_.isEqual(this.model.defaults[attr],"")) this.model.set(attr,"");
+				else this.model.set(attr, "  ");
+				this.model.set(attr, this.model.defaults[attr]);
+				this[attr+"_viewController"](attr,"value");
+				return true;
+			}
+		}
+		return false;
+	},
+	arrayController: function(attr, cmd, value){
+		var attr = this.splitAttr(name);
+		var item = this.splitItem(name);
+		switch(cmd){
+			case "add":{
+				var val = this.model.get(attr);
+				val.push(value);
+				break;
+			}
+			case "remove":{
+				break;
+			}
+			case "move":{
+				break;
+			}				
+		}
+	},
+	commonViewController: function(attr, cmd){
+		switch(cmd){
+			case "null":{
+				this.$(".set_null_wrap input[data-attribute_name="+attr+"]").addClass("green");
+				this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").hide();
+				return true;
+			}
+			case "value":{
+				this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
+				this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+				return true;
+			}
+		}
+	},
+	arrayViewController: function(attr, cmd){
+		switch(cmd){
+			case "maximize":{
+				// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
+				// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+				break;
+			}
+			case "minimize":{
+				// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
+				// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+				break;
+			}
+			case "addItem":{
+				break;
+			}
+			case "removeItem":{
+				break;
+			}
+			case "moveItem":{
+				break;
+			}
+		}
+	},
+	initElementViewController: function(attr, type){
+		switch(type){
+			case "string":
+				break;
+				
+			case "object":
+				return function(attr, cmd){
+							switch(cmd){
+								case "maximize":{
+									// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
+									// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+									break;
+								}
+								case "minimize":{
+									// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
+									// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+									break;
+								}				
+							}
+						}
+				break;
+			case "number":
+				break;
+			case "date":
+				break;
+			case "model":
+				break;
+		}
 		
+		
+		
+	},
+	splitAttr:function(attr){
+		var a = attr.split("_");
+		if(a.length == 2)  return a[0];
+		return null;
+	},
+	splitItem:function(attr){
+		var a = attr.split("_");
+		if(a.length == 2)  return a[1];
+		return null;
 	},
 	renderAttribute: function(attr){
 		var _v = this;
@@ -41,12 +228,15 @@ m.ModelView.extend({
 		this.renderAttrValue(attr, value).appendTo($vwr); 
 		$vwr.appendTo($el);
 		
+		
 		var $nwrp = $("<div></div>").addClass("set_null_wrap").addClass("attr_sets");
 		var $nsetter = $("<input></input>").attr({"type":"button", "data-attribute_name":attr, "value":"null"});
 		if(attr=="src") console.log(scheme["null_allowed"] && scheme["null_allowed"] === true);
 		if(scheme["null_allowed"] && scheme["null_allowed"] === true){}
 		else $nsetter.attr("disabled", "true");
-		$nsetter.click(function(){_v.setNullValue(_a, $vwr);});
+		$nsetter.click(function(ev){
+			_v[_a+"_controller"](_a, "null");
+			});
 		$nsetter.appendTo($nwrp);
 		$nwrp.appendTo($el);
 		
@@ -54,103 +244,47 @@ m.ModelView.extend({
 		var $dsetter = $("<input></input>").attr({"type":"button",	"data-attribute_name":attr, "value":"default"});
 		if(this.context.defaults[attr]){}
 		else $dsetter.attr("disabled", true);
-		$dsetter.click(function(){_v.setDefaultValue(_a, $vwr);});
+		$dsetter.click(function(){
+				_v[_a+"_controller"](_a, "default");
+			});
 		$dsetter.appendTo($dwrp);
 		$dwrp.appendTo($el);
 		
 		var $owrp = $("<div></div>").addClass("set_original_wrap").addClass("attr_sets");
 		var $osetter = $("<input></input>").attr({"type":"button", "data-attribute":attr, "value":"original"});
-		$osetter.click(function(){_v.setOriginalValue(_a, $vwr);});
+		$osetter.click(function(){
+			_v[_a+"_controller"](_a, "original");
+			});
 		$osetter.appendTo($owrp);
 		$owrp.appendTo($el);
 		
   		return $el;
 	},
 	
-	setNullValue:function(attr, container){
-		this.model.set(attr, null);
-		if(!container){
-			container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
-			if(!container){
-				console.log("warning setDefaultValue");
-				return this.renderAttrValue(attr);
-			} 
-		}
-		container.html(this.renderAttrValue(attr));
-	},
-	
-	setDefaultValue:function(attr, container){
-		if (_.isEqual(this.model.defaults[attr],"")) this.model.set(attr,"");
-		else this.model.set(attr, "  ");
-		this.model.set(attr, this.model.defaults[attr]);
-		console.log(["SET default", attr, this.originalAttributes[attr]]);
-		// if(!container){
-			// container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
-			if(!container){
-				console.log("warning setDefaultValue");
-				return this.renderAttrValue(attr);
-			} 
-		// }
-		// container.html(this.renderAttrValue(attr));
-	},
-	
-	setOriginalValue:function(attr, container){
-		if (_.isEqual(this.originalAttributes[attr],"")) this.model.set(attr,"");
-		else this.model.set(attr, "  ");
-		this.model.set(attr, this.originalAttributes[attr]);
-		console.log(["SET original", attr, this.originalAttributes[attr]]);
-		// if(!container){
-			// container = this.$("div.value_wrap[data-attribute_name="+attr+"]");
-			// if(!container){
-				// console.log("warning setDefaultValue");
-				// return this.renderAttrValue(attr);
-			// } 
-		// }
-		// container.html(this.renderAttrValue(attr));
-	},
-	
 	renderAttrValue: function(attr){
 		var value = this.model.get(attr);
+		var type = this.model.scheme[attr].type;
 		if(value != null && value == undefined) {alert("undefined attribute: "+attr); return $("<div>");}
-		else{ if(value == null) return $("<span>").text("null");}
+		// else{ if(value == null) return $("<span>").text("null");}
 		//TODO 
-
 		if(_.isArray(value)) return this.renderArrayValue(attr, value);
-		else{
-			if(_.isObject(value)){
-				if(value instanceof m.Model){
-				}else{
-					this["get_"+attr] = function(){
-						console.log([attr, "get"]);
-					 	var jsn = JSON.stringify(this.model.get(attr),null,'\t'),
-							mch = jsn.match(/\t+/g),
-							l = 1;
-						if(mch) l = mch.length+2;
-						this.$('textarea[data-model-set='+attr+']').attr({"rows":(l<20?l:20)}).removeClass("notvalid");;
-						return jsn;
-					};
-					this["set_"+attr] = function(value){
-						console.log([attr, "set", value]);
-						$obj = this.$('textarea[data-model-set='+attr+']');
-						try{
-							obj = JSON.parse(value);
-							$obj.removeClass("notvalid");
-							this.context.set(attr, obj);
-						}catch(err){
-							$obj.addClass("notvalid");
-						}
-					}
-				}
-			}
-			return this.renderValueItem(attr, value);
-		} 
+		return this.renderItem(attr, value);
 	},
-	
-	renderValueItem:function(attr, value){
+	renderArrayValue: function(attr, value){
+		var ret = $("<div>").addClass("value_array_wrap");
+		for(var i in value){
+			console.log(value[i]);
+			var sub = attr+"_"+i;
+			this.renderItem(sub,value[i]).appendTo(ret);
+			// this.initControllers(sub)
+		}
+		return ret;
+	},
+	renderItem:function(attr, value){
 		var ret = $("<div>").addClass("value_item_wrap");
 		var view = this;
 		if(_.isString(value)){
-			$("<input></input>").attr({"type":"text","value": value,"data-model-set": attr,"size":value.length*1.2}).appendTo(ret);
+			$("<input></input>").attr({"type":"text","data-model-set": attr,"size":value.length*1.2}).appendTo(ret);
 			return ret;
 		}
 		if(_.isNumber(value)){
@@ -164,11 +298,6 @@ m.ModelView.extend({
 		if(_.isObject(value)){
 			if(value instanceof m.Model){
 				ret =  $("<span></span>").text("id: "+ value.id);
-				// ret = $("<span></span>").text("id:").append($("<input></input>").attr({
-					// "type": "text",
-					// "value": value.id,
-					// "data-attribute": attr
-				// }));
 				return ret;
 			}
 			
@@ -181,19 +310,8 @@ m.ModelView.extend({
 				.appendTo(ret);
 			return ret;
 		}
-		console.log("WARN!: Somthing wrong in renderValueItem");
+		console.log("WARN!: Something wrong in renderValueItem");
 	},
-	renderArrayValue: function(attr, value){
-		var ret = $("<input></input>");
-		return ret;
-	},
-	renderVal: function(attr, value){
-		
-	},
-	renderObjVal: function(){
-		
-	},
-	
 	
 	_setObjAttr:function(attr, model){
 		console.log(["SET ATTR ", attr, model]);	
