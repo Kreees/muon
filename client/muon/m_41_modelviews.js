@@ -9,7 +9,8 @@ function __setGetElementValue__(view,getter){
         else $(this).attr(this.dataset["attrType"],val);
     }
     if (typeof view["get_"+getter] == "function"){
-        var val = view["get_"+getter]();
+        var val = view["get_"+getter](this);
+        // Для деферед ответов
         if (typeof val == "object" && "then" in val) val.then(set.bind(this));
         else set.call(this,val);
     }
