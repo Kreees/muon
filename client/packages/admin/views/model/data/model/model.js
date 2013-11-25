@@ -74,7 +74,7 @@ m.ModelView.extend({
 					this.$('textarea[data-model-set='+attr+']').attr({"rows":(l<20?l:20)}).removeClass("notvalid");
 					return jsn;
 				};
-				this["set_"+attr] = function(value){
+				this["set_"+attr] = function(value,el){
 					console.log([attr, "set", value]);
 					$obj = this.$('textarea[data-model-set='+attr+']');
 					try{

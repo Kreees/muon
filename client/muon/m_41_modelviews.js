@@ -61,17 +61,17 @@ m.ModelView = m.View.extend({
         this.$el.find("[data-model-set]").each(function(){
             var setter = this.dataset.modelSet;
             var _this = this;
-            var int = null;
+            var interval = null;
             view.listenTo(view.model,"sync",function(){
                 __setGetElementValue__.call(_this,view,setter);
             });
             if (!(this.dataset.silent || view.silent)){
                 $(this).keyup(function(){
-                    clearTimeout(int);
-                    int = setTimeout(function(){$(_this).trigger("change");},150);
+                    clearTimeout(interval);
+                    interval = setTimeout(function(){$(_this).trigger("change");},150);
                 });
                 $(this).change(function(){
-                    if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val());
+                    if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
                     else view.model.set(setter,$(this).val());
                 });
             }
@@ -94,7 +94,7 @@ m.ModelView = m.View.extend({
         var view = this;
         this.$el.find("[data-model-set]").each(function(){
             var setter = this.dataset.modelSet;
-            if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val());
+            if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
             else view.model.set(setter,$(this).val(),{silent: true});
         });
         return view.model.save();
