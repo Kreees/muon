@@ -35,11 +35,11 @@ m.ModelView.extend({
 				if(this.commonViewController(attr, cmd)) return;
 				this.arrayViewController(attr, cmd, value);
 			}
+			this.initElementController(attr, type, true);
 			var value = this.model.get(attr);
-			console.log(["value", value])
 			for( var i in value){
 				var sub = attr+"_"+i;
-				this.initElementController(sub, type);
+				//TODO 
 				this[sub+"_viewController"] = this.initElementViewController(sub, type);
 			}
 			return;
@@ -52,42 +52,43 @@ m.ModelView.extend({
 			elemC(attr, cmd);
 		}
 	},
-	initElementController: function(attr, type){
-		var a_name = this.splitAttr(attr);
-		var index = this.splitIndex(attr);
-		if(!a_name) a_name=attr; 
+	initElementController: function(attr, type, flag){
+		console.log(["init element", attr, type]);
+		// var a_name = this.splitAttr(attr);
+		// var index = this.splitIndex(attr);
 		switch(type){
 			case "string":
 				break;
 				
 			case "object":
-				console.log(["init element", attr, type]);
-				this["get_"+attr] = function(){
-					console.log([attr, "get", this]);
-				 	var jsn;
-				 	var value = this.model.get(a_name);
-			 		if(index != undefined && value) jsn = JSON.stringify(value[index],null,'\t');
-			 		else jsn = JSON.stringify(value, null, '\t')
+				
+				this["get_"+attr] = function(el){
+					console.log([attr, "get", el]);
+					var jsn;
+				 	var value = this.model.get(attr);
+				 	var sub = this.toNum(el.dataset["modelSub"]);
+					if(sub != undefined){ //TODO for many
+						jsn = JSON.stringify(value[sub], null, '\t');
+					}else jsn = JSON.stringify(value, null, '\t')
 					var mch = jsn.match(/\t+/g),
 						l = 1;
 					if(mch) l = mch.length+2;
 					this.$('textarea[data-model-set='+attr+']').attr({"rows":(l<20?l:20)}).removeClass("notvalid");
 					return jsn;
 				};
-				this["set_"+attr] = function(value,el){
-					console.log([attr, "set", value]);
-					$obj = this.$('textarea[data-model-set='+attr+']');
+				this["set_"+attr] = function(value, el){
+					console.log([attr, "set", value, el]);
+					var sub = this.toNum(el.dataset["modelSub"]);
 					try{
 						obj = JSON.parse(value);
-						$obj.removeClass("notvalid");
-						if(index == undefined) this.model.set(a_name, obj);
-						else{
-							var val = this.model.get(a_name);
-							val[index] = obj;
-							this.model.set(a_name, val);
-						}
+						$(el).removeClass("notvalid");
+						if(sub != undefined){
+							var val = this.model.get(attr);
+							val[sub] = obj;
+							this.model.set(attr, val);
+						}else this.model.set(attr, obj);
 					}catch(err){
-						$obj.addClass("notvalid");
+						$(el).addClass("notvalid");
 					}
 				};
 				return;
@@ -100,19 +101,22 @@ m.ModelView.extend({
 			case "model":
 				break;
 		}
-		if(index != undefined){
-			console.log(["init element", attr, type]);
-			this["get_"+attr] = function(){
+		if(flag){
+			this["get_"+attr] = function(el){
 				console.log([attr, "get"]);
-				var value = this.model.get(a_name);
-				if(value) return value[index];
+				var value = this.model.get(attr);
+				var sub = this.toNum(el.dataset["modelSub"]);
+				if(value && sub != undefined) return value[sub];
 				else return "";
 			}
-			this["set_"+attr] = function(value){
+			this["set_"+attr] = function(value, el){
 				console.log([attr, "set", value]);
-				var val = this.model.get(a_name);
-				val[index] = value;
-				this.model.set(a_name, val);
+				var val = this.model.get(attr);
+				var sub = this.toNum(el.dataset["modelSub"]);
+				if(value && sub != undefined){
+					val[sub] = value;
+					this.model.set(attr, val);
+				}
 			}
 		}
 	},
@@ -169,7 +173,7 @@ m.ModelView.extend({
 					var l = val.push(value);
 					var sub = attr+"_"+(l-1);
 					console.log(["add", sub, type, value]);
-					this.initElementController(sub, type);
+					// this.initElementController(sub, type);
 					this[sub+"_viewController"] = this.initElementViewController(sub, type);
 					this[attr+"_viewController"](sub, "addItem", value);
 					this.model.set(val)
@@ -251,7 +255,7 @@ m.ModelView.extend({
 				break;
 				
 			case "object":
-				return function(attr, cmd){
+				return function(attr, cmd, value){
 							switch(cmd){
 								case "maximize":{
 									this.$(".element_wrap[data-attribute_name="+attr+"]").show();
@@ -260,6 +264,9 @@ m.ModelView.extend({
 								case "minimize":{
 									this.$(".element_wrap[data-attribute_name="+attr+"]").hide();
 									break;
+								}
+								case "resize":{
+									
 								}				
 							}
 						}
@@ -286,6 +293,12 @@ m.ModelView.extend({
 			var num = Number(a[1]);
 			if(!isNaN(num)) return num;
 		} 
+		return undefined;
+	},
+	toNum:function(str){
+		if(!str) return undefined;
+		var num = Number(str);
+		if(!isNaN(num)) return num;
 		return undefined;
 	},
 	renderAttribute: function(attr){
@@ -348,11 +361,11 @@ m.ModelView.extend({
 	renderArrayValue: function(attr, value){
 		var _v = this;
 		var _a = attr;
-		var ret = $("<div>").addClass("array_wrap").attr({"data-attribute_name":attr});
+		var ret = $("<div>").addClass("array_wrap nonzero_wrap").attr({"data-attribute_name":attr});
 		for(var i in value){
 			var sub = attr+"_"+i;
 			var $sub = $("<div>").addClass("array_element_wrap").attr({"data-attribute_name":sub});
-			this.renderElement(sub, value[i]).appendTo($sub);
+			this.renderElement(attr, value[i], i).appendTo($sub);
 			var $rmv =$("<input></input>").attr({"type":"button", "data-attribute_name":sub, "value":"remove"});
 			$rmv.click(function(){
 				console.log(sub);
@@ -369,19 +382,26 @@ m.ModelView.extend({
 		$add.appendTo(ret);
 		return ret;
 	},
-	renderElement:function(attr, value){
-		var ret = $("<div>").addClass("element_wrap").attr({"data-attribute_name":attr});
+	renderElement:function(attr, value, sub){
+		var ret = $("<div>").addClass("element_wrap nonzero_wrap").attr({"data-attribute_name":attr});
 		var view = this;
+		
 		if(_.isString(value)){
-			$("<input></input>").attr({"type":"text","data-model-set": attr,"size":value.length*1.2}).appendTo(ret);
+			var $el = $("<input></input>").attr({"type":"text","data-model-set": attr,"size":value.length*1.2});
+			if(sub) $el.attr("data-model-sub", sub);
+			$el.appendTo(ret);
 			return ret;
 		}
 		if(_.isNumber(value)){
-			$("<input></input>").attr({"type":"text","value": value,"data-model-set": attr,"size":value.length*1.2}).appendTo(ret);
+			var $el = $("<input></input>").attr({"type":"text","value": value,"data-model-set": attr,"size":value.length*1.2});
+			if(sub) $el.attr("data-model-sub", sub);
+			$el.appendTo(ret);
 			return ret;
 		}
 		if(_.isDate(value)){
-			$("<input></input>").attr({"type":"text","value": value,"data-model-set": attr}).appendTo(ret);
+			var $el = $("<input></input>").attr({"type":"text","value": value,"data-model-set": attr});
+			if(sub) $el.attr("data-model-sub", sub);
+			$el.appendTo(ret);
 			return ret;
 		}
 		if(_.isObject(value)){
@@ -394,9 +414,10 @@ m.ModelView.extend({
 			$("<input></input>").attr({"type": "button","value": "edit"}).appendTo(ret).click(function(){
 				$(ret.find("div.item_content_edit_wrap")[0]).toggle();
 			});
-			$("<div>").addClass("item_content_edit_wrap")
-				.append($("<textarea></textarea>").attr({"data-model-set":attr}))
-				.appendTo(ret);
+			var $el = $("<div>").addClass("item_content_edit_wrap")
+				.append($("<textarea></textarea>").attr({"data-model-set":attr}));
+			if(sub) $el.attr("data-model-sub", sub);
+			$el.appendTo(ret);
 			return ret;
 		}
 		console.log("WARN!: Something wrong in renderValueItem");
