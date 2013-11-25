@@ -250,23 +250,32 @@ function __procProfiledViews__(pack){
     });
 }
 
-m.__pendingPackages__ = {};
+var __pendingPackages__ = {};
 
 m.requirePack = function(pack,callback,parentPack){
-    if (pack in m.__pendingPackages__){
-        callback && m.__pendingPackages__[pack].push(callback);
-        return fallback();
+    if (pack in __pendingPackages__){
+        callback && __pendingPackages__[pack].push(callback);
+        return fallback;
     }
-    callback && (m.__pendingPackages__[pack] = [callback]);
-    callback = function(arg){
-        if (m.__pendingPackages__[pack] instanceof Array)
-            for(var i = 0, len = m.__pendingPackages__[pack].length; i < len; i++)
-                if (typeof m.__pendingPackages__[pack][i] == "function")
-                    try{m.__pendingPackages__[pack][i](arg)} catch(e){}
-    }
+
     var fallbackPath = "";
     var pluginName = pack.substr(0,pack.lastIndexOf(":"));
-    var route = null, fullRoute = null;
+    var route,fullRoute,packObject;
+
+    callback && (__pendingPackages__[pack] = [callback]);
+    callback = function(arg){
+        packObject.inited = true;
+        if (__pendingPackages__[pack] instanceof Array){
+            while(__pendingPackages__[pack].length != 0){
+                if (typeof __pendingPackages__[pack][0] == "function"){
+                    try{__pendingPackages__[pack][0](arg)
+                    } catch(e){}
+                }
+                __pendingPackages__[pack].splice(0,1);
+            }
+            delete __pendingPackages__[pack];
+        }
+    }
 
 
     _.defer(function(){
@@ -314,11 +323,11 @@ m.requirePack = function(pack,callback,parentPack){
             mod.useAppView = mod.useAppView || true;
             if (mod.useAppView){
                 var appViewClass = null;
-                if (m.packages[pack].views.stack && m.packages[pack].views.stack.application)
-                    appViewClass = m.packages[pack].views.stack.application;
+                if (packObject.views.stack && m.packages[pack].views.stack.application)
+                    appViewClass = packObject.views.stack.application;
                 else
                     appViewClass = m.ApplicationStackView.extend({package:pack});
-                var appView = m.packages[pack].appView = new appViewClass;
+                var appView = packObject.appView = new appViewClass;
                 if (__applicationView__ == appView) appView.$el.appendTo("body");
                 else {
                     if (m.packages[parentPack]
@@ -346,14 +355,11 @@ m.requirePack = function(pack,callback,parentPack){
         __currentPackage__ = pack;
         __currentPlugin__ = pluginName;
 
-        var packObject = new m.MuonPackage(pack);
         var pluginObject = __registerPlugin__(__currentPlugin__);
-
         var mod = m.packageInitData[pack].package;
-        m.packages[pack] = packObject;
-        m.packages[pack].packageObject = mod;
-        m.packages[pack].translation = m.packageInitData[pack].translation;
-        m.packages[pack].parentPack = m.packages[parentPack||""];
+        packObject.packageObject = mod;
+        packObject.translation = m.packageInitData[pack].translation;
+        packObject.parentPack = m.packages[parentPack||""];
         mod.surrogate = mod.surrogate || {};
         mod.surrogate.m = __plugins__[pluginName];
         mod.surrogate.cfg = m.packageInitData[pack].cfg;
@@ -388,7 +394,14 @@ m.requirePack = function(pack,callback,parentPack){
         function proc_view(){
             if (views.length == 0) return finalize();
             var view_data = views.shift();
-            $(view_data).appendTo(document.head);
+            if (view_data.match(/^<script type='text\/javascript'/) && __serverMode__ == "development"){
+                var id = $(view_data).attr("id");
+                $("<script />").attr({
+                    src: (__staticApp__? "":"/")+"pack_view/"+__currentPackage__+"/"+id+"?muon",
+                    type: "text/javascript"
+                }).appendTo(document.head);
+            }
+            else $(view_data).appendTo(document.head);
             proc_view();
         }
         function finalize() {
@@ -405,8 +418,14 @@ m.requirePack = function(pack,callback,parentPack){
     }
 
     function packLoaded(){
-        if (m.packages[pack] instanceof m.MuonPackage) postProcLoadedPackage();
-        else initPack();
+        if (m.packages[pack] instanceof m.MuonPackage) {
+            packObject = m.packages[pack];
+            postProcLoadedPackage();
+        }
+        else {
+            m.packages[pack] = packObject = new m.MuonPackage(pack);
+            initPack();
+        }
     }
 
     return fallback;

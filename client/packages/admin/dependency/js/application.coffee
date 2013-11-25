@@ -13,7 +13,7 @@ m.UserModelView = m.ModelView.extend {
       ,=>
         dfd = @dfd
         delete this.dfd
-        dfd.resolve('/img/mystery-man.jpg')
+        dfd.resolve('/pack_src/MUON:admin/mystery-man.jpg?muon')
       );
       return @dfd.promise();
 }

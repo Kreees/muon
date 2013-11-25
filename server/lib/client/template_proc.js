@@ -4,8 +4,8 @@ var app = m.app,
 ;
 
 var pre_wrapper = {
-    "less": "#{profile} [data-pack='#{pack}'][data-muon$='#{id}'] {position: relative;#{data}}",
-    "css": "#{profile} [data-pack='#{pack}'][data-muon$='#{id}'] {position: relative;#{data}}"
+    "less": "#{profile} [data-pack='#{pack}'][data-muon$='#{id}'] {& {position: relative;} #{data}}",
+    "css": "#{profile} [data-pack='#{pack}'][data-muon$='#{id}'] {& {position: relative;} #{data}}"
 };
 
 //var post_wrapper = {
@@ -19,8 +19,8 @@ var pre_wrapper = {
 //}
 
 var post_wrapper = {
-    "less": "<style data-pack='#{pack}'>#{data}</style>",
-    "css": "<style data-pack='#{pack}'>#{data}</style>",
+    "less": "<!-- #{pack}:#{name} --><style data-pack='#{pack}'>#{data}</style>",
+    "css": "<!-- #{pack}:#{name} --><style data-pack='#{pack}'>#{data}</style>",
     "js": "<script type='text/javascript' data-pack='#{pack}' id='#{id}'>#{data}</script>",
     "coffee": "<script type='text/javascript' data-pack='#{pack}' id='#{id}'>#{data}</script>",
     "jade": "<script #{profile} data-pack='#{pack}' type='text/muon-template' id='#{id}_template'>#{data}</script>",

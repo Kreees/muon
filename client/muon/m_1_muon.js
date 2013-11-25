@@ -23,6 +23,7 @@ var __MuonPackBase__ = {
     viewsUnnamed: {},
     routerPath: null,
     loaded: false,
+    inited: false,
     translation: {}
 };
 
@@ -33,7 +34,7 @@ var __syncNames__ = {},
     __plugins__ = {},
     __history__ = [],
     __forwardHistory__ = [],
-    __views__ = [],
+    __views__ = {},
     __currentPackage__ = "",
     __currentPlugin__ = "",
     __onReady__ = [],
@@ -46,12 +47,15 @@ var __syncNames__ = {},
 ;
 
 function __getAllViewEls__(){
-    return __views__.map(function(a){return a.el});
+    var ret = [];
+    for(var i in __views__)
+        ret.push(__views__[i].el)
+    return ret;
 }
 
 window.getAllView = __getAllViewEls__;
-
 window.profiles = __profiles__;
+
 function __mDeepExtend__(dst,src){
     for(var i in src){
         if (src[i] instanceof Function) { dst[i] = src[i]; continue; }
@@ -86,6 +90,8 @@ _.extend(MuonPlugin.prototype,{
 
 var m = _.extend(new    MuonPlugin(""),{
     packageInitData: {},
+    // Delete
+    __views__: __views__,
     MuonPackage: MuonPackage,
     MuonPlugin: MuonPlugin,
     isDebug: function(){
@@ -122,24 +128,22 @@ var m = _.extend(new    MuonPlugin(""),{
     getLanguage: function(){ return document.getElementsByTagName("html")[0].lang || __defaultLang__; },
     setProfile: function(profile,flag){
         if (profile == "muon") return;
-        _.defer(function(){
-            if (flag === false){ return m.removeProfile(profile); }
-            if (m.hasProfile(profile)) return;
-            var className = document.body.className.split(/\s+/);
-            className = className.concat(profile.split("."));
-            document.body.className = className.sort().join(" ");
-            var profilesToFilter = _.keys(__profiles__).filter(function(p){
-                return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
-            });
-            profilesToFilter = profilesToFilter.filter(function(p){return m.hasProfile(p);});
-            if (profilesToFilter.length == 0) return;
-            var templates = [];
-            for(var i in profilesToFilter){
-                templates = templates.concat(__profiles__[profilesToFilter[i]]);
-            }
-            $(__getAllViewEls__()).filter(templates.join(",")).each(function(){
-                if (this.muonView instanceof m.View) this.muonView.reload();
-            });
+        if (flag === false){ return m.removeProfile(profile); }
+        if (m.hasProfile(profile)) return;
+        var className = document.body.className.split(/\s+/);
+        className = className.concat(profile.split("."));
+        document.body.className = className.sort().join(" ");
+        var profilesToFilter = _.keys(__profiles__).filter(function(p){
+            return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
+        });
+        profilesToFilter = profilesToFilter.filter(function(p){return m.hasProfile(p);});
+        if (profilesToFilter.length == 0) return;
+        var templates = [];
+        for(var i in profilesToFilter){
+            templates = templates.concat(__profiles__[profilesToFilter[i]]);
+        }
+        $(__getAllViewEls__()).filter(templates.join(",")).each(function(){
+            if (this.muonView instanceof m.View) this.muonView.reload();
         });
     },
     removeProfile: function(profile){

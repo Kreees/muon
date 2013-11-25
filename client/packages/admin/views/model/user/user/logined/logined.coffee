@@ -1,1 +1,1 @@
-m.ModelView.extend {}
+m.UserModelView.extend {}
