@@ -20,3 +20,10 @@ Press Ctrl-C to shut down
 127.0.0.1 - - [Fri, 15 Nov 2013 10:25:44 GMT] "GET /admin HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11"
 127.0.0.1 - - [Fri, 15 Nov 2013 10:25:45 GMT] "GET /muon.js HTTP/1.1" 200 - "http://localhost:8000/admin" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11"
 127.0.0.1 - - [Fri, 15 Nov 2013 10:25:45 GMT] "GET /pack/application?muon&lang=en&m_callback=mpackcallback1384511145122&_=1384511145078 HTTP/1.1" 404 - "http://localhost:8000/admin" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11"
+Server started in development mode, listening on 0.0.0.0:8000 address.
+Press Ctrl-C to shut down
+--------------------------- SERVER RELOADED ------------------------------
+127.0.0.1 - - [Fri, 22 Nov 2013 11:15:01 GMT] "GET /admin/data HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11"
+127.0.0.1 - - [Fri, 22 Nov 2013 11:15:01 GMT] "GET /pack/application?muon&lang=en&m_callback=mpackcallback1385118901515&_=1385118901462 HTTP/1.1" 404 - "http://localhost:8000/admin/data" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11"
+Server started in development mode, listening on 0.0.0.0:8000 address.
+Press Ctrl-C to shut down

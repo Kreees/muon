@@ -25,20 +25,22 @@ m.ModelView.extend({
 	},
 	initControllers: function(attr, flag){
 		var type = this.model.scheme[attr].type;
-		if(type.indexOf("[") == 0){
+		if(type.match(/\[|\]/g)){
+			type = type.replace(/\[|\]/g,"");
 			this[attr+"_controller"] = function(attr, cmd, value){
 				if(this.commonController(attr, cmd, value)) return;
 				this.arrayController(attr, cmd, value);
 			}
-			this[attr+"_viewController"] = function(attr, cmd){
+			this[attr+"_viewController"] = function(attr, cmd, value){
 				if(this.commonViewController(attr, cmd)) return;
-				this.arrayViewController(attr, cmd);
+				this.arrayViewController(attr, cmd, value);
 			}
 			var value = this.model.get(attr);
+			console.log(["value", value])
 			for( var i in value){
 				var sub = attr+"_"+i;
 				this.initElementController(sub, type);
-				this[sub+"_viewController"] = this.initElementViewController;
+				this[sub+"_viewController"] = this.initElementViewController(sub, type);
 			}
 			return;
 		}
@@ -51,15 +53,22 @@ m.ModelView.extend({
 		}
 	},
 	initElementController: function(attr, type){
+		var a_name = this.splitAttr(attr);
+		var index = this.splitIndex(attr);
+		if(!a_name) a_name=attr; 
 		switch(type){
 			case "string":
 				break;
 				
 			case "object":
+				console.log(["init element", attr, type]);
 				this["get_"+attr] = function(){
 					console.log([attr, "get", this]);
-				 	var jsn = JSON.stringify(this.model.get(attr),null,'\t'),
-						mch = jsn.match(/\t+/g),
+				 	var jsn;
+				 	var value = this.model.get(a_name);
+			 		if(index != undefined && value) jsn = JSON.stringify(value[index],null,'\t');
+			 		else jsn = JSON.stringify(value, null, '\t')
+					var mch = jsn.match(/\t+/g),
 						l = 1;
 					if(mch) l = mch.length+2;
 					this.$('textarea[data-model-set='+attr+']').attr({"rows":(l<20?l:20)}).removeClass("notvalid");
@@ -71,19 +80,40 @@ m.ModelView.extend({
 					try{
 						obj = JSON.parse(value);
 						$obj.removeClass("notvalid");
-						this.context.set(attr, obj);
+						if(index == undefined) this.model.set(a_name, obj);
+						else{
+							var val = this.model.get(a_name);
+							val[index] = obj;
+							this.model.set(a_name, val);
+						}
 					}catch(err){
 						$obj.addClass("notvalid");
 					}
 				};
 				return;
 				break;
+				
 			case "number":
 				break;
 			case "date":
 				break;
 			case "model":
 				break;
+		}
+		if(index != undefined){
+			console.log(["init element", attr, type]);
+			this["get_"+attr] = function(){
+				console.log([attr, "get"]);
+				var value = this.model.get(a_name);
+				if(value) return value[index];
+				else return "";
+			}
+			this["set_"+attr] = function(value){
+				console.log([attr, "set", value]);
+				var val = this.model.get(a_name);
+				val[index] = value;
+				this.model.set(a_name, val);
+			}
 		}
 	},
 	commonController: function(attr, cmd, value){
@@ -118,18 +148,47 @@ m.ModelView.extend({
 		return false;
 	},
 	arrayController: function(attr, cmd, value){
-		var attr = this.splitAttr(name);
-		var item = this.splitItem(name);
 		switch(cmd){
-			case "add":{
+			case "addItem":{
 				var val = this.model.get(attr);
-				val.push(value);
+				if(value) val.push(value);
+				else{
+					
+					var type = this.model.scheme[attr].type.replace(/\[|\]/g,"");
+					switch(type){
+						case "string":value = new String(); break;
+						case "object": value = new Object(); break;
+						case "number":
+							value = new Number();
+							break;
+						case "date":
+							break;
+						case "model":
+							break;
+					}
+					var l = val.push(value);
+					var sub = attr+"_"+(l-1);
+					console.log(["add", sub, type, value]);
+					this.initElementController(sub, type);
+					this[sub+"_viewController"] = this.initElementViewController(sub, type);
+					this[attr+"_viewController"](sub, "addItem", value);
+					this.model.set(val)
+				}
 				break;
 			}
-			case "remove":{
+			case "removeItem":{
+				console.log(["remove", attr])
+				var a_name = this.splitAttr(attr);
+				var index = this.splitIndex(attr);
+				var val = this.model.get(a_name);
+				val.splice(index,1);
+				this[a_name+"_viewController"](attr, "removeItem");
 				break;
 			}
-			case "move":{
+			case "moveItem":{
+				var a_name = this.splitAttr(attr);
+				var index = this.splitIndex(attr);
+				
 				break;
 			}				
 		}
@@ -138,32 +197,47 @@ m.ModelView.extend({
 		switch(cmd){
 			case "null":{
 				this.$(".set_null_wrap input[data-attribute_name="+attr+"]").addClass("green");
-				this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").hide();
+				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap").hide();
 				return true;
 			}
 			case "value":{
 				this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
-				this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap").show();
 				return true;
 			}
 		}
 	},
-	arrayViewController: function(attr, cmd){
+	arrayViewController: function(attr, cmd, value){
 		switch(cmd){
 			case "maximize":{
-				// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
-				// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+				this.$(".array_wrap[data-attribute_name="+attr+"]").show();
 				break;
 			}
 			case "minimize":{
-				// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
-				// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+				this.$(".array_wrap[data-attribute_name="+attr+"]").hide();
 				break;
 			}
 			case "addItem":{
+				var _v = this;
+				var _a = this.splitAttr(attr);
+				console.log(["view Controller", attr, value]);
+				var $ret = this.$(".array_wrap[data-attribute_name="+_a+"]");
+				var sub = attr;
+				var $sub = $("<div>").addClass("array_element_wrap").attr({"data-attribute_name":sub});
+				this.renderElement(sub, value).appendTo($sub);
+				var $rmv =$("<input></input>").attr({"type":"button", "data-attribute_name":sub, "value":"remove"});
+				$rmv.click(function(){
+					_v[_a+"_controller"](sub, "removeItem");
+				});
+				$rmv.appendTo($sub);
+				$sub.appendTo($ret);
 				break;
 			}
 			case "removeItem":{
+				var _a = this.splitAttr(attr);
+				console.log(this.$(".array_element_wrap[data-attribute_name="+attr+"]"));
+				this.$(".array_element_wrap[data-attribute_name="+attr+"]").remove();
+				var $ret = this.$(".array_wrap[data-attribute_name="+_a+"] ");
 				break;
 			}
 			case "moveItem":{
@@ -180,13 +254,11 @@ m.ModelView.extend({
 				return function(attr, cmd){
 							switch(cmd){
 								case "maximize":{
-									// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
-									// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+									this.$(".element_wrap[data-attribute_name="+attr+"]").show();
 									break;
 								}
 								case "minimize":{
-									// this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
-									// this.$(".value_wrap[data-attribute_name="+attr+"] .value_item_wrap").show();
+									this.$(".element_wrap[data-attribute_name="+attr+"]").hide();
 									break;
 								}				
 							}
@@ -208,10 +280,13 @@ m.ModelView.extend({
 		if(a.length == 2)  return a[0];
 		return null;
 	},
-	splitItem:function(attr){
+	splitIndex:function(attr){
 		var a = attr.split("_");
-		if(a.length == 2)  return a[1];
-		return null;
+		if(a.length == 2){
+			var num = Number(a[1]);
+			if(!isNaN(num)) return num;
+		} 
+		return undefined;
 	},
 	renderAttribute: function(attr){
 		var _v = this;
@@ -242,7 +317,7 @@ m.ModelView.extend({
 		
 		var $dwrp = $("<div></div>").addClass("set_default_wrap").addClass("attr_sets");
 		var $dsetter = $("<input></input>").attr({"type":"button",	"data-attribute_name":attr, "value":"default"});
-		if(this.context.defaults[attr]){}
+		if(this.model.defaults[attr]){}
 		else $dsetter.attr("disabled", true);
 		$dsetter.click(function(){
 				_v[_a+"_controller"](_a, "default");
@@ -268,20 +343,34 @@ m.ModelView.extend({
 		// else{ if(value == null) return $("<span>").text("null");}
 		//TODO 
 		if(_.isArray(value)) return this.renderArrayValue(attr, value);
-		return this.renderItem(attr, value);
+		return this.renderElement(attr, value);
 	},
 	renderArrayValue: function(attr, value){
-		var ret = $("<div>").addClass("value_array_wrap");
+		var _v = this;
+		var _a = attr;
+		var ret = $("<div>").addClass("array_wrap").attr({"data-attribute_name":attr});
 		for(var i in value){
-			console.log(value[i]);
 			var sub = attr+"_"+i;
-			this.renderItem(sub,value[i]).appendTo(ret);
-			// this.initControllers(sub)
+			var $sub = $("<div>").addClass("array_element_wrap").attr({"data-attribute_name":sub});
+			this.renderElement(sub, value[i]).appendTo($sub);
+			var $rmv =$("<input></input>").attr({"type":"button", "data-attribute_name":sub, "value":"remove"});
+			$rmv.click(function(){
+				console.log(sub);
+				_v[_a+"_controller"](sub, "removeItem");
+			});
+			$rmv.appendTo($sub);
+			$sub.appendTo(ret);
 		}
+		var $add = $("<input></input>").attr({"type":"button", "data-attribute_name":attr, "value":"add"});
+		$add.click(function(){
+			console.log(["add"]);
+			_v[_a+"_controller"](_a, "addItem");
+			});
+		$add.appendTo(ret);
 		return ret;
 	},
-	renderItem:function(attr, value){
-		var ret = $("<div>").addClass("value_item_wrap");
+	renderElement:function(attr, value){
+		var ret = $("<div>").addClass("element_wrap").attr({"data-attribute_name":attr});
 		var view = this;
 		if(_.isString(value)){
 			$("<input></input>").attr({"type":"text","data-model-set": attr,"size":value.length*1.2}).appendTo(ret);
@@ -322,7 +411,7 @@ m.ModelView.extend({
         if (!$subElement.length) return;
         $subElement.each(function(){
         	 // console.log(["sub element ", $(this).val()]);
-            var attrsList = this.dataset["modelSetSub"].split(".");
+            var attrsList = this.dataset[" "].split(".");
             // console.log(attrsList);
            	attrsList.shift();
             var container = attrValue;
