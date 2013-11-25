@@ -78,15 +78,22 @@ module.exports = function (req,res){
             }
             var file = files.shift();
             var extension = file.substr(file.lastIndexOf(".")+1);
+            var tmp_file = file.substr(0,file.lastIndexOf("/")+1)+"temp."+file.substr(file.lastIndexOf("/")+1)+"."+extension;
             function data_rendered(e,data){
+                if (fs.existsSync(tmp_file)) fs.unlinkSync(tmp_file);
                 if (e){return proc_file();}
                 if (["coffee","js"].indexOf(extension) != -1) dependency.js.push(data);
-                else dependency.css.push(data);
+                if (["less","css"].indexOf(extension) != -1) dependency.css.push(data);
                 proc_file();
             }
-            if (["coffee","less"].indexOf(extension) != -1){
+            if ( "coffee" == extension){
                 m.app.set("views",package_dir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
                 m.app.render(file.substr(file.lastIndexOf("/")+1),{},data_rendered);
+            }
+            else if (["css","less"].indexOf(extension) != -1){
+                fs.writeFileSync(tmp_file,"[data-pack='"+full_pack_name+"'] {"+fs.readFileSync(file,"utf-8")+"\n}");
+                m.app.set("views",package_dir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
+                m.app.render(tmp_file,{},data_rendered);
             }
             else fs.readFile(file,"utf8",data_rendered);
         }

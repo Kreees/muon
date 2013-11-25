@@ -4,7 +4,7 @@ module.exports = {
     ],
     ready: function(next){
         var _this = this;
-        if (localStorage["FB_authorized"] != "false") this.userAuthorized();
+        if (localStorage["FB_authorized"] == "true") this.userAuthorized();
         else this.userNotAuthorized();
         window.fbAsyncInit = function(){
             FB.init({
@@ -16,11 +16,11 @@ module.exports = {
             });
 
             FB.Event.subscribe('auth.authResponseChange', function(r) {
-                console.log("Here", r.status);
+                next();
                 if (r.status === 'connected') _this.userAuthorized();
                 else _this.userNotAuthorized();
             });
-            next();
+
 
         }
         $("<script src='//connect.facebook.net/en_US/all.js' />").appendTo(document.body);
@@ -30,10 +30,11 @@ module.exports = {
         userAuthorized: function(){
             if (m.hasProfile("FB_authorized")) return;
             m.removeProfile("FB_not_authorized");
-            m.setProfile("FB_authorized")
+            m.setProfile("FB_authorized");
             localStorage["FB_authorized"] = true;
         },
         userNotAuthorized: function(){
+
             if (m.hasProfile("FB_not_authorized")) return;
             m.removeProfile("FB_authorized");
             m.setProfile("FB_not_authorized");

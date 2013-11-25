@@ -179,7 +179,7 @@ function __getParentMuonView__(el){
 function __insertView__(el,viewType,pack,parentView){
     var _this = this;
     if (_this.__removed__) return;
-    if (!(pack in m.packages)){
+    if (!(m.packages[pack] && m.packages[pack].inited)){
         m.requirePack(pack,function(){
             __insertView__.apply(_this,[el,viewType,pack,parentView]);
         });

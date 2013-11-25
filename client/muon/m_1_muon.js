@@ -23,6 +23,7 @@ var __MuonPackBase__ = {
     viewsUnnamed: {},
     routerPath: null,
     loaded: false,
+    inited: false,
     translation: {}
 };
 
