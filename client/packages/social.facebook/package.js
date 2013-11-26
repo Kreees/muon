@@ -34,7 +34,6 @@ module.exports = {
             localStorage["FB_authorized"] = true;
         },
         userNotAuthorized: function(){
-
             if (m.hasProfile("FB_not_authorized")) return;
             m.removeProfile("FB_authorized");
             m.setProfile("FB_not_authorized");

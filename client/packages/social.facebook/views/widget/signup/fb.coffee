@@ -1,8 +1,8 @@
 m.WidgetView.extend {
   events: {
-    "click button": "try"
+    "click button": "try_login"
   }
-  try: ->
+  "try_login": ->
     FB.login((r)=>
       if r.status == "connected"
         @trigger("connected",r.authReponse)
