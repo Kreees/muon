@@ -261,10 +261,8 @@ m.requirePack = function(pack,callback,parentPack){
     var fallbackPath = "";
     var pluginName = pack.substr(0,pack.lastIndexOf(":"));
     var route,fullRoute,packObject;
-
     callback && (__pendingPackages__[pack] = [callback]);
     callback = function(arg){
-        packObject.inited = true;
         if (__pendingPackages__[pack] instanceof Array){
             while(__pendingPackages__[pack].length != 0){
                 if (typeof __pendingPackages__[pack][0] == "function"){
@@ -311,6 +309,7 @@ m.requirePack = function(pack,callback,parentPack){
     }
 
     function postProcLoadedPackage(){
+        packObject.inited = true;
         var mod = m.packages[pack].packageObject;
         if (route){            
             __b__.history.handlers = __b__.history.handlers.filter(function(obj){
@@ -345,7 +344,6 @@ m.requirePack = function(pack,callback,parentPack){
 
             _.defer(_.bind(__b__.history.loadUrl,__b__.history));
         }
-
         callback();
     };
 

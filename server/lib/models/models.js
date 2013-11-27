@@ -25,8 +25,8 @@ var surrogate = function(name,descr){
     model.prototype.model_name = name;
     if (descr.super){
         model.scheme = descr.super.scheme;
-        (descr.super.objects instanceof Array) && (model.objects = descr.super.objects.concat(model.objects));
-        (descr.super.scopes instanceof Array) && (model.scopes = descr.super.scopes.concat(model.scopes));
+        (descr.super.objects instanceof Array) && (model.objects = descr.super.objects.concat(model.objects || []));
+        (descr.super.scopes instanceof Array) && (model.scopes = descr.super.scopes.concat(model.scopes || []));
     }
     return model;
 }
@@ -90,9 +90,9 @@ module.exports = {
                 db_drive.extend(model);
                 model.plugin_name = cfg.name;
                 model.plugin_cfg = cfg;
+
                 //* Не определено
 //                model.prototype.url = function() { return model.url+"/"+this.id.toString(); }
-
                 // объявляем глобально
                 plugin_scope.models[model.model_name] = model;
                 plugin_scope.model_names.push(model.model_name);
@@ -197,7 +197,6 @@ module.exports = {
                             c.plugin_name = cfg.name;
                         }
                         catch(e){
-                            console.log(e.message);
                             if (model.super) c = m.super;
                             else m.kill("No controller for object '"+object_name+"' found for "+name+"! Exit.");
                         }

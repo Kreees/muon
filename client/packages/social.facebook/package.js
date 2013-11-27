@@ -4,8 +4,6 @@ module.exports = {
     ],
     ready: function(next){
         var _this = this;
-        if (localStorage["FB_authorized"] == "true") this.userAuthorized();
-        else this.userNotAuthorized();
         window.fbAsyncInit = function(){
             FB.init({
                 "channelUrl": location.protocol+"//"+location.host+"apis/MUON:social.facebook/?muon&__action__=channelUrl",
@@ -16,12 +14,14 @@ module.exports = {
             });
 
             FB.Event.subscribe('auth.authResponseChange', function(r) {
-                next();
                 if (r.status === 'connected') _this.userAuthorized();
                 else _this.userNotAuthorized();
             });
-
-
+            FB.getLoginStatus(function(r){
+                if (r.status == "connected") _this.userAuthorized();
+                else _this.userNotAuthorized();
+                next();
+            });
         }
         $("<script src='//connect.facebook.net/en_US/all.js' />").appendTo(document.body);
     },

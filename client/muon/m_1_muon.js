@@ -131,10 +131,12 @@ var m = _.extend(new    MuonPlugin(""),{
         if (flag === false){ return m.removeProfile(profile); }
         if (m.hasProfile(profile)) return;
         var className = document.body.className.split(/\s+/);
-        className = className.concat(profile.split("."));
+        profile = profile.split(".");
+        className = className.filter(function(a){return profile.indexOf(a) == -1;});
+        className = className.concat(profile);
         document.body.className = className.sort().join(" ");
         var profilesToFilter = _.keys(__profiles__).filter(function(p){
-            return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
+            return RegExp(profile.sort().join(".([a-zA-Z0-9_]+.)*?")).test(p);
         });
         profilesToFilter = profilesToFilter.filter(function(p){return m.hasProfile(p);});
         if (profilesToFilter.length == 0) return;
@@ -166,8 +168,9 @@ var m = _.extend(new    MuonPlugin(""),{
         });
     },
     hasProfile: function(profile){
-        return RegExp(profile.split(".").sort().join(".([a-zA-Z0-9_]+.)*?")).
-            test(document.body.className.split(/\s+/).sort().join("."));
+        return RegExp(profile.split(".").map(function(a){return "\\b"+a+"\\b";})
+            .sort().join("\\.([a-zA-Z0-9_]+\\.)*?"))
+            .test(document.body.className.split(/\s+/).sort().join("."));
     },
     getProfile: function(){
         return document.body.className.split(/\s+/).sort().join(".");
