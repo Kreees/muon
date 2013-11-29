@@ -4,8 +4,7 @@ module.exports = {
     ],
     ready: function(next){
         var _this = this;
-        if (localStorage["FB_authorized"] == "true") this.userAuthorized();
-        else this.userNotAuthorized();
+        this.authResponse = null;
         window.fbAsyncInit = function(){
             FB.init({
                 "channelUrl": location.protocol+"//"+location.host+"apis/MUON:social.facebook/?muon&__action__=channelUrl",
@@ -16,12 +15,20 @@ module.exports = {
             });
 
             FB.Event.subscribe('auth.authResponseChange', function(r) {
-                next();
-                if (r.status === 'connected') _this.userAuthorized();
+                if (r.status === 'connected'){
+                    _this.authResponse = r.authResponse;
+                    _this.userAuthorized();
+                }
                 else _this.userNotAuthorized();
             });
-
-
+            FB.getLoginStatus(function(r){
+                if (r.status == "connected"){
+                    _this.authResponse = r.authResponse;
+                    _this.userAuthorized();
+                }
+                else _this.userNotAuthorized();
+                next();
+            });
         }
         $("<script src='//connect.facebook.net/en_US/all.js' />").appendTo(document.body);
     },
@@ -34,7 +41,6 @@ module.exports = {
             localStorage["FB_authorized"] = true;
         },
         userNotAuthorized: function(){
-
             if (m.hasProfile("FB_not_authorized")) return;
             m.removeProfile("FB_authorized");
             m.setProfile("FB_not_authorized");

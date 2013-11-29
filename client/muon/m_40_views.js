@@ -72,11 +72,11 @@ var __procProjection__ = {
         if ((typeof projection == "string" || typeof projection == "number" || projection) && el.dataset.modelId)
             throw Error("You shouldn't use both projection variable and model Id attribute in one view simultaneously.");
         if (typeof projection == "string" || typeof projection == "number" ){
-            _.defer(dfd.resolve,new Model(projection,{forceSync: true}));
+            Model.get(projection).then(dfd.resolve,dfd.reject);
             return dfd.promise();
         }
         if (typeof el.dataset.modelId == 'string'){
-            _.defer(dfd.resolve,new Model(el.dataset.modelId,{forceSync: true}));
+            Model.get(el.dataset.modelId).then(dfd.resolve,dfd.reject);
             return dfd.promise();
         }
         if (_.isObject(projection) || projection === undefined){
@@ -274,7 +274,9 @@ function __render__(){
         this.el.innerHTML = "";
         $(this.el).append($el.children());
     }
-    else this.el = $el[0];
+    else{
+        this.el = $el[0];
+    }
     this.$el = $(this.el);
     this.$ = _.bind(this.$el.find,this.$el);
     this.postTemplateRender && this.postTemplateRender();
@@ -296,7 +298,7 @@ function __render__(){
         $els.each(function(){
             __insertView__.call(_this,this,i,this.dataset.pack || _this.package,_this);
         });
-    }
+    };
     this.rendered && this.rendered($el);
     setTimeout(function(){
         _this.trigger("rendered");
@@ -408,7 +410,7 @@ m.View = __b__.View.extend({
             this.$el.children().remove();
             this.$el.removeAttr("data-muon");
         }
-        else this.el.remove();
+        else this.$el.remove();
         delete this.el.muonView;
         this.stopListening();
         delete this.$el;

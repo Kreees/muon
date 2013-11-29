@@ -16,19 +16,6 @@ __b__.Model.extend = function _modelExtend(obj,common){
         var _objs = {};
         function child(attrs,opts){
             attrs = attrs || {};
-            if (typeof attrs === "string" || typeof attrs === "number"){
-                var _id = attrs;
-                if (!(_id in _objs)){
-                    attrs = {}; attrs[attrId] = _id;
-                    var obj = new newModel(attrs,opts);
-                    _objs[_id] = obj;
-                }
-                else {
-                    var obj = _objs[_id];
-                }
-                if (opts && opts.forceSync) obj.fetch();
-                return _objs[_id];
-            }
             if (typeof attrs._id === "string" || typeof attrs._id === "number"){
                 if (attrs._id in _objs) _objs[attrs._id].set(attrs);
                 else _objs[attrs._id] = new newModel(attrs,opts);
@@ -140,6 +127,10 @@ m.Model = __b__.Model.extend({
         }
     },
     {
+        get: function(id){
+            var a = new this({_id: id});
+            return a.fetch();
+        },
         collection: function(objSearchParams){
             objSearchParams = __serializeObject__(objSearchParams || {});
             if (objSearchParams) objSearchParams = "?__action__=search&"+objSearchParams;

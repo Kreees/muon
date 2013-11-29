@@ -66,12 +66,13 @@ m.ModelView = m.View.extend({
             view.listenTo(view.model,"sync",function(){
                 __setGetElementValue__.call(_this,view,setter);
             });
-            if (!(this.dataset.silent || view.silent)){
+            if (!(this.dataset.silent || view.silent || view.el.dataset.silent)){
                 $(this).keyup(function(){
                     clearTimeout(interval);
                     interval = setTimeout(function(){$(_this).trigger("change");},150);
                 });
                 $(this).change(function(){
+                    if (this.dataset.silent || view.silent || view.el.dataset.silent) return;
                     if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
                     else view.model.set(setter,$(this).val());
                 });
