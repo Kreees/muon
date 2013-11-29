@@ -16,7 +16,7 @@ function __templateForView__(view) {
         }
     }
     selector = "script#"+selector+"_template";
-    selector += "[type='text/muon-template'][data-pack='"+view.package+"']";
+    selector += "[type='text/muon-template'][data-pack='"+view["package"]+"']";
     selector += "[data-profile='"+profile+"']";
     return $(selector)[0];
 };
@@ -285,7 +285,7 @@ function __render__(){
     this.$el.addClass([this.className,this.viewType,"block"].join(" "));
     this.el.muonView = this;
     this.el.dataset.muon = this.template?this.template+"_"+this.viewType:"";
-    this.el.dataset.pack = this.package;
+    this.el.dataset.pack = this["package"];
     this.el.dataset.cid = this.cid;
     __renderFocus__.call(this);
     __renderDependencySrc__.call(this);
@@ -296,10 +296,11 @@ function __render__(){
     for(var i in m.baseViews){
         var $els = this.$el.find("*[data-"+i+"-view]");
         $els.each(function(){
-            __insertView__.call(_this,this,i,this.dataset.pack || _this.package,_this);
+            __insertView__.call(_this,this,i,this.dataset.pack || _this["package"],_this);
         });
     };
     this.rendered && this.rendered($el);
+    this.__rendered__ = true;
     setTimeout(function(){
         _this.trigger("rendered");
     })

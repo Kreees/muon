@@ -1,3 +1,5 @@
+// Устанавливает значение атрибутов в инпут
+
 function __setGetElementValue__(view,getter){
     function set(val){
         if (!this.dataset["attrType"]){
@@ -41,6 +43,8 @@ function __updateModelView__(attrs){
             });
         }
     }
+    
+    // Если datamodelset and data-model-get назначены одновременно
     this.$el.find("[data-model-get],[data-model-set]").each(function(){
         __setGetElementValue__.call(this,_this,this.dataset.modelGet || this.dataset.modelSet);
     });
@@ -56,27 +60,31 @@ m.ModelView = m.View.extend({
         this.listenTo(model,"destroy",_this.remove);
         m.View.prototype.initialize.apply(this,arguments);
     },
+    assignModelSetElement: function(el){
+        var setter = el.dataset.modelSet;
+        var _this = el;
+        var view = this;
+        var interval = null;
+        view.listenTo(view.model,"sync",function(){
+            __setGetElementValue__.call(_this,view,setter);
+        });
+        if (!(el.dataset.silent || view.silent || view.el.dataset.silent)){
+            $(el).keyup(function(){
+                clearTimeout(interval);
+                interval = setTimeout(function(){$(_this).trigger("change");},150);
+            });
+            $(el).change(function(){
+                if (this.dataset.silent || view.silent || view.el.dataset.silent) return;
+                if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
+                else view.model.set(setter,$(this).val());
+            });
+        }    	
+    },
     __set__: function(){
         __updateModelView__.call(this,this.model.attributes);
         var view = this;
         this.$el.find("[data-model-set]").each(function(){
-            var setter = this.dataset.modelSet;
-            var _this = this;
-            var interval = null;
-            view.listenTo(view.model,"sync",function(){
-                __setGetElementValue__.call(_this,view,setter);
-            });
-            if (!(this.dataset.silent || view.silent || view.el.dataset.silent)){
-                $(this).keyup(function(){
-                    clearTimeout(interval);
-                    interval = setTimeout(function(){$(_this).trigger("change");},150);
-                });
-                $(this).change(function(){
-                    if (this.dataset.silent || view.silent || view.el.dataset.silent) return;
-                    if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
-                    else view.model.set(setter,$(this).val());
-                });
-            }
+        	view.assignModelSetElement(this);
         });
         this.$el.attr("id",this.model.id);
     },
