@@ -35,6 +35,7 @@ module.exports = function (req,res){
         });
     }
     function view_render(){
+
         fs_ext.tree(views_dir+"/model",
             function(t){templ_proc.render_template(t,views_dir,full_pack_name,function(r_views){
                 views = views.concat(r_views);
@@ -74,7 +75,8 @@ module.exports = function (req,res){
             var prev_views = m.app.get("views");
             if (files.length == 0){
                 m.app.set("views",prev_views);
-                return tr_proc.render_translation(plugin,pack_name,req.query.lang || m.default_lang,model_render);
+                tr_proc.render_translation(plugin,pack_name,req.query.lang || m.default_lang,model_render);
+                return
             }
             var file = files.shift();
             var extension = file.substr(file.lastIndexOf(".")+1);
@@ -95,7 +97,9 @@ module.exports = function (req,res){
                 m.app.set("views",package_dir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
                 m.app.render(tmp_file,{},data_rendered);
             }
-            else fs.readFile(file,"utf8",data_rendered);
+            else{
+                fs.readFile(file,"utf8",data_rendered);
+            }
         }
         proc_file();
     },["/_"],[".js",".css",".coffee",".less"]);

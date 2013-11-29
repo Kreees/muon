@@ -72,6 +72,7 @@ m.ModelView = m.View.extend({
                     interval = setTimeout(function(){$(_this).trigger("change");},150);
                 });
                 $(this).change(function(){
+                    if (this.dataset.silent || view.silent) return;
                     if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
                     else view.model.set(setter,$(this).val());
                 });

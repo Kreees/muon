@@ -9,8 +9,18 @@ var fs_ext = require(global.m.__sys_path+"/server/lib/utils/fs/fs_ext.js"),
 
 
 var surrogate = function(name,descr){
-    if (descr.extend && descr.attrs){
-        m.kill("It's not allowed to override extended model attributes");
+    if (descr.extend){
+        if (descr.attrs){
+            for(var i in descr.super.attrs) {
+                if (i in descr.attrs) m.kill("It's not allowed to override extended model attributes. Exiting.");
+                else {
+                    descr.attrs[i] = descr.super.attrs[i];
+                }
+            }
+        }
+        else {
+            descr.attrs = descr.super.attrs;
+        }
     }
     var model = function Model(obj){
 	    this.attributes = {};
@@ -18,13 +28,15 @@ var surrogate = function(name,descr){
 	        this.set(obj);
 	};
     _.extend(model,descr);
+    for(var i in descr.attrs){
+        if (!descr.attrs[i].type) m.kill("Model attribute type is not specified: "+model.model_name+" : "+i);
+    }
     model.scheme = descr.attrs || {};
     model.model = model;
     model.model_name = name;
     model.prototype.model = model;
     model.prototype.model_name = name;
     if (descr.super){
-        model.scheme = descr.super.scheme;
         (descr.super.objects instanceof Array) && (model.objects = descr.super.objects.concat(model.objects || []));
         (descr.super.scopes instanceof Array) && (model.scopes = descr.super.scopes.concat(model.scopes || []));
     }
