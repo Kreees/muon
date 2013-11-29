@@ -15,22 +15,22 @@ module.exports = {
             if (this.m.getProjection("admin.config")) return;
             var dfd = $.Deferred();
             var _this = this;
-            var config = new this.m.models["project.project"]("config");
-            config.fetch().then(function(){
-                if (config.get("server_mode") == "production") m.setProfile("admin_production");
-                else {
-                    if (config.get("wait_restart")) m.setProfile("admin_need_restart");
-                    else
-                        config.once("change:wait_restart",function(){
-                            if (config.get("wait_restart")) m.setProfile("admin_need_restart");
-                        })
-                    _this.m.setProjection("admin.config",config);
-                    _.defer(m.setProfile.bind(m),"admin_config");
-                }
-                dfd.resolve();
-            },function(){
-                dfd.resolve();
-            })
+            this.m.models["project.project"].get("config")
+            	.then(function(config){
+	                if (config.get("server_mode") == "production") m.setProfile("admin_production");
+	                else {
+	                    if (config.get("wait_restart")) m.setProfile("admin_need_restart");
+	                    else
+	                        config.once("change:wait_restart",function(){
+	                            if (config.get("wait_restart")) m.setProfile("admin_need_restart");
+	                        })
+	                    _this.m.setProjection("admin.config",config);
+	                    _.defer(m.setProfile.bind(m),"admin_config");
+	                }
+	                dfd.resolve();
+	            },function(){
+	                dfd.resolve();
+            	});
             return dfd.promise();
         }
     ],
