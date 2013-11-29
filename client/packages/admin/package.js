@@ -115,8 +115,7 @@ module.exports = {
     },
     ready: function(next){
         var _this = this;
-        var a = new this.m.model_user_user("me");
-        a.fetch().then(function(a){
+        this.m.model_user_user.get("me").then(function(a){
             _this.m.setProjection("admin.logined",a);
             m.setProfile("logined");
             next();
