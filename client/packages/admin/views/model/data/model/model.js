@@ -5,13 +5,32 @@ m.ModelView.extend({
 		"click #remove_model":"removeModel",
 		"click .model_data_show_subattr":"showSubattr"
 	},
+	__setNew__: function(el){
+    	var view = this;
+        var setter = el.dataset.modelSet;
+        var _this = el;
+        var interval = null;
+        view.listenTo(view.model,"sync",function(){
+            __setGetElementValue__.call(_this,view,setter);
+        });
+        if (!(el.dataset.silent || view.silent)){
+            $(el).keyup(function(){
+                clearTimeout(interval);
+                interval = setTimeout(function(){$(_this).trigger("change");},150);
+            });
+            $(el).change(function(){
+                if (typeof view["set_"+setter] == "function") view["set_"+setter]($(el).val(),el);
+                else view.model.set(setter,$(el).val());
+            });
+        }
+    },
 	postTemplateRender: function(){
-		var atrs = this.context.attributes;
+		var atrs = this.model.attributes;
 		window.view = this;
-		this.originalAttributes = this.context.toJSON();
+		this.originalAttributes = this.model.toJSON();
 		console.log(this.originalAttributes);
-		window.mm = this.context;
-		if(!this.context.get("_id")) this.$("#model_data_save").hide();
+		window.mm = this.model;
+		if(!this.model.get("_id")) this.$("#model_data_save").hide();
 		for(var i in atrs){
 			if(i == "_id") continue;
 			try{
@@ -23,36 +42,33 @@ m.ModelView.extend({
 			}
 		}
 	},
-	initControllers: function(attr, flag){
+	
+	initControllers: function(attr){
 		var type = this.model.scheme[attr].type;
+		console.log(["init controllers", attr, type]);
 		if(type.match(/\[|\]/g)){
 			type = type.replace(/\[|\]/g,"");
 			this[attr+"_controller"] = function(attr, cmd, value){
-				if(this.commonController(attr, cmd, value)) return;
+				this.commonController(attr, cmd, value);
 				this.arrayController(attr, cmd, value);
 			}
 			this[attr+"_viewController"] = function(attr, cmd, value){
-				if(this.commonViewController(attr, cmd)) return;
+				this.commonViewController(attr, cmd);
 				this.arrayViewController(attr, cmd, value);
 			}
-			this.initElementController(attr, type, true);
-			var value = this.model.get(attr);
-			for( var i in value){
-				var sub = attr+"_"+i;
-				//TODO 
-				this[sub+"_viewController"] = this.initElementViewController(sub, type);
-			}
+			this.initArrayElementController(attr, type);
+			this[attr+"_elViewController"] = this.initElementViewController(type);
 			return;
 		}
 		this[attr+"_controller"] = this.commonController;
 		this.initElementController(attr, type);
 		var elemC = this.initElementViewController(attr, type);
-		this[attr+"_viewController"] = function(attr, cmd){
-			if(this.commonViewController(attr, cmd)) return;
-			elemC(attr, cmd);
+		this[attr+"_viewController"] = function(attr, cmd, obj){
+			this.commonViewController(attr, cmd, obj);
+			elemC(attr, cmd, obj);
 		}
 	},
-	initElementController: function(attr, type, flag){
+	initElementController: function(attr, type){
 		console.log(["init element", attr, type]);
 		// var a_name = this.splitAttr(attr);
 		// var index = this.splitIndex(attr);
@@ -61,15 +77,11 @@ m.ModelView.extend({
 				break;
 				
 			case "object":
-				
 				this["get_"+attr] = function(el){
 					console.log([attr, "get", el]);
 					var jsn;
 				 	var value = this.model.get(attr);
-				 	var sub = this.toNum(el.dataset["modelSub"]);
-					if(sub != undefined){ //TODO for many
-						jsn = JSON.stringify(value[sub], null, '\t');
-					}else jsn = JSON.stringify(value, null, '\t')
+				 	jsn = JSON.stringify(value, null, '\t')
 					var mch = jsn.match(/\t+/g),
 						l = 1;
 					if(mch) l = mch.length+2;
@@ -78,15 +90,10 @@ m.ModelView.extend({
 				};
 				this["set_"+attr] = function(value, el){
 					console.log([attr, "set", value, el]);
-					var sub = this.toNum(el.dataset["modelSub"]);
 					try{
 						obj = JSON.parse(value);
 						$(el).removeClass("notvalid");
-						if(sub != undefined){
-							var val = this.model.get(attr);
-							val[sub] = obj;
-							this.model.set(attr, val);
-						}else this.model.set(attr, obj);
+						this.model.set(attr, obj);
 					}catch(err){
 						$(el).addClass("notvalid");
 					}
@@ -101,22 +108,67 @@ m.ModelView.extend({
 			case "model":
 				break;
 		}
-		if(flag){
-			this["get_"+attr] = function(el){
-				console.log([attr, "get"]);
-				var value = this.model.get(attr);
-				var sub = this.toNum(el.dataset["modelSub"]);
-				if(value && sub != undefined) return value[sub];
-				else return "";
-			}
-			this["set_"+attr] = function(value, el){
-				console.log([attr, "set", value]);
-				var val = this.model.get(attr);
-				var sub = this.toNum(el.dataset["modelSub"]);
-				if(value && sub != undefined){
-					val[sub] = value;
-					this.model.set(attr, val);
-				}
+	},
+	initArrayElementController: function(attr, type){
+		switch(type){
+			case "string":
+				break;
+				
+			case "object":
+				
+				this["get_"+attr] = function(el){
+					console.log([attr, "get", el]);
+					var jsn;
+				 	var value = this.model.get(attr);
+				 	var indx = $(el).parent().parent().prevAll().length;
+					if(indx != undefined){ //TODO for many
+						jsn = JSON.stringify(value[indx], null, '\t');
+					}
+					var mch = jsn.match(/\t+/g),
+						l = 1;
+					if(mch) l = mch.length+2;
+					this.$('textarea[data-model-set='+attr+']').attr({"rows":(l<20?l:20)}).removeClass("notvalid");
+					return jsn;
+				};
+				this["set_"+attr] = function(value, el){
+					console.log([attr, "set", value, el]);
+					var indx = $(el).parent().parent().prevAll().length;
+					try{
+						obj = JSON.parse(value);
+						$(el).removeClass("notvalid");
+						if(indx != undefined){
+							var val = this.model.get(attr);
+							val[indx] = obj;
+							this.model.set(attr, val);
+						}
+					}catch(err){
+						$(el).addClass("notvalid");
+					}
+				};
+				return;
+				break;
+				
+			case "number":
+				break;
+			case "date":
+				break;
+			case "model":
+				break;
+		}
+		this["get_"+attr] = function(el){
+			console.log([attr, "get"]);
+			var value = this.model.get(attr);
+			var indx = $(el).parent().parent().prevAll().length;
+			if(indx != undefined) return value[indx];
+			else return "";
+		}
+		this["set_"+attr] = function(value, el){
+			console.log([attr, "set", value]);
+			var val = this.model.get(attr);
+			var indx = $(el).parent().parent().prevAll().length;
+			if(value && indx != undefined){
+				val[indx] = value;
+				this.model.set(attr, val);
 			}
 		}
 	},
@@ -124,8 +176,8 @@ m.ModelView.extend({
 		switch(cmd){
 			case "null":{
 				if(this.model.scheme[attr]["null-allowed"] == false) return false;
+				this[attr+"_viewController"](attr, "null");
 				this.model.set(attr, null);
-				this[attr+"_viewController"](attr,"null");
 				return true;
 			}
 			case "value":{
@@ -137,56 +189,59 @@ m.ModelView.extend({
 			case "original":{
 				if (_.isEqual(this.originalAttributes[attr],"")) this.model.set(attr,"");
 				else this.model.set(attr, "  ");
-				this.model.set(attr, this.originalAttributes[attr]);
+				this[attr+"_viewController"](attr, "rerender", this.originalAttributes[attr]);
 				this[attr+"_viewController"](attr,"value");
+				
+				this.model.set(attr, this.originalAttributes[attr]);
 				return true;
 			}
 			case "default":{
 				if (_.isEqual(this.model.defaults[attr],"")) this.model.set(attr,"");
 				else this.model.set(attr, "  ");
+				console.log(["1"]);
+				this[attr+"_viewController"](attr, "rerender", this.model.defaults[attr]);
+				console.log(["2"]);
+				console.log([this.model.get(attr), this.model.defaults[attr]]);
+				console.log(this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap [data-model-set]")[0].dataset)
 				this.model.set(attr, this.model.defaults[attr]);
+				console.log(["3"]);
 				this[attr+"_viewController"](attr,"value");
+				console.log(["4"]);
 				return true;
 			}
 		}
 		return false;
 	},
-	arrayController: function(attr, cmd, value){
+	arrayController: function(attr, cmd, obj){
 		switch(cmd){
 			case "addItem":{
+				console.log(["addItem", attr, obj]);
 				var val = this.model.get(attr);
-				if(value) val.push(value);
-				else{
-					
+				var value = obj;
+				if(value == undefined){
 					var type = this.model.scheme[attr].type.replace(/\[|\]/g,"");
 					switch(type){
 						case "string":value = new String(); break;
 						case "object": value = new Object(); break;
-						case "number":
-							value = new Number();
-							break;
-						case "date":
-							break;
-						case "model":
-							break;
+						case "number": value = new Number(); break;
+						case "date": break;
+						case "model": break;
 					}
-					var l = val.push(value);
-					var sub = attr+"_"+(l-1);
-					console.log(["add", sub, type, value]);
-					// this.initElementController(sub, type);
-					this[sub+"_viewController"] = this.initElementViewController(sub, type);
-					this[attr+"_viewController"](sub, "addItem", value);
-					this.model.set(val)
-				}
+				}else { console.log("ERROR in arrayController.addItem "+attr); return;}
+				var l = val.push(value);
+				this[attr+"_viewController"](attr, "addItem", l-1);
+				this.model.set(attr, val)
 				break;
 			}
 			case "removeItem":{
-				console.log(["remove", attr])
-				var a_name = this.splitAttr(attr);
-				var index = this.splitIndex(attr);
-				var val = this.model.get(a_name);
-				val.splice(index,1);
-				this[a_name+"_viewController"](attr, "removeItem");
+				console.log(["removeItem", attr, obj])
+				var val = this.model.get(attr);
+				var indx = this.toNum(obj.attr("data-model-sub"));
+				if(indx != undefined){
+					val.splice(indx,1);
+					this[attr+"_viewController"](attr, "removeItem", indx);
+					this.model.set(attr, val);
+				}
 				break;
 			}
 			case "moveItem":{
@@ -202,17 +257,26 @@ m.ModelView.extend({
 			case "null":{
 				this.$(".set_null_wrap input[data-attribute_name="+attr+"]").addClass("green");
 				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap").hide();
+				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap [data-model-set]").attr("data-silent", true);
 				return true;
 			}
 			case "value":{
 				this.$(".set_null_wrap input[data-attribute_name="+attr+"]").removeClass("green");
 				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap").show();
+				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap [data-model-set]").removeAttr("data-silent");
 				return true;
 			}
 		}
 	},
-	arrayViewController: function(attr, cmd, value){
+	arrayViewController: function(attr, cmd, obj){
 		switch(cmd){
+			case "rerender":{
+				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap").html("");
+				var $el=this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap");
+				if(!obj) obj =  this.model.get(attr);
+				this.renderArrayValue(attr, obj, true).appendTo($el);
+				break;
+			}
 			case "maximize":{
 				this.$(".array_wrap[data-attribute_name="+attr+"]").show();
 				break;
@@ -222,26 +286,14 @@ m.ModelView.extend({
 				break;
 			}
 			case "addItem":{
-				var _v = this;
-				var _a = this.splitAttr(attr);
-				console.log(["view Controller", attr, value]);
-				var $ret = this.$(".array_wrap[data-attribute_name="+_a+"]");
-				var sub = attr;
-				var $sub = $("<div>").addClass("array_element_wrap").attr({"data-attribute_name":sub});
-				this.renderElement(sub, value).appendTo($sub);
-				var $rmv =$("<input></input>").attr({"type":"button", "data-attribute_name":sub, "value":"remove"});
-				$rmv.click(function(){
-					_v[_a+"_controller"](sub, "removeItem");
-				});
-				$rmv.appendTo($sub);
-				$sub.appendTo($ret);
+				console.log([" addItem view Controller", attr, obj]);
+				var $ret = this.$(".element_list_wrap[data-attribute_name="+attr+"] ");
+				this.renderArrayElement(attr, obj, true).appendTo($ret);
 				break;
 			}
 			case "removeItem":{
-				var _a = this.splitAttr(attr);
-				console.log(this.$(".array_element_wrap[data-attribute_name="+attr+"]"));
-				this.$(".array_element_wrap[data-attribute_name="+attr+"]").remove();
-				var $ret = this.$(".array_wrap[data-attribute_name="+_a+"] ");
+				console.log([" removeItem view Controller", attr, obj]);
+				this.$(".element_list_wrap[data-attribute_name="+attr+"] .array_element_wrap[data-model-sub="+obj+"]").remove();
 				break;
 			}
 			case "moveItem":{
@@ -249,7 +301,7 @@ m.ModelView.extend({
 			}
 		}
 	},
-	initElementViewController: function(attr, type){
+	initElementViewController: function(type){
 		switch(type){
 			case "string":
 				break;
@@ -304,8 +356,8 @@ m.ModelView.extend({
 	renderAttribute: function(attr){
 		var _v = this;
 		var _a = attr;
-		var value = this.context.get(attr);
-		var scheme = this.context.scheme[attr];
+		var value = this.model.get(attr);
+		var scheme = this.model.scheme[attr];
 		if(!scheme) scheme={}; 
 		
 		var $el = $("<div></div>").addClass("attribute_wrap").attr("data-attribute", attr);
@@ -349,85 +401,92 @@ m.ModelView.extend({
   		return $el;
 	},
 	
-	renderAttrValue: function(attr){
-		var value = this.model.get(attr);
-		var type = this.model.scheme[attr].type;
+	renderAttrValue: function(attr, value){
 		if(value != null && value == undefined) {alert("undefined attribute: "+attr); return $("<div>");}
 		// else{ if(value == null) return $("<span>").text("null");}
 		//TODO 
 		if(_.isArray(value)) return this.renderArrayValue(attr, value);
 		return this.renderElement(attr, value);
 	},
-	renderArrayValue: function(attr, value){
+	renderArrayValue: function(attr, value, flag){
+		console.log(["render Array Element", attr, value])
 		var _v = this;
 		var _a = attr;
 		var ret = $("<div>").addClass("array_wrap nonzero_wrap").attr({"data-attribute_name":attr});
+		var list = $("<div>").addClass("element_list_wrap").attr({"data-attribute_name":attr});
 		for(var i in value){
-			var sub = attr+"_"+i;
-			var $sub = $("<div>").addClass("array_element_wrap").attr({"data-attribute_name":sub});
-			this.renderElement(attr, value[i], i).appendTo($sub);
-			var $rmv =$("<input></input>").attr({"type":"button", "data-attribute_name":sub, "value":"remove"});
-			$rmv.click(function(){
-				console.log(sub);
-				_v[_a+"_controller"](sub, "removeItem");
-			});
-			$rmv.appendTo($sub);
-			$sub.appendTo(ret);
+			this.renderArrayElement(attr,i, flag).appendTo(list);
 		}
-		var $add = $("<input></input>").attr({"type":"button", "data-attribute_name":attr, "value":"add"});
-		$add.click(function(){
-			console.log(["add"]);
-			_v[_a+"_controller"](_a, "addItem");
-			});
-		$add.appendTo(ret);
+		list.appendTo(ret);
+		$("<input></input>").attr({"type":"button", "data-attribute_name":attr, "value":"add"})
+			.click(function(){
+				_v[_a+"_controller"](_a, "addItem"); })
+			.appendTo(ret);
 		return ret;
 	},
-	renderElement:function(attr, value, sub){
+	renderArrayElement:function(attr, indx, flag){
+		console.log(["render Array Element", attr, indx])
+		var _v = this;
+		var _a = attr;
+		var $el = $("<div>").addClass("array_element_wrap").attr({"data-model-sub": indx});
+		this.renderElement(attr, indx,flag).appendTo($el);
+		$("<input></input>").attr({"type":"button", "value":"remove"})
+			.click(function(ev){
+				_v[_a+"_controller"](attr, "removeItem", $el);	})
+			.appendTo($el);
+		return $el;
+	},
+	renderElement:function(attr, indx, flag){
 		var ret = $("<div>").addClass("element_wrap nonzero_wrap").attr({"data-attribute_name":attr});
-		var view = this;
-		
-		if(_.isString(value)){
-			var $el = $("<input></input>").attr({"type":"text","data-model-set": attr,"size":value.length*1.2});
-			if(sub) $el.attr("data-model-sub", sub);
-			$el.appendTo(ret);
-			return ret;
-		}
-		if(_.isNumber(value)){
-			var $el = $("<input></input>").attr({"type":"text","value": value,"data-model-set": attr,"size":value.length*1.2});
-			if(sub) $el.attr("data-model-sub", sub);
-			$el.appendTo(ret);
-			return ret;
-		}
-		if(_.isDate(value)){
-			var $el = $("<input></input>").attr({"type":"text","value": value,"data-model-set": attr});
-			if(sub) $el.attr("data-model-sub", sub);
-			$el.appendTo(ret);
-			return ret;
-		}
-		if(_.isObject(value)){
-			if(value instanceof m.Model){
-				ret =  $("<span></span>").text("id: "+ value.id);
+		var type = this.model.scheme[attr].type;
+		if(type.match(/\[|\]/g)) type = type.replace(/\[|\]/g,"");
+		switch(type){
+			case "string":
+				var $el = $("<input></input>").attr({"type":"text","data-model-set": attr});
+				if(flag) this.__setNew__($el.get(0));
+				$el.appendTo(ret);
 				return ret;
-			}
-			
-			$("<span>").text("Object").appendTo(ret);
-			$("<input></input>").attr({"type": "button","value": "edit"}).appendTo(ret).click(function(){
-				$(ret.find("div.item_content_edit_wrap")[0]).toggle();
-			});
-			var $el = $("<div>").addClass("item_content_edit_wrap")
-				.append($("<textarea></textarea>").attr({"data-model-set":attr}));
-			if(sub) $el.attr("data-model-sub", sub);
-			$el.appendTo(ret);
-			return ret;
+				break;
+				
+			case "object":
+				$("<span>").text("Object").appendTo(ret);
+				$("<input></input>").attr({"type": "button","value": "edit"}).appendTo(ret).click(function(){
+					$(ret.find("div.item_content_edit_wrap")[0]).toggle();
+				});
+				var $el = $("<div>").addClass("item_content_edit_wrap")
+					.append($("<textarea></textarea>").attr({"data-model-set":attr}));
+				if(flag) this.__setNew__($el.get(0));
+				$el.appendTo(ret);
+				return ret;
+				break;
+
+			case "number":
+				var $el = $("<input></input>").attr({"type":"text","data-model-set": attr});
+				if(flag) this.__setNew__($el.get(0));
+				$el.appendTo(ret);
+				return ret;
+				break;
+				
+			case "date":
+				var $el = $("<input></input>").attr({"type":"text","data-model-set": attr});
+				if(flag) this.__setNew__($el.get(0));
+				$el.appendTo(ret);
+				return ret;
+				break;
+				
+			case "model":
+				
+				break;
 		}
+		
 		console.log("WARN!: Something wrong in renderValueItem");
 	},
 	
 	_setObjAttr:function(attr, model){
 		console.log(["SET ATTR ", attr, model]);	
-		console.log([model,this.context]);
-		if(!model) model=this.context;
-		var attrValue = this.context.get(attr);
+		console.log([model,this.model]);
+		if(!model) model=this.model;
+		var attrValue = this.model.get(attr);
         var $subElement = this.$el.find("[data-model-set-sub^='"+attr+"']");
         if (!$subElement.length) return;
         $subElement.each(function(){
@@ -474,7 +533,7 @@ m.ModelView.extend({
 	showSubattr:function(ev){
 		var attr=$(ev.currentTarget).attr("data-attribute");
 		var cnt = $("div[data-attribute="+attr+"]");
-		if(!cnt.html() || cnt.html() == "") this._renderSubattribute(null,attr,this.context.get(attr)).appendTo(cnt);
+		if(!cnt.html() || cnt.html() == "") this._renderSubattribute(null,attr,this.model.get(attr)).appendTo(cnt);
 		cnt.toggle();
 	},
 	_renderSubattribute: function(prntKey, key, obj){
@@ -516,13 +575,13 @@ m.ModelView.extend({
 		return dv;
 	},
 	removeModel: function(){
-	  	if(this.context) this.context.destroy();
+	  	if(this.model) this.model.destroy();
 	},
 	saveNewModel: function(){
 		var view = this;
-		var nm = new this.context.constructor();
-		var att = this.context.toJSON();
-		delete att[this.context.idAttribute];
+		var nm = new this.model.constructor();
+		var att = this.model.toJSON();
+		delete att[this.model.idAttribute];
 		nm.set(att);
 		// this.$el.find("[data-model-set]").each(function(){
 		    // var setter = this.dataset.modelSet;
