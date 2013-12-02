@@ -113,6 +113,7 @@ fs_ext.traverse_dir(__dirname+"/../_template_",function(file){
     f_data = f_data.replace(/#\{version\}/g,muon_cfg.version);
     fs.writeFileSync(project_dir+file.replace(__dirname+"/../_template_",""),f_data);
 },function(){
+    fs.writeFileSync(project_dir+".muon","");
     var complete = "Complete!";
     console.log(complete);
 });

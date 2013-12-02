@@ -3,13 +3,13 @@ var fs = require("fs"),
     Q = require("q"),
     cheerio = require("cheerio");
 
-module.exports = function(req,res,base_dir){
-    var file = m.path+"/"+base_dir+"/index.html";
+module.exports = function(req,res,baseDir){
+    var file = m.path+"/"+baseDir+"/index.html";
     if (fs.existsSync(m.path+"/client/assets/index.html")) file = m.path+"/client/assets/index.html";
     var $ = cheerio.load(fs.readFileSync(file,"utf8"));
-    $("html").attr("lang",m.cfg.default_lang || "en");
+    $("html").attr("lang",m.cfg.defaultLang || "en");
     $("head").append("<script src='/muon.js'></script>");
-    if (m.cfg.server_mode == "testing"){
+    if (m.cfg.serverMode == "testing"){
         $("head").append("<script src='/jasmin.js'></script>");
     }
     res.set("Content-Type","text/html");

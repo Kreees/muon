@@ -2,80 +2,80 @@ var defs = require("./attr_defaults.js");
 var vals = require("./attr_validation.js");
 var _ = require("underscore");
 
-function get_plugins(plugin){
+function getPlugin(plugin){
     var plugins = {};
-    function calculate_plugin(plugin,name) {
+    function calculatePlugin(plugin,name) {
         plugins[name] = plugin;
         for(var i in plugin.plugins)
-            calculate_plugin(plugin.plugins[i],(name?name+":":"")+i)
+            calculatePlugin(plugin.plugins[i],(name?name+":":"")+i)
     }
-    calculate_plugin(plugin,plugin.cfg.name);
+    calculatePlugin(plugin,plugin.cfg.name);
     return plugins;
 }
 
-var get_plugins = _.memoize(get_plugins);
+var getPlugin = _.memoize(getPlugin);
 
 module.exports = {
-    get_model_names: function(plugin,pack_models){
-        var plugins = get_plugins(plugin);
-        var pack_model_list = [];
-        for(var pl_name in plugins){
-            var plugin = plugins[pl_name];
-            for(var i in pack_models){
-                var token = pack_models[i];
+    getModelNames: function(plugin,packModels){
+        var plugins = getPlugin(plugin);
+        var packageModelList = [];
+        for(var pluginName in plugins){
+            var plugin = plugins[pluginName];
+            for(var i in packModels){
+                var token = packModels[i];
                 token = token.replace(/\./g,"\\.").replace(/\*/g,".*?");
                 token = RegExp("^"+token+"$");
                 for(var j in plugin.models){
-                    if (token.test(j)) pack_model_list.push((pl_name?pl_name+":":"")+j);
+                    if (token.test(j)) packageModelList.push((pluginName?pluginName+":":"")+j);
                 }
             }
         }
-        return pack_model_list;
+        return packageModelList;
 
     },
-    render_models: function(plugin,list,callback){
+    renderModels: function(plugin,list,callback){
         if (typeof list == "function"){
             callback = list;
         }
         var ret = {};
-        var plugins = get_plugins(plugin);
+        var plugins = getPlugin(plugin);
         try{
-            for(var pl_name in plugins){
-                var plugin = plugins[pl_name];
+            for(var pluginName in plugins){
+                var plugin = plugins[pluginName];
                 for(var i in plugin.models){
-                    if (_.isArray(list) && list.indexOf((pl_name?pl_name+":":"")+i) == -1) continue;
-                    if (!(plugin.models[i].url in plugin.url_access)){
+                    if (_.isArray(list) && list.indexOf((pluginName?pluginName+":":"")+i) == -1) continue;
+                    if (!(plugin.models[i].url in plugin.urlAccess)){
                         continue;
                     }
                     var model = plugin.models[i];
                     var defaults = {};
                     for(var j in model.scheme)
-                        defaults[j] = (model.scheme[j].default !== undefined)?model.scheme[j].default:defs[model.scheme[j].type];
+                        defaults[j] = (model.scheme[j].defaults !== undefined)?model.scheme[j].defaults:defs[model.scheme[j].type];
                     var host = m.cfg.protocol+"://";
                     if (m.cfg.jsonp && m.cfg.domain) host += m.cfg.domain;
                     else host += "0.0.0.0";
                     if (m.cfg.port && parseInt(m.cfg.port) != 80)
                         host += ":"+m.cfg.port;
-                    var model_name = (pl_name?pl_name+":":"")+model.model_name;
+                    var modelName = (pluginName?pluginName+":":"")+model.modelName;
                     var scheme = {};
                     for(var i in model.scheme){
                         scheme[i] = {
                             type: model.scheme[i].type,
-                            null_allowed: (model.scheme[i].null_allowed !== undefined)?!!model.scheme[i].null_allowed:true,
+                            nullAllowed: (model.scheme[i].nullAllowed !== undefined)?!!model.scheme[i].nullAllowed:true,
                             values: model.scheme[i].values
                         }
                     }
-                    var back_model = {
-                        plugin: pl_name,
-                        modelName: model_name,
-                        urlRoot: host+"/apis/"+(model.plugin_name?model.plugin_name+":":"")+model.model.url,
+                    var backboneModel = {
+                        plugin: pluginName,
+                        modelName: modelName,
+                        urlRoot: host+"/apis/"+(model.pluginName?model.pluginName+":":"")+model.model.url,
                         defaults: defaults,
                         scheme: scheme
                     };
-                    var back_model_str = "m.model_"+ model_name.replace(/[:\.]/g,"_");
-                    back_model_str += " = m.Model.extend(";
-                    back_model_str += JSON.stringify(back_model)+",{scheme: "+JSON.stringify(scheme)+"});";
-                    ret[(pl_name?pl_name+":":"")+model.model_name] = back_model_str;
+                    var backboneModelString = "m.model_"+ modelName.replace(/[:\.]/g,"_");
+                    backboneModelString += " = m.Model.extend(";
+                    backboneModelString += JSON.stringify(backboneModel)+",{scheme: "+JSON.stringify(scheme)+"});";
+                    ret[(pluginName?pluginName+":":"")+model.modelName] = backboneModelString;
                 }
             }
         }

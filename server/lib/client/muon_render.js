@@ -10,7 +10,7 @@ module.exports = function (){
     }
     data += "\n\n";
     data += "__domain__ = '"+ (m.cfg.domain || m.cfg.host +":"+ m.cfg.port)+"',"+
-            "__serverMode__ = '"+m.cfg.server_mode+"',"+
+            "__serverMode__ = '"+m.cfg.serverMode+"',"+
             "__protocol__ = '"+(m.cfg.secure?"https":"http")+"';";
     data += "\n})();\n\n";
     return data;

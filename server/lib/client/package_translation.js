@@ -1,4 +1,4 @@
-var tr_proc = require(m.__sys_path+"/server/lib/client/translation_proc"),
+var trProc = require(m.__sys_path+"/server/lib/client/translation_proc"),
     _ = require("underscore");
 
 module.exports = function(req,res){
@@ -16,14 +16,14 @@ module.exports = function(req,res){
     }
     var ret = {};
     for(var i in packs){
-        (function(pack_name){
-            var plug_name = pack_name.split(":").slice(0,-1).join(":"),
-                plugin = m.__plugins[plug_name],
-                full_pack_name = pack_name,
-                pack_name = full_pack_name.split(":").pop();
-            tr_proc.render_translation(plugin,pack_name,lang || m.default_lang,function(trs){
+        (function(packName){
+            var pluginName = packName.split(":").slice(0,-1).join(":"),
+                plugin = m.__plugins[pluginName],
+                fullPackName = packName,
+                packName = fullPackName.split(":").pop();
+            trProc.renderTranslation(plugin,packName,lang || m.defaultLang,function(trs){
                 counter--;
-                ret[full_pack_name] = trs;
+                ret[fullPackName] = trs;
                 if(counter == 0){
                     res.set("Content-Type","application/json");
                     res.end(JSON.stringify(ret));

@@ -4,7 +4,7 @@ module.exports = m.rest.extend({
     ],
     permissions: function(){
         if (!this.user) return [];
-        if (m.cfg.server_mode != "development" || m.wait_restart) return ["get"];
+        if (m.cfg.serverMode != "development" || m.waitRestart) return ["get"];
         return ["get","edit"];
     },
     actions: {}

@@ -2,22 +2,22 @@ var object_attrs = [
     "host",
     "port",
     "domain",
-    "server_mode",
+    "serverMode",
     "protocol",
-    "db_name",
-    "db_host",
-    "db_port",
-    "db_user",
-    "db_pass",
+    "dbName",
+    "dbHost",
+    "dbPort",
+    "dbUser",
+    "dbPass",
     "lang"
 ];
 var fs = require("fs");
 
-var super_obj = m.super;
-var c = super_obj.extend({
+var superObject = m.super;
+var c = superObject.extend({
     decorator: function(){
-        if (m.cfg.server_mode == "production" || m.wait_restart)
-            return ["server_mode","host","domain","port","lang","protocol","version","project_name","wait_restart"]
+        if (m.cfg.serverMode == "production" || m.waitRestart)
+            return ["serverMode","host","domain","port","lang","protocol","version","project_name","waitRestart"]
         else null
     },
     actions: {
@@ -27,14 +27,14 @@ var c = super_obj.extend({
         "edit": function(req){
             try{
                 var config = JSON.parse(fs.readFileSync(m.cfg.path+"/config.json","utf8"));
-                var attrs = (m.cfg.server_mode == "development")?object_attrs:["server_mode"];
+                var attrs = (m.cfg.serverMode == "development")?object_attrs:["serverMode"];
 
                 for(var i in attrs){
                     config[attrs[i]] = req.body[attrs[i]];
                     this.model.__data__.config[attrs[i]] = req.body[attrs[i]];
                 }
-                this.model.__data__.config.wait_restart = true;
-                m.wait_restart = true;
+                this.model.__data__.config.waitRestart = true;
+                m.waitRestart = true;
                 fs.writeFileSync(m.cfg.path+"/config.json",JSON.stringify(config,null,2),"utf-8");
                 return this.model.__data__.config;
             }

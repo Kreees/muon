@@ -3,14 +3,14 @@ var crypto = require("crypto");
     _ = require("underscore");
 
 module.exports = {
-    permissions: ["create","delete"],
+    permissions: ["create","remove"],
     actions: {
         "create": function(req,res){
             var md5 = crypto.createHash("md5");
             var dfd = Q.defer();
             var _this = this;
             if (req.body.session_id){
-                _this.m.models["user.session"].db.find({"session_id":req.body.session_id})
+                _this.model.db.find({"session_id":req.body.session_id})
                     .then(dfd.resolve,dfd.reject);
             }
             else {
@@ -27,7 +27,7 @@ module.exports = {
                     }
                     else {
                     	try{
-                        new _this.m.models["user.session"]({
+                        new _this.m.model({
                             "user": obj[0],
                             "created": new Date(),
                             "last_view": new Date(),
@@ -49,8 +49,6 @@ module.exports = {
             }
             return dfd.promise;
         },
-        "delete": function(){
-            return;
-        }
+        "remove": m.rest.actions["remove"]
     }
 };

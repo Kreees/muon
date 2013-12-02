@@ -5,17 +5,17 @@ var fs = require("fs"),
 var app = global.m.app;
 var path = global.m.path;
 
-function find_pattern(str,pattern_array){
+function findPatterns(str,patternArray){
     str = str || "";
-    pattern_array = pattern_array || [];
-    if (pattern_array.length == 0) return false;
-    for(var i in pattern_array){
-        if(str.match(pattern_array[i]) !== null) return true;
+    patternArray = patternArray || [];
+    if (patternArray.length == 0) return false;
+    for(var i in patternArray){
+        if(str.match(patternArray[i]) !== null) return true;
     }
     return false;
 }
 
-function traverse_dir(path,__call__,compl,ignore,filter,__counter__){
+function traversDir(path,__call__,compl,ignore,filter,__counter__){
     var __compl__ = _.once(function(){
         if (!isFinite(__counter__) && typeof compl == "function") compl();
     });
@@ -27,29 +27,29 @@ function traverse_dir(path,__call__,compl,ignore,filter,__counter__){
     counter += dir.length;
     if (counter == 0) return __compl__();
     for(var i in dir){
-        if (find_pattern(path+dir[i],ignore) || dir[i].replace(/^(temp_[\s\S]*)|(\.+[\s\S]*)|([\s\S]*~)|([\s\S]*\.back)$/,"wrong")=="wrong")
+        if (findPatterns(path+dir[i],ignore) || dir[i].replace(/^(temp_[\s\S]*)|(\.+[\s\S]*)|([\s\S]*~)|([\s\S]*\.back)$/,"wrong")=="wrong")
         {
             counter--;
             if (counter == 0) return __compl__();
             continue;
         }
-        var file_name = path+"/"+dir[i];
-        var stat = fs.statSync(file_name);
+        var fileName = path+"/"+dir[i];
+        var stat = fs.statSync(fileName);
         counter--;
         if (stat.isFile()){
-            if (filter.length == 0 || find_pattern(file_name.substring(file_name.lastIndexOf("/")),filter)){
-                __call__(file_name.replace(/\/+/g,"/"),stat);
+            if (filter.length == 0 || findPatterns(fileName.substring(fileName.lastIndexOf("/")),filter)){
+                __call__(fileName.replace(/\/+/g,"/"),stat);
             }
         }
-        else traverse_dir(file_name,__call__,compl,ignore,filter,counter);
+        else traversDir(fileName,__call__,compl,ignore,filter,counter);
         if (counter == 0) return __compl__ && __compl__();
     }
 };
 
 module.exports = {
-    cat_directory: function(dir,callback){
+    catDirectory: function(dir,callback){
         var temp = [];
-        traverse_dir(dir,function(name){temp.push(name)},function(){
+        traversDir(dir,function(name){temp.push(name)},function(){
             var counter = temp.length;
             var rendered = [];
             if (counter == 0) callback(rendered.join("\r\n"));
@@ -66,9 +66,9 @@ module.exports = {
     },
     tree: function(path,callback,ignore,filter){
         var ret = [];
-        traverse_dir(path,function(name){ret.push(name)},function(){
+        traversDir(path,function(name){ret.push(name)},function(){
             callback(_.sortBy(ret,function(name){return name}));
         },ignore,filter);
     },
-    traverse_dir: traverse_dir
+    traversDir: traversDir
 }

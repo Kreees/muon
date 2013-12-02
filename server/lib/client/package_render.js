@@ -1,20 +1,20 @@
-var templ_proc = require(m.__sys_path+"/server/lib/client/template_proc"),
-    tr_proc = require(m.__sys_path+"/server/lib/client/translation_proc"),
-    models_render = require(m.__sys_path+"/server/lib/models/model_render"),
-    fs_ext = require(m.__sys_path+"/server/lib/utils/fs/fs_ext"),
+var templProc = require(m.__sys_path+"/server/lib/client/template_proc"),
+    trProc = require(m.__sys_path+"/server/lib/client/translation_proc"),
+    modelsRender = require(m.__sys_path+"/server/lib/models/model_render"),
+    fsExt = require(m.__sys_path+"/server/lib/utils/fs/fs_ext"),
     _ = require("underscore"),
     fs = require("fs");
 
 module.exports = function (req,res){
-    var plug_name = req.path.replace(/\//g,"").split(":").slice(0,-1).join(":"),
-        plugin = m.__plugins[plug_name],
-        full_pack_name = req.path.replace(/\//g,""),
-        pack_name = full_pack_name.split(":").pop(),
-        package_dir = plugin.cfg.path+"/client/packages/"+pack_name+"/";
+    var plugName = req.path.replace(/\//g,"").split(":").slice(0,-1).join(":"),
+        plugin = m.__plugins[plugName],
+        fullPackName = req.path.replace(/\//g,""),
+        packName = fullPackName.split(":").pop(),
+        packageDir = plugin.cfg.path+"/client/packages/"+packName+"/";
 
-    try {var pack = require(package_dir+"package.js");}
+    try {var pack = require(packageDir+"package.js");}
     catch(e){
-        return m.errorize(res,404,"Package load error: "+pack_name+" from plugin "+plug_name);
+        return m.errorize(res,404,"Package load error: "+packName+" from plugin "+plugName);
     }
     pack.dependencies = pack.dependencies || ["*"];
 
@@ -23,85 +23,84 @@ module.exports = function (req,res){
     var views = [],
         dependency = {js:[],css:[]},
         models = null,
-        callback_text = null,
-        views_dir = package_dir+"views",
-        pack_translation = {};
+        callbackText = null,
+        viewsDir = packageDir+"views",
+        packTranslation = {};
 
-    var pack_model_list = models_render.get_model_names(plugin,pack.models);
-    function model_render(trs){
-        pack_translation = trs;
-        models_render.render_models(plugin,pack_model_list,function(data){
-            models = data; view_render();
+    var packModelList = modelsRender.getModelNames(plugin,pack.models);
+    function modelRender(trs){
+        packTranslation = trs;
+        modelsRender.renderModels(plugin,packModelList,function(data){
+            models = data; viewRender();
         });
     }
-    function view_render(){
-
-        fs_ext.tree(views_dir+"/model",
-            function(t){templ_proc.render_template(t,views_dir,full_pack_name,function(r_views){
-                views = views.concat(r_views);
-                fs_ext.tree(views_dir+"/collection",
-                    function(t){templ_proc.render_template(t,views_dir,full_pack_name,function(r_views){
-                        views = views.concat(r_views);
-                        fs_ext.tree(views_dir,
-                            function(t){templ_proc.render_template(t,views_dir,full_pack_name,function(r_views){
-                                views = views.concat(r_views);
-                                load_package();
+    function viewRender(){
+        fsExt.tree(viewsDir+"/model",
+            function(t){templProc.renderTemplate(t,viewsDir,fullPackName,function(rViews){
+                views = views.concat(rViews);
+                fsExt.tree(viewsDir+"/collection",
+                    function(t){templProc.renderTemplate(t,viewsDir,fullPackName,function(rViews){
+                        views = views.concat(rViews);
+                        fsExt.tree(viewsDir,
+                            function(t){templProc.renderTemplate(t,viewsDir,fullPackName,function(rViews){
+                                views = views.concat(rViews);
+                                loadPackage();
                             })},["views/model","views/collection"]);
                     })});
             })});
     }
 
-    function load_package(){
-        callback_text = fs.readFileSync(package_dir+"package.js","utf8");
-        callback_text = callback_text.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
-        callback_text = "m.packageInitData['"+full_pack_name+"'] = {\n"+
-            "\"package\": "+callback_text+",\n\n"+
+    function loadPackage(){
+        callbackText = fs.readFileSync(packageDir+"package.js","utf8");
+        callbackText = callbackText.replace(/^(\s*module\.exports\s*=\s*)|(;$)/g,"");
+        callbackText = "m.packageInitData['"+fullPackName+"'] = {\n"+
+            "\"package\": "+callbackText+",\n\n"+
             "\"models\": "+JSON.stringify(models)+",\n\n"+
             "\"views\": "+JSON.stringify(views)+",\n\n"+
-            "\"translation\": "+JSON.stringify(pack_translation)+",\n\n"+
+            "\"translation\": "+JSON.stringify(packTranslation)+",\n\n"+
             "\"dependencies\": "+JSON.stringify(dependency)+",\n\n"+
-            "\"cfg\": "+JSON.stringify((plugin.cfg.packages && plugin.cfg.packages[pack_name])?plugin.cfg.packages[pack_name]:{})+",\n\n"+
+            "\"cfg\": "+JSON.stringify((plugin.cfg.packages && plugin.cfg.packages[packName])?plugin.cfg.packages[packName]:{})+",\n\n"+
             "\n};";
-        if (req.query.m_callback) callback_text += "\ntry{ m['"+req.query.m_callback+"']();} catch(e){console.log('Callback f called: '+e.message); console.debug(e.stack)}";
+        if (req.query.m_callback) callbackText += "\ntry{ m['"+req.query.m_callback+"']();} catch(e){console.log('Callback f called: '+e.message); console.debug(e.stack)}";
         finalize();
     }
     function finalize(){
         res.set("Content-Type","text/javascript");
-        res.end(callback_text);
+        res.end(callbackText);
     }
 
-    fs_ext.tree(package_dir+"dependency/",function(files){
-        function proc_file(){
-            var prev_views = m.app.get("views");
+    fsExt.tree(packageDir+"dependency/",function(files){
+        function procFile(){
+            var prevViews = m.app.get("views");
             if (files.length == 0){
-                m.app.set("views",prev_views);
-                tr_proc.render_translation(plugin,pack_name,req.query.lang || m.default_lang,model_render);
+                m.app.set("views",prevViews);
+                trProc.renderTranslation(plugin,packName,req.query.lang || m.defaultLang,modelRender);
                 return
             }
             var file = files.shift();
             var extension = file.substr(file.lastIndexOf(".")+1);
-            var tmp_file = file.substr(0,file.lastIndexOf("/")+1)+"temp."+file.substr(file.lastIndexOf("/")+1)+"."+extension;
-            function data_rendered(e,data){
-                if (fs.existsSync(tmp_file)) fs.unlinkSync(tmp_file);
-                if (e){return proc_file();}
+            var tmpFile = file.substr(0,file.lastIndexOf("/")+1)+"temp."+file.substr(file.lastIndexOf("/")+1)+"."+extension;
+            function dataRendered(e,data){
+                if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+                if (e){return procFile();}
                 if (["coffee","js"].indexOf(extension) != -1) dependency.js.push(data);
                 if (["less","css"].indexOf(extension) != -1) dependency.css.push(data);
-                proc_file();
+                procFile();
             }
             if ( "coffee" == extension){
-                m.app.set("views",package_dir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
-                m.app.render(file.substr(file.lastIndexOf("/")+1),{},data_rendered);
+                m.app.set("views",packageDir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
+                m.app.render(file.substr(file.lastIndexOf("/")+1),{},dataRendered);
             }
             else if (["css","less"].indexOf(extension) != -1){
-                fs.writeFileSync(tmp_file,"[data-pack='"+full_pack_name+"'] {"+fs.readFileSync(file,"utf-8")+"\n}");
-                m.app.set("views",package_dir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
-                m.app.render(tmp_file,{},data_rendered);
+                fs.writeFileSync(tmpFile,"[data-pack='"+fullPackName+"'] {"+fs.readFileSync(file,"utf-8")+"\n}");
+                m.app.set("views",packageDir+"dependency/"+(["coffee","js"].indexOf(extension) != -1?"js":"css"));
+                m.app.render(tmpFile,{},dataRendered);
             }
             else{
-                fs.readFile(file,"utf8",data_rendered);
+                fs.readFile(file,"utf8",dataRendered);
             }
         }
-        proc_file();
+        procFile();
     },["/_"],[".js",".css",".coffee",".less"]);
 
 };
