@@ -61,13 +61,10 @@ m.ModelView.extend({
 		}
 		this[attr+"_controller"] = this.commonController;
 		this.initElementController(attr, type);
-		var elemC = this.initElementViewController(attr, type);
+		// var elemC = this.initElementViewController(attr, type);
 		this[attr+"_viewController"] = function(attr, cmd, obj){
-			console.log("11");
 			this.commonViewController(attr, cmd, obj);
-			console.log("12");
-			elemC(attr, cmd, obj);
-			console.log("13");
+			// elemC(attr, cmd, obj); error
 		}
 	},
 	initElementController: function(attr, type){
