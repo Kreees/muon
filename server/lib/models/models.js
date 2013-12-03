@@ -9,7 +9,7 @@ var fsExt = require(global.m.__sys_path+"/server/lib/utils/fs/fs_ext.js"),
 
 
 var surrogate = function(name,descr){
-    if (descr.extend){
+    if (descr.extends){
         if (descr.attrs){
             for(var i in descr.super.attrs) {
                 if (i in descr.attrs) m.kill("It's not allowed to override extended model attributes. Exiting.");
@@ -80,9 +80,9 @@ module.exports = {
                 var name = (packagePath?packagePath+".":"")+modelSimpleName;
 
                 // ищем зависимость на расширение
-                if (_model.extend) {
-                    if (_model.extend.indexOf(":") != -1){
-                        var dependencyFullName = (cfg.name?cfg.name+":":"")+_model.extend;
+                if (_model.extends) {
+                    if (_model.extends.indexOf(":") != -1){
+                        var dependencyFullName = (cfg.name?cfg.name+":":"")+_model.extends;
                         var subPlugin = dependencyFullName.split(":");
                         var modelName = subPlugin.pop(); subPlugin = subPlugin.join(":");
                         if (m.__plugins[subPlugin] && m.__plugins[subPlugin].models[modelName])
@@ -90,11 +90,11 @@ module.exports = {
                         else m.kill("No such model: "+dependencyFullName+". Dependency from model: "+name);
                     }
                     else {
-                        if (pluginScope.modelNames.indexOf(_model.extend) == -1){
+                        if (pluginScope.modelNames.indexOf(_model.extends) == -1){
                             dependencyFree && modelDependencies.push(filePath);
                             return false;
                         }
-                        _model.super = pluginScope.models[_model.extend];
+                        _model.super = pluginScope.models[_model.extends];
                     }
                 }
 
@@ -107,7 +107,6 @@ module.exports = {
                 dbDriver.extend(model);
                 model.pluginName = cfg.name;
                 model.pluginCfg = cfg;
-                m.log(model.modelName,model.extend);
                 //* Не определено
 //                model.prototype.url = function() { return model.url+"/"+this.id.toString(); }
                 // объявляем глобально
@@ -155,7 +154,9 @@ module.exports = {
                 // Если ниодного контроллера нет - то фолбечимся до обычного реста
                 if (model.super) m.super = model.super.controller;
                 else m.super = rest;
+                var sup = m.super;
                 m.super = _.clone(m.super);
+                m.super.super = sup;
                 try {
                     var controllerName = name;
                     while(!fs.existsSync(modelFilePath(controllerName,controllersPath))) {
@@ -177,7 +178,9 @@ module.exports = {
                     var scopeName = model.scope_list[i];
                     if (model.super && model.super.scopes[scopeName]) m.super = model.super.scopes[scopeName].controller;
                     else m.super = model.controller;
+                    var sup = m.super;
                     m.super = _.clone(m.super);
+                    m.super.super = sup;
 
                     var controller;
                     if ('string' == typeof scopeName){
@@ -210,7 +213,9 @@ module.exports = {
 
                     if (model.super && model.super.objects[objectName]) m.super = model.super.objects[objectName].controller;
                     else m.super = model.controller;
+                    var sup = m.super;
                     m.super = _.clone(m.super);
+                    m.super.super = sup;
 
                     var controller = null;
                     if ('string' == typeof objectName){

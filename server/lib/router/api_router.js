@@ -56,7 +56,9 @@ function runDependencies(target,req,res,next){
         return (pl?pl+":":"")+a;
     });
 
-    if (target.model.super) deps.unshift(target.model.extend);
+    if (target.model.super) {
+        deps.unshift(target.model.super);
+    }
     req.context.middleware.push(target.modelName);
     var nativeModel = req.context.model;
     function run(){
