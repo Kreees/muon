@@ -1,4 +1,5 @@
 module.exports = {
+    models: ["*"],
     middleware: [
         function(){
             if (m.hasProfile("first_user") || m.hasProfile("logined")) return;

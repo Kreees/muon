@@ -4,13 +4,14 @@ m.WidgetView.extend {
   }
   login: (ev)->
     ev.preventDefault();
-    window.some = this;
     new @m.models["user.session"]().save({
       login: @$("#login").val()
       password: md5(@$("#pass").val())
       remember: @$("#remember")[0].checked
     }).then(=>
-      this.m.setProjection("admin.logined",new @m.models["user.user"]("me",{force_sync:true}));
+      _this.m.models["user.user"].get("me").then(->
+        _this.m.setProjection("admin.logined",me);
+      );
       m.setProfile("logined");
     ,@error.bind(this));
   error: (e)->

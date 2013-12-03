@@ -39,4 +39,4 @@ module.exports = m.rest.extend({
             return dfd.promise;
         }
     }
-})
+});

@@ -32,13 +32,18 @@ var surrogate = function(name,descr){
         if (!descr.attrs[i].type) m.kill("Model attribute type is not specified: "+model.modelName+" : "+i);
     }
     model.scheme = descr.attrs || {};
+    model.object_list = descr.objects;
+    model.scope_list = descr.scopes;
+    model.objects = {};
+    model.scopes = {};
     model.model = model;
     model.modelName = name;
     model.prototype.model = model;
     model.prototype.modelName = name;
+
     if (descr.super){
-        (descr.super.objects instanceof Array) && (model.objects = descr.super.objects.concat(model.objects || []));
-        (descr.super.scopes instanceof Array) && (model.scopes = descr.super.scopes.concat(model.scopes || []));
+        (descr.super.object_list instanceof Array) && (model.object_list = descr.super.object_list.concat(model.object_list || []));
+        (descr.super.scope_list instanceof Array) && (model.scope_list = descr.super.scope_list.concat(model.scope_list || []));
     }
     return model;
 }
@@ -102,7 +107,7 @@ module.exports = {
                 dbDriver.extend(model);
                 model.pluginName = cfg.name;
                 model.pluginCfg = cfg;
-
+                m.log(model.modelName,model.extend);
                 //* Не определено
 //                model.prototype.url = function() { return model.url+"/"+this.id.toString(); }
                 // объявляем глобально
@@ -150,6 +155,7 @@ module.exports = {
                 // Если ниодного контроллера нет - то фолбечимся до обычного реста
                 if (model.super) m.super = model.super.controller;
                 else m.super = rest;
+                m.super = _.clone(m.super);
                 try {
                     var controllerName = name;
                     while(!fs.existsSync(modelFilePath(controllerName,controllersPath))) {
@@ -167,11 +173,12 @@ module.exports = {
                 if (typeof model.controller.extend != "function") model.controller.extend = rest.extend;
                 // Выполняем привязку скоупов для моделей. Им
 
-                if (model.super) m.super = model.super.controller;
-                else m.super = model.controller;
+                for(var i in model.scope_list){
+                    var scopeName = model.scope_list[i];
+                    if (model.super && model.super.scopes[scopeName]) m.super = model.super.scopes[scopeName].controller;
+                    else m.super = model.controller;
+                    m.super = _.clone(m.super);
 
-                for(var i in model.scopes){
-                    var scopeName = model.scopes[i];
                     var controller;
                     if ('string' == typeof scopeName){
                         try {
@@ -198,10 +205,13 @@ module.exports = {
                     scope.scopeName = scopeName;
                 }
 
-                for(var i in model.objects){
-                    var objectName = model.objects[i];
-                    if (model.super) m.super = model.super.controller;
+                for(var i in model.object_list){
+                    var objectName = model.object_list[i];
+
+                    if (model.super && model.super.objects[objectName]) m.super = model.super.objects[objectName].controller;
                     else m.super = model.controller;
+                    m.super = _.clone(m.super);
+
                     var controller = null;
                     if ('string' == typeof objectName){
                         try {

@@ -53,8 +53,9 @@ function runDependencies(target,req,res,next){
     if (req.context.middleware.indexOf(target.modelName) != -1) return next();
     var deps = (target.controller.dependencies || []).map(function(a){
         var pl = target.controller.pluginName;
-        return (pl?pl+":":+"")+a;
+        return (pl?pl+":":"")+a;
     });
+
     if (target.model.super) deps.unshift(target.model.extend);
     req.context.middleware.push(target.modelName);
     var nativeModel = req.context.model;
@@ -81,7 +82,9 @@ function runDependencies(target,req,res,next){
                 return next();
             }
         }
+//        m.log(deps);
         var dependencyName = deps.shift();
+//        m.log(dependencyName);
         try{
             if (dependencyName.indexOf(":") != -1){
                 var dep_plugin = dependencyName.split(":");

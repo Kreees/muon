@@ -75,6 +75,7 @@ module.exports = {
                     var backboneModelString = "m.model_"+ modelName.replace(/[:\.]/g,"_");
                     backboneModelString += " = m.Model.extend(";
                     backboneModelString += JSON.stringify(backboneModel)+",{scheme: "+JSON.stringify(scheme)+"});";
+
                     ret[(pluginName?pluginName+":":"")+model.modelName] = backboneModelString;
                 }
             }

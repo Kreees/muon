@@ -27,19 +27,19 @@ module.exports = {
                     }
                     else {
                     	try{
-                        new _this.m.model({
-                            "user": obj[0],
-                            "created": new Date(),
-                            "last_view": new Date(),
-                            "session_id": md5.update(obj[0]+new Date().toISOString()).digest("hex"),
-                            "expires": req.body.remember?new Date(Date.now() + 1000*3600*24*365*10):new Date(Date.now() + 1000*3600*6)
-                        }).save().then(function(a){
-                            res.cookie(
-                                "muon.session.id",
-                                a.get("session_id"),
-                                req.body.remember?{expires: new Date(Date.now() + 1000000000000)}:{});
-                            dfd.resolve(a)
-                        },dfd.reject);
+                            new _this.model({
+                                "user": obj[0],
+                                "created": new Date(),
+                                "last_view": new Date(),
+                                "session_id": md5.update(obj[0]+new Date().toISOString()).digest("hex"),
+                                "expires": req.body.remember?new Date(Date.now() + 1000*3600*24*365*10):new Date(Date.now() + 1000*3600*6)
+                            }).save().then(function(a){
+                                res.cookie(
+                                    "muon.session.id",
+                                    a.get("session_id"),
+                                    req.body.remember?{expires: new Date(Date.now() + 1000000000000)}:{});
+                                dfd.resolve(a)
+                            },dfd.reject);
                     	}
                     	catch(e){
                     		m.log(e.message);
