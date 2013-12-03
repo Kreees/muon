@@ -5,20 +5,20 @@ var _ = require("underscore"),
 var rest = {
     "actions":{
         "create": function(req,res){
-            return new this.model(req.body).save();
+            return new this.model(this.data).save();
         },
         "edit": function(req,res,id){
             var dfd = Q.defer();
             this.model.db.get(id).then(
                 function(a){
-                    a.set(req.body);
+                    a.set(this.data);
                     a.save().then(dfd.resolve,dfd.reject);
                 },
                 dfd.reject
             );
             return dfd.promise;
         },
-        "delete": function(req,res,id){
+        "remove": function(req,res,id){
             var dfd = Q.defer();
             this.model.db.get(id).then(
                 function(a){
@@ -31,7 +31,7 @@ var rest = {
             var dfd = Q.defer();
             try {id = m.objId(id)}
             catch(e){return null;}
-            this.model.db.find({$and:[{"_id":id},req.__compiled_where__]}).
+            this.model.db.find({$and:[{"_id":id},req.__compiledWhere__]}).
                 then(function(a){
                     if (a.length == 0) dfd.reject(null);
                     else dfd.resolve(a.eval()[0]);
@@ -39,29 +39,29 @@ var rest = {
             return dfd.promise;
         },
         "index": function(req){
-            return this.model.db.find(req.__compiled_where__);
+            return this.model.db.find(req.__compiledWhere__);
         },
         "search": function(req){
-            return this.model.db.find({$and:[req.__compiled_where__,(req.method.toUpperCase() == "GET")?req.query:req.body]})
+            return this.model.db.find({$and:[req.__compiledWhere__,this.data]})
         }
     },
-    extend: function(extend_obj){
-        var new_obj = _.clone(this);
-        new_obj["actions"] =  _.clone(this.actions || {});
+    extend: function(extension){
+        var newObject = _.clone(this);
+        newObject["actions"] =  _.clone(this.actions || {});
         (function(object){
             for(var i in object){
                 if (i == "extend") continue;
                 if (i == "actions"){
-                    _.extend(new_obj.actions,object.actions);
+                    _.extend(newObject.actions,object.actions);
                 }
                 else {
-                    new_obj[i] = object[i];
+                    newObject[i] = object[i];
                 }
             }
-        })(extend_obj);
-        new_obj.super = rest;
-        new_obj.extend = this.extend;
-        return new_obj;
+        })(extension);
+        newObject.super = rest;
+        newObject.extend = this.extend;
+        return newObject;
     }
 };
 m.rest = rest;

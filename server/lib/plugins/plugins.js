@@ -4,27 +4,27 @@ var Q = require("q"),
 
 module.exports = {
     init: function(cfg){
-        var project_plug_loader = require(cfg.path+"/lib/plugin_loader.js");
-        var plugins_scope = {}
+        var projectPluginLoader = require(cfg.path+"/lib/plugin_loader.js");
+        var pluginScope = {}
         var dfd = Q.defer();
         var plugins = _.keys(cfg.plugins);
-        function load_plugin(){
+        function loadPlugin(){
             if (plugins.length == 0){
-                _.defer(dfd.resolve,plugins_scope);
+                _.defer(dfd.resolve,pluginScope);
                 return;
             }
             var plugin = plugins.shift();
-            var cfg_obj = cfg.plugins[plugin];
-            var plugin_uppercase = plugin.toLocaleUpperCase();
+            var cfgObject = cfg.plugins[plugin];
+            var pluginUppercaseName = plugin.toLocaleUpperCase();
             try{
-                cfg_obj.parent = cfg.name;
-                var plugin_obj = project_plug_loader(plugin).plugin();
-                plugin_obj.init(cfg_obj).then(function(scope){
-                    plugins_scope[plugin_uppercase] = scope;
-                    scope.plugin_obj = plugin_obj;
-                    scope.name = plugin_uppercase;
-                    scope.cfg = cfg_obj;
-                    load_plugin();
+                cfgObject.parent = cfg.name;
+                var pluginObject = projectPluginLoader(plugin).plugin();
+                pluginObject.init(cfgObject).then(function(scope){
+                    pluginScope[pluginUppercaseName] = scope;
+                    scope.pluginObject = pluginObject;
+                    scope.name = pluginUppercaseName;
+                    scope.cfg = cfgObject;
+                    loadPlugin();
                 });
             }
             catch(e){
@@ -32,7 +32,7 @@ module.exports = {
                 throw e;
             }
         }
-        load_plugin();
+        loadPlugin();
         return dfd.promise;
     }
 }

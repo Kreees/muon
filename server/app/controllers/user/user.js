@@ -14,11 +14,14 @@ module.exports = m.rest.extend({
             var dfd = Q.defer();
             var _this = this;
             var args = arguments;
-            this.model.db.find({nick:req.body.nick}).then(function(a){
+
+            this.data.password = this.data.password || "";
+
+            this.model.db.find({nick:this.data.nick}).then(function(a){
                 if (a.length > 0)
                     return dfd.reject({error: "User with such Nick already exists",statusCode: 1})
                 var md5 = crypto.createHash("md5");
-                req.body.password = md5.update(req.body.password).digest("hex");
+                _this.data.password = md5.update(_this.data.password).digest("hex");
                 m.rest.actions.create.apply(_this,args).then(dfd.resolve,dfd.reject);
             })
 
@@ -36,4 +39,4 @@ module.exports = m.rest.extend({
             return dfd.promise;
         }
     }
-})
+});

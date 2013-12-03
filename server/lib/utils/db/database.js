@@ -13,15 +13,15 @@ m.objId = function(a){
 
 function $(obj){
     if (!obj.model.__collection){
-        var collection_name = (obj.model.plugin_name?obj.model.plugin_name.toUpperCase()+"_":"")+obj.model.model_name.replace(/\./g,"_");
-        obj.model.__collection = m.db.collection(collection_name);
+        var collectionName = (obj.model.pluginName?obj.model.pluginName.toUpperCase()+"_":"")+obj.model.modelName.replace(/\./g,"_");
+        obj.model.__collection = m.db.collection(collectionName);
     }
     return obj.model.__collection;
 }
 
-var db_queryset = function(model,data){
+var dbQuerySet = function(model,data){
     this.model = model;
-    this.model_name = model.model_name;
+    this.modelName = model.modelName;
     this.__data__ = {};
     for(var i in data){
         this.push(data[i]._id);
@@ -29,12 +29,12 @@ var db_queryset = function(model,data){
     }
 }
 
-m.QuerySet = db_queryset;
+m.QuerySet = dbQuerySet;
 
-db_queryset.prototype = [];
-_.extend(db_queryset.prototype,
+dbQuerySet.prototype = [];
+_.extend(dbQuerySet.prototype,
 {
-    __query_set__: true,
+    __querySet__: true,
     del: function(){
         var _this = this;
         var dfd = Q.defer();
@@ -49,14 +49,14 @@ _.extend(db_queryset.prototype,
         for(var i in this.slice()) ret.push(new this.model(this.__data__[this[i]]));
         return ret;
     },
-    eval_raw: function(){
+    evalRaw: function(){
         var ret = [];
         for(var i in this.slice()) ret.push(this.__data__[this[i]]);
         return ret;
     }
 });
 
-var db_model_extend = {
+var dbModelExtend = {
     get: function(id){
         var dfd = Q.defer();
         while(1){
@@ -67,7 +67,7 @@ var db_model_extend = {
             var cursor = $(this).find({_id: id});
             cursor.toArray(function(e,data){
                 if (e) return dfd.reject(e);
-                if (data.length == 0) return dfd.reject("Object "+_this.model.model_name+":"+id+" doesn't exist");
+                if (data.length == 0) return dfd.reject("Object "+_this.model.modelName+":"+id+" doesn't exist");
                 var obj = new _this.model(data[0]);
                 obj.id = data[0]._id.toString();
                 dfd.resolve(obj);
@@ -76,10 +76,10 @@ var db_model_extend = {
         }
         return dfd.promise;
     },
-    find: function(where_clause){
+    find: function(whereClause){
         var dfd = Q.defer();
         var _this = this;
-        var a = $(this).find(where_clause);
+        var a = $(this).find(whereClause);
         var obj = dfd.promise;
         obj.sort = function(){a = a.sort.apply(a,arguments); return obj;}
         obj.skip = function(){a = a.skip.apply(a,arguments); return obj;}
@@ -87,21 +87,21 @@ var db_model_extend = {
         _.defer(function(){
             a.toArray(function(e,data){
                 if (e || !data) dfd.reject(e);
-                else dfd.resolve(new db_queryset(_this.model,data));
+                else dfd.resolve(new dbQuerySet(_this.model,data));
             });
         });
         return obj;
     }
 };
 
-var db_objet_extend = {
+var dbObjectExtend = {
     save: function(){
         var dfd = Q.defer();
         var _this = this;
         if (!this.id) {
             $(this).insert(this.attributes,function(e,a){
                 if (e) return dfd.reject(e);
-                if (!a) return dfd.reject("Can't create new object of "+_this.model.model_name);
+                if (!a) return dfd.reject("Can't create new object of "+_this.model.modelName);
                 _this.attributes = a[0];
                 _this.id = _this.attributes._id.toString();
                 return dfd.resolve(_this);
@@ -150,18 +150,18 @@ module.exports = {
         if ('function' != typeof model){
             throw Error("Wrong model object type: should be a function");
         }
-        _.extend(model.prototype,db_objet_extend);
-        model.db = _.clone(db_model_extend);
+        _.extend(model.prototype,dbObjectExtend);
+        model.db = _.clone(dbModelExtend);
         model.db.model = model;
     },
-    init: function(db_name){
+    init: function(dbName){
         var dfd = Q.defer();
         if (global.m.db){
             db = global.m.db;
             _.defer(dfd.resolve);
         }
         else {
-            mongo.MongoClient.connect(db_name, function(err, dbObj) {
+            mongo.MongoClient.connect(dbName, function(err, dbObj) {
                 if(err) throw err;
                 global.m.db = dbObj;
                 db = dbObj;

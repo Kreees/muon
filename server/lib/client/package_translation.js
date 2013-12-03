@@ -1,4 +1,25 @@
-var tr_proc = require(m.__sys_path+"/server/lib/client/translation_proc"),
+/**
+ Данный метод является одним из частей api сервера
+
+ В данном файле формируется JSON-описание с переводами интерфейса всех вьюх для указанных пакетов
+
+ соответствует запросу /pack_translate?muon
+ в качестве GET-аргумента перечень пакетов, для которых требуется перевод через запятую,
+ напр: ?muon&pack=admin,application,tutor
+
+ программа обходит содержимое всех указанных пакетов в подпапке tr и формирует словарь переводов изходя из того,
+ что имена (и пути) файлов с переводом соответствует пути одной из вьюх в папке views.
+
+ Например: stack/application/application.jade содержит в себе тэги с атрибутами data-tr='welcome'
+            в этом случае для перевод интерфейса на английский язык требуется файл
+            en/stack/application/tr.json примерно следующего содержания
+            {
+                'welcome': "Welcome to the muon.js project!"
+            }
+ */
+
+
+var trProc = require(m.__sys_path+"/server/lib/client/translation_proc"),
     _ = require("underscore");
 
 module.exports = function(req,res){
@@ -16,14 +37,14 @@ module.exports = function(req,res){
     }
     var ret = {};
     for(var i in packs){
-        (function(pack_name){
-            var plug_name = pack_name.split(":").slice(0,-1).join(":"),
-                plugin = m.__plugins[plug_name],
-                full_pack_name = pack_name,
-                pack_name = full_pack_name.split(":").pop();
-            tr_proc.render_translation(plugin,pack_name,lang || m.default_lang,function(trs){
+        (function(packName){
+            var pluginName = packName.split(":").slice(0,-1).join(":"),
+                plugin = m.__plugins[pluginName],
+                fullPackName = packName,
+                packName = fullPackName.split(":").pop();
+            trProc.renderTranslation(plugin,packName,lang || m.defaultLang,function(trs){
                 counter--;
-                ret[full_pack_name] = trs;
+                ret[fullPackName] = trs;
                 if(counter == 0){
                     res.set("Content-Type","application/json");
                     res.end(JSON.stringify(ret));

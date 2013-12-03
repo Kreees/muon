@@ -1,16 +1,16 @@
 module.exports = {
+    permissions: function(){
+        if (this.session) return ["all"];
+        else return [];
+    },
     actions: {
-        permissions: function(){
-            if (this.session) return ["all"];
-            else return [];
-        },
         get: function(){
             return this.session || null;
         },
-        delete: function(req,res){
+        remove: function(req,res){
             var id = this.session.id;
             delete this.session;
-            return m.rest.actions.delete.apply(this,[req,res,id]);
+            return m.rest.actions.remove.apply(this,[req,res,id]);
         }
     }
 }

@@ -13,12 +13,12 @@ m.errorize = function(res,statusCode,message){
     res.end(JSON.stringify({error: message,statusCode: statusCode}));
 }
 
-function init_server(next){
+function initServer(next){
     var next = next || function(){}
     m.__plugins = {}
     m.__plugins[""] = m;
-    m.__server_init__ = true;
-    Q.when(db.init("mongodb://"+m.cfg.db_host+"/"+m.cfg.db_name)).then(
+    m.__serverInit__ = true;
+    Q.when(db.init("mongodb://"+m.cfg.dbHost+"/"+m.cfg.dbName)).then(
         function(){
             m.plugins = {};
             plugins.init(m.cfg).then(
@@ -31,7 +31,7 @@ function init_server(next){
                     models.init(m.cfg).then(
                         function(a){
                             for(var i in a) m[i] = a[i];
-                            m.__server_init__ = false;
+                            m.__serverInit__ = false;
                             try { next(); }
                             catch(e){ m.kill(e.message) }
                         },function(e){ throw Error("Models load error!");})
@@ -42,14 +42,13 @@ function init_server(next){
 
 try{
 module.exports = {
-    init: init_server,
-    compile_client: req("client/client_render"),
-    compile_muonjs: req("client/muon_render"),
-    package_render: req("client/package_render"),
-    package_view: req("client/package_view"),
-    package_translation: req("client/package_translation"),
-    api_proc: req("router/api_router"),
-    docs_proc: req("router/doc_router")
+    init: initServer,
+    compileClient: req("client/client_render"),
+    compileMuonJs: req("client/muon_render"),
+    packageRender: req("client/package_render"),
+    packageView: req("client/package_view"),
+    packageTranslation: req("client/package_translation"),
+    apiProc: req("router/api_router")
 }
 }
 catch(e){
