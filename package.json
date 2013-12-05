@@ -44,5 +44,10 @@
         "fstream":"*",
         "cheerio": "*",
         "optimist":"*"
+    },
+    "devDependencies":
+    {
+        "mocha": "*",
+        "chai": "*"
     }
 }
