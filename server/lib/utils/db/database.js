@@ -39,7 +39,7 @@ _.extend(dbQuerySet.prototype,
         var _this = this;
         var dfd = Q.defer();
         $(this).remove({_id: {$in: this.slice()}},{},function(e,_){
-            if (e) dfd.reject(e);
+            if (e) dfd.reject(500,e);
             else dfd.resolve(_this);
         });
         return dfd.promise;
@@ -63,11 +63,11 @@ var dbModelExtend = {
             var _this = this;
             if (!id) {_.defer(dfd.reject,"No id specified"); break;}
             try {var id = new ObjectID(id);}
-            catch(e) {_.defer(dfd.reject,"Wrong ObjectId. Object doesn't exist."); break;}
+            catch(e) {_.defer(dfd.reject,500,"Wrong ObjectId. Object doesn't exist."); break;}
             var cursor = $(this).find({_id: id});
             cursor.toArray(function(e,data){
                 if (e) return dfd.reject(e);
-                if (data.length == 0) return dfd.reject("Object "+_this.model.modelName+":"+id+" doesn't exist");
+                if (data.length == 0) return dfd.reject(404,"Object "+_this.model.modelName+":"+id+" doesn't exist");
                 var obj = new _this.model(data[0]);
                 obj.id = data[0]._id.toString();
                 dfd.resolve(obj);
@@ -86,7 +86,7 @@ var dbModelExtend = {
         obj.limit = function(){a = a.limit.apply(a,arguments); return obj;}
         _.defer(function(){
             a.toArray(function(e,data){
-                if (e || !data) dfd.reject(e);
+                if (e || !data) dfd.reject(500,e);
                 else dfd.resolve(new dbQuerySet(_this.model,data));
             });
         });
@@ -101,7 +101,7 @@ var dbObjectExtend = {
         if (!this.id) {
             $(this).insert(this.attributes,function(e,a){
                 if (e) return dfd.reject(e);
-                if (!a) return dfd.reject("Can't create new object of "+_this.model.modelName);
+                if (!a) return dfd.reject(500,"Can't create new object of "+_this.model.modelName);
                 _this.attributes = a[0];
                 _this.id = _this.attributes._id.toString();
                 return dfd.resolve(_this);
@@ -110,7 +110,8 @@ var dbObjectExtend = {
         else {
             delete _this.attributes._id;
             $(this).update({_id: new ObjectID(this.id)},this.attributes,{safe:true,upsert:true},function(e,a){
-                if (e || !a) return dfd.reject(e);
+                if (e) return dfd.reject(500,e);
+                if (!a) return dfd.reject(404,e);
                 _this.attributes._id = new ObjectID(_this.id);
                 dfd.resolve(_this);
             });
@@ -122,7 +123,7 @@ var dbObjectExtend = {
         var _this = this;
         if (this.id) {
             $(this).remove({_id: new ObjectID(this.id)},{},function(e,_){
-                if (e) dfd.reject(e);
+                if (e) dfd.reject(500,e);
                 else dfd.resolve(_this);
             });
         }

@@ -9,23 +9,22 @@ var rest = {
         },
         "edit": function(req,res,id){
             var dfd = Q.defer();
-            var _this = this;
             this.model.db.get(id).then(
                 function(a){
-                    a.set(_this.data);
-                    a.save().then(dfd.resolve,dfd.reject);
+                    a.set(this.data);
+                    a.save().then(dfd.resolve,dfd.reject).done();
                 },
                 dfd.reject
-            );
+            ).done();
             return dfd.promise;
         },
         "remove": function(req,res,id){
             var dfd = Q.defer();
             this.model.db.get(id).then(
                 function(a){
-                    a.del().then(dfd.resolve,dfd.reject);
+                    a.del().then(dfd.resolve,dfd.reject).done();
                 },
-                dfd.reject);
+                dfd.reject).done();
             return dfd.promise;
         },
         "get": function(req,res,id){
@@ -34,7 +33,7 @@ var rest = {
             catch(e){return null;}
             this.model.db.find({$and:[{"_id":id},req.__compiledWhere__]}).
                 then(function(a){
-                    if (a.length == 0) dfd.reject(null);
+                    if (a.length == 0) dfd.reject(404,null);
                     else dfd.resolve(a.eval()[0]);
                 },dfd.reject);
             return dfd.promise;
@@ -48,6 +47,7 @@ var rest = {
     },
     extend: function(extension){
         var newObject = _.clone(this);
+        delete newObject.dependencies;
         newObject["actions"] =  _.clone(this.actions || {});
         (function(object){
             for(var i in object){
@@ -60,7 +60,7 @@ var rest = {
                 }
             }
         })(extension);
-        newObject.super = rest;
+        newObject.super = this;
         newObject.extend = this.extend;
         return newObject;
     }

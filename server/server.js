@@ -28,19 +28,21 @@ function initServer(next){
                         m.__plugins[i] = a[i];
                         m.plugins[i] = a[i];
                     }
-                    models.init(m.cfg).then(
-                        function(a){
-                            for(var i in a) m[i] = a[i];
-                            m.__serverInit__ = false;
-                            try { next(); }
-                            catch(e){ m.kill(e.message) }
-                        },function(e){ throw Error("Models load error!");})
-                },function(e){ throw Error("Plugins load error!");})
-        },function(){ throw Error("Database load error!");});
+                    try{
+                        models.init(m.cfg).then(
+                            function(a){
+
+                                for(var i in a) m[i] = a[i];
+                                m.__serverInit__ = false;
+                                _.defer(next)
+                            },function(e){ throw Error("Models load error!");}).done()
+                    }
+                    catch(e){m.kill(e);}
+                },function(e){ throw Error("Plugins load error!");}).done()
+        },function(){ throw Error("Database load error!");}).done();
     return this;
 }
 
-try{
 module.exports = {
     init: initServer,
     compileClient: req("client/client_render"),
@@ -49,9 +51,4 @@ module.exports = {
     packageView: req("client/package_view"),
     packageTranslation: req("client/package_translation"),
     apiProc: req("router/api_router")
-}
-}
-catch(e){
-    console.log(e.stack);
-    process.kill();
-}
+};

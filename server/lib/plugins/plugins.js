@@ -25,12 +25,9 @@ module.exports = {
                     scope.name = pluginUppercaseName;
                     scope.cfg = cfgObject;
                     loadPlugin();
-                });
+                }).done();
             }
-            catch(e){
-                console.log(e.stack);
-                throw e;
-            }
+            catch(e){ m.kill(e); }
         }
         loadPlugin();
         return dfd.promise;

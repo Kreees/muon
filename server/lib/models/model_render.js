@@ -16,9 +16,9 @@ function getPlugin(plugin){
 var getPlugin = _.memoize(getPlugin);
 
 module.exports = {
-    getModelNames: function(plugin,packModels){
+    renderModels: function(plugin,packModels,callback){
         var plugins = getPlugin(plugin);
-        var packageModelList = [];
+        var list = [];
         for(var pluginName in plugins){
             var plugin = plugins[pluginName];
             for(var i in packModels){
@@ -26,16 +26,9 @@ module.exports = {
                 token = token.replace(/\./g,"\\.").replace(/\*/g,".*?");
                 token = RegExp("^"+token+"$");
                 for(var j in plugin.models){
-                    if (token.test(j)) packageModelList.push((pluginName?pluginName+":":"")+j);
+                    if (token.test(j)) list.push((pluginName?pluginName+":":"")+j);
                 }
             }
-        }
-        return packageModelList;
-
-    },
-    renderModels: function(plugin,list,callback){
-        if (typeof list == "function"){
-            callback = list;
         }
         var ret = {};
         var plugins = getPlugin(plugin);
@@ -43,7 +36,7 @@ module.exports = {
             for(var pluginName in plugins){
                 var plugin = plugins[pluginName];
                 for(var i in plugin.models){
-                    if (_.isArray(list) && list.indexOf((pluginName?pluginName+":":"")+i) == -1) continue;
+                    if (list.indexOf((pluginName?pluginName+":":"")+i) == -1) continue;
                     if (!(plugin.models[i].url in plugin.urlAccess)){
                         continue;
                     }

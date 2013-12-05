@@ -24,7 +24,8 @@ function initPlugin(cfg){
                     for(var i in a) pluginScope[i] = a[i];
                     pluginScope.plugins = {};
                     dfd.resolve(pluginScope);
-                })});
+                }).done();
+        }).done();
     return dfd.promise;
 }
 
