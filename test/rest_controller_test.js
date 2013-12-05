@@ -14,7 +14,12 @@ describe('REST controller', function(){
 //    start server
     before(function(done){
         serv.onready = done;
+    });
+//    assign global variables
+    before(function(done){
+        this.User = m.models['user.user']
         this.rest = m.rest;
+        done();
     });
 //    drop database
     before(function(done){
@@ -26,7 +31,8 @@ describe('REST controller', function(){
 
     describe('action GET', function(){
         before(function(done){
-            var User = m.models['user.user']
+//            var User = m.models['user.user']
+            var User = this.User;
             user = new User({nick:'prikha'});
             user.save().then(function(user){
                 Mocha.test_user = user;
@@ -38,7 +44,7 @@ describe('REST controller', function(){
         })
         it("should respond with valid object",function(done){
             var rest = this.rest;
-            var User = m.models['user.user'];
+            var User = this.User;
             test_user = Mocha.test_user;
             var req = {
                 context: {
@@ -61,7 +67,6 @@ describe('REST controller', function(){
 
     describe('action INDEX', function(){
         before(function(done){
-            this.User = m.models['user.user']
             this.User.db.find().done(function(collection){
                 this.test_collection = collection.slice();
                 done();
@@ -128,7 +133,7 @@ describe('REST controller', function(){
                         this.after_user_count = count;
                         this.before_user_count.should.equal(this.after_user_count-1);
                         (user instanceof User).should.equal(true);
-                       done();
+                        done();
                     });
             })
 
@@ -148,7 +153,7 @@ describe('REST controller', function(){
 
         it('should be present', function () {
             this.rest.actions.should.have.property('edit');
-        })
+        });
 
         it('should change record', function(done){
             var User = this.User;
@@ -167,14 +172,15 @@ describe('REST controller', function(){
 
             var res = {end: function(){}}
             var ret = this.rest.actions.edit.apply(req.context,[req,res,existing_user.id]);
-
             Q.when(ret).then(function(user){
-                m.log('====');
-                m.log(user);
-                done();
-            })
-
-        })
+                (user.id).should.equal(Mocha.existing_user.id);
+                user.should.not.eql(this.existing_user);
+                user.attributes.nick.should.equal(changed_user.nick)
+            },function(e){
+                m.log("=======")
+                m.log("Error"+ e.message);
+            }).done(done);
+        });
     });
 })
 
