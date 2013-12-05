@@ -9,9 +9,10 @@ var rest = {
         },
         "edit": function(req,res,id){
             var dfd = Q.defer();
+            var _this = this;
             this.model.db.get(id).then(
                 function(a){
-                    a.set(this.data);
+                    a.set(_this.data);
                     a.save().then(dfd.resolve,dfd.reject);
                 },
                 dfd.reject
