@@ -116,6 +116,7 @@ m.DataPageLayoutView = m.LayoutView.extend({
 					if(_._m) _.cur_c = _._m.collection();
 				}
 			});
+			window.cur_c = this.cur_c;
 		} 
 		this.m.setProjection("editor.coll", this.cur_c);
 	},
