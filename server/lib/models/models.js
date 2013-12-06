@@ -32,8 +32,8 @@ var surrogate = function(name,descr){
         if (!descr.attrs[i].type) m.kill("Model attribute type is not specified: "+model.modelName+" : "+i);
     }
     model.scheme = descr.attrs || {};
-    model.object_list = descr.objects;
-    model.scope_list = descr.scopes;
+    model.objectsList = descr.objects;
+    model.scopesList = descr.scopes;
     model.objects = {};
     model.scopes = {};
     model.model = model;
@@ -42,8 +42,8 @@ var surrogate = function(name,descr){
     model.prototype.modelName = name;
 
     if (descr.super){
-        (descr.super.object_list instanceof Array) && (model.object_list = descr.super.object_list.concat(model.object_list || []));
-        (descr.super.scope_list instanceof Array) && (model.scope_list = descr.super.scope_list.concat(model.scope_list || []));
+        (descr.super.objectsList instanceof Array) && (model.objectsList = descr.super.objectsList.concat(model.objectsList || []));
+        (descr.super.scopesList instanceof Array) && (model.scopesList = descr.super.scopesList.concat(model.scopesList || []));
     }
     return model;
 }
@@ -63,6 +63,7 @@ module.exports = {
         cfg = cfg || global.m.cfg;
         var modelsPath = cfg.path+"/server/app/models";
         fsExt.tree(modelsPath,function(files){
+            files = files.filter(function(file){ return !file.match(/\/_[a-zA-Z_\d\.]*/); });
             var pluginScope = {}
             var initOrder = [];
             pluginScope.models = {};
@@ -138,25 +139,22 @@ module.exports = {
                     m.kill("Cyclic models dependency detected. Exiting.");
             }
 
+            try {
             var controllersPath = cfg.path+"/server/app/controllers/";
             for(var modelIndex = 0, len = initOrder.length; modelIndex < len; modelIndex++){
+
                 var model = pluginScope.models[initOrder[modelIndex]];
                 var name = model.modelName;
-
-                model.scopes = {};
-                model.objects = {};
-                model.middleware = {};
-
                 // задаем контроллер для модели
                 // Если точного соответствия имени файла контроллера и имени модели нет
                 // то пытаемся подняться на ступень выше и взять контроллер на ступень выше.
                 // Это обеспечит условное наследование моделей.
                 // Если ниодного контроллера нет - то фолбечимся до обычного реста
+
                 if (model.super) m.super = model.super.controller;
                 else m.super = rest;
-                var sup = m.super;
-                m.super = _.clone(m.super);
-                m.super.super = sup;
+
+                var controller;
                 try {
                     var controllerName = name;
                     while(!fs.existsSync(modelFilePath(controllerName,controllersPath))) {
@@ -164,82 +162,78 @@ module.exports = {
                         if (_controllerName == controllerName) throw Error();
                         controllerName = _controllerName;
                     }
-                    model.controller = require(modelFilePath(controllerName,controllersPath));
-                    model.controller.pluginName = cfg.name;
+                    try {controller = require(modelFilePath(controllerName,controllersPath));}
+                    catch(e) {m.kill(e);}
                 }
                 catch(e) {
-                    model.controller = m.super;
+                    m.log(e);
+                    controller = m.super;
                 }
-                if (typeof model.controller.actions != "object") model.controller.actions = {}
-                if (typeof model.controller.extend != "function") model.controller.extend = rest.extend;
+
+                if (typeof controller.extend != "function") controller.extend = rest.extend;
+
+                model.controller = controller.extend({});
+                model.controller.super = m.super;
+                model.controller.pluginName = cfg.name;
                 // Выполняем привязку скоупов для моделей. Им
 
-                for(var i in model.scope_list){
-                    var scopeName = model.scope_list[i];
-                    if (model.super && model.super.scopes[scopeName]) m.super = model.super.scopes[scopeName].controller;
+                for(var i in model.scopesList){
+                    var scopeName = model.scopesList[i];
+                    if (model.super && model.super.scopes[scopeName])
+                        m.super = model.super.scopes[scopeName].controller;
                     else m.super = model.controller;
-                    var sup = m.super;
-                    m.super = _.clone(m.super);
-                    m.super.super = sup;
 
                     var controller;
                     if ('string' == typeof scopeName){
-                        try {
-                            controller = require(controllersPath+name.replace(/\./g,"/")+"/"+scopeName+".js");
-                            controller.pluginName = cfg.name;
-                        }
-                        catch(e){
-                            if (model.super) controller = m.super;
-                            else m.kill("No controller for scope '"+scopeName+"' found for "+name+"! Exit.");
-                        }
+                        if (!fs.existsSync(controllersPath+name.replace(/\./g,"/")+"/"+scopeName+".js"))
+                            controller = m.super;
+                        else
+                            try { controller = require(controllersPath+name.replace(/\./g,"/")+"/"+scopeName+".js"); }
+                            catch(e){ m.kill(e); }
                     }
-                    else m.kill("Syntax error. Scopes should be an array of strings! Exit.");
-                    /**
-                     * TODO Решить вопрос со скоупом - это должен быть самостоятельнй класс
-                     */
+                    else m.kill("Model definition error. Scopes should be an array of strings! Exit.");
+
+                    if (typeof controller.extend != "function") controller.extend = rest.extend;
+
                     var scope = function ModelScope(){}
+                    scope.controller = controller.extend({});
+                    scope.controller.super = m.super;
+                    scope.controller.pluginName = cfg.name;
 
-
-                    model.s[scopeName] = scope;
-                    scope.controller = controller;
-                    if (typeof scope.controller.actions != "object") scope.controller.actions = {}
                     scope.model = model;
                     scope.modelName = model.modelName;
                     scope.scopeName = scopeName;
+
+                    model.scopes[scopeName] = scope;
                 }
+                for(var i in model.objectsList){
+                    var objectName = model.objectsList[i];
 
-                for(var i in model.object_list){
-                    var objectName = model.object_list[i];
-
-                    if (model.super && model.super.objects[objectName]) m.super = model.super.objects[objectName].controller;
+                    if (model.super && model.super.objects[objectName])
+                        m.super = model.super.objects[objectName].controller;
                     else m.super = model.controller;
-                    var sup = m.super;
-                    m.super = _.clone(m.super);
-                    m.super.super = sup;
 
                     var controller = null;
                     if ('string' == typeof objectName){
-                        try {
-                            controller = require(controllersPath+name.replace(/\./g,"/")+"/"+objectName+".js");
-                            controller.pluginName = cfg.name;
-                        }
-                        catch(e){
-                            if (model.super) controller = m.super;
-                            else m.kill("No controller for object '"+objectName+"' found for "+name+"! Exit.");
-                        }
+                        if (!fs.existsSync(controllersPath+name.replace(/\./g,"/")+"/"+objectName+".js"))
+                            controller = m.super;
+                        else
+                            try { controller = require(controllersPath+name.replace(/\./g,"/")+"/"+objectName+".js"); }
+                            catch(e){ m.kill(e); }
                     }
-                    else m.kill("Syntax error. Objects should be an array of strings! Exit.");
-                    /**
-                     * TODO Решить вопрос с объектами - это должен быть самостоятельнй класс
-                     */
-                    var object = function ModelObject(){}
+                    else m.kill("Model definition error. Objects should be an array of strings! Exit.");
+                    if (typeof controller.extend != "function") controller.extend = rest.extend;
 
-                    model.objects[objectName] = object;
-                    object.controller = controller;
-                    if (typeof object.controller.actions != "object") object.controller.actions = {}
+
+                    var object = function ModelObject(){}
+                    object.controller = controller.extend({});
+                    object.controller.super = m.super;
+                    object.controller.pluginName = cfg.name;
+
                     object.model = model;
                     object.modelName = model.modelName;
                     object.objectName = objectName;
+                    model.objects[objectName] = object;
                 }
                 delete m.super;
             }
@@ -256,6 +250,10 @@ module.exports = {
             var models = pluginScope.modelNames.slice();
             var initialisersPath = cfg.path + "/server/app/initialisers/";
 
+            }
+            catch(e){
+                m.kill(e);
+            }
             function initModels(){
                 if (models.length == 0){
                     return dfd.resolve(pluginScope);
@@ -264,7 +262,7 @@ module.exports = {
                 try {
                     var f = require(modelFilePath(name,initialisersPath)).apply(pluginScope.models[name],[cfg,initModels]);
                     if (!f) return;
-                    if (f.__proto__ = dfd.promise.__proto__) f.then(initModels);
+                    if (f.__proto__ = dfd.promise.__proto__) f.then(initModels).done();
                     else {
                         console.log("Initializer should return void or Q thenable object: "+name);
                         return;

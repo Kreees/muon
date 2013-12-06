@@ -48,7 +48,8 @@ module.exports = function (req,res){
      *
      * Переменна хранит в себе список моделей-зависимостей в виде простых регулярных выражений
      */
-    pack.models = pack.models || [];
+    if (m.cfg.serverMode == "development") pack.models = ["*"];
+    else pack.models = pack.models || [];
 
     var views = [],
         dependency = {js:[],css:[]},
@@ -57,10 +58,9 @@ module.exports = function (req,res){
         viewsDir = packageDir+"views",
         packTranslation = {};
 
-    var packModelList = modelsRender.getModelNames(plugin,pack.models);
     function modelRender(trs){
         packTranslation = trs;
-        modelsRender.renderModels(plugin,packModelList,function(data){
+        modelsRender.renderModels(plugin,pack.models,function(data){
             models = data; viewRender();
         });
     }

@@ -19,7 +19,7 @@ module.exports = m.rest.extend({
 
             this.model.db.find({nick:this.data.nick}).then(function(a){
                 if (a.length > 0)
-                    return dfd.reject({error: "User with such Nick already exists",statusCode: 1})
+                    return dfd.reject([409,{error: "User with such Nick already exists"}]);
                 var md5 = crypto.createHash("md5");
                 _this.data.password = md5.update(_this.data.password).digest("hex");
                 m.rest.actions.create.apply(_this,args).then(dfd.resolve,dfd.reject);

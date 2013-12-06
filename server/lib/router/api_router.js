@@ -6,11 +6,11 @@ var rest = require(global.m.__sys_path+"/server/lib/controllers/rest.js").run,
 function checkPermissions(allowedActions,controller,action){
     var checkDfd = Q.defer();
     if (!_.isArray(allowedActions))
-        _.defer(checkDfd.reject,"Permission check error");
+        _.defer(checkDfd.reject,[500,"Permission check error: permission should be an array of actions"]);
     else if ((allowedActions.indexOf("all") == -1) && (allowedActions.indexOf(action) == -1))
-        _.defer(checkDfd.reject,"Action '"+action+"' is not allowed");
+        _.defer(checkDfd.reject,[403,"Action '"+action+"' is not allowed"]);
     else if (!(action in controller.actions))
-        _.defer(checkDfd.reject,"Action '"+action+"' is not available");
+        _.defer(checkDfd.reject,[403,"Action '"+action+"' is not available"]);
     else _.defer(checkDfd.resolve);
     return checkDfd.promise;
 }
@@ -25,14 +25,14 @@ function getPermissions(permissions,req){
                 if (typeof resolved == "string"){
                     if (resolved.toLowerCase() == "none") return getDfd.resolve([]);
                     if (resolved.toLowerCase() == "all") return getDfd.resolve(["all"]);
-                    return getDfd.reject("Permission check error");
+                    return getDfd.reject();
                 }
                 getDfd.resolve(resolved);
-            },getDfd.reject);
+            },getDfd.reject).done();
         }
         catch(e){
             m.error("Permission check exception: "+ e.message);
-            getDfd.reject("Permission check exception: "+ e.message);
+            getDfd.reject([500,"Permission check exception: "+ e.message]);
             return;
         };
     }
@@ -49,16 +49,9 @@ function getPermissions(permissions,req){
     return getDfd.promise;
 }
 
-function runDependencies(target,req,res,next){
+function runDependencies(dfd,target,req,res,next){
     if (req.context.middleware.indexOf(target.modelName) != -1) return next();
-    var deps = (target.controller.dependencies || []).map(function(a){
-        var pl = target.controller.pluginName;
-        return (pl?pl+":":"")+a;
-    });
-
-    if (target.model.super) {
-        deps.unshift(target.model.super);
-    }
+    var deps = (target.controller.dependencies || []);
     req.context.middleware.push(target.modelName);
     var nativeModel = req.context.model;
     function run(){
@@ -72,37 +65,26 @@ function runDependencies(target,req,res,next){
                         next();
                     }]);
                 }
-                catch(e){
-                    m.error("Middleware exception: "+ e.message);
-                    res.statusCode = 500;
-                    res.end("Middleware exception: "+ e.message);
-                }
-
+                catch(e){ dfd.reject([500,"Middleware exception: "+ e.message]); }
             }
             else{
                 req.context.model = nativeModel;
                 return next();
             }
         }
-//        m.log(deps);
         var dependencyName = deps.shift();
-//        m.log(dependencyName);
-        try{
-            if (dependencyName.indexOf(":") != -1){
-                var dep_plugin = dependencyName.split(":");
-                dependencyName = dep_plugin.pop();
-                dep_plugin = dep_plugin.join(":");
-                plug_models = m.__plugins[dep_plugin].models;
-            }
-            else {
-                var plug_models = m.__plugins[target.model.pluginName].models;
-            }
+        if (dependencyName.indexOf(":") != -1){
+            var dep_plugin = dependencyName.split(":");
+            dependencyName = dep_plugin.pop();
+            dep_plugin = dep_plugin.join(":");
+            plug_models = m.__plugins[dep_plugin].models;
         }
-        catch(e){ throw e; }
-        if (!(dependencyName in plug_models)){
+        else  var plug_models = m.__plugins[target.model.pluginName].models;
+
+        if (!(dependencyName in plug_models))
             m.kill("Model dependency '"+dependencyName+"' in plugin '"+target.model.pluginName+"' doesn't exist.")
-        }
-        runDependencies(plug_models[dependencyName],req,res,run);
+
+        runDependencies(dfd,plug_models[dependencyName],req,res,run);
     }
     run();
 }
@@ -120,12 +102,13 @@ function doAction(dfd,req,res,controller,action,target,value){
                 req.__compiledWhere__ = req.__compiledWhere__.call(req.context,req,res);
             }
             catch(e){
-                dfd.reject("Where function call error:"+ e.message);
+                dfd.reject([500,"Where function call error:"+ e.message]);
                 m.error("Where function call error:"+ e.message);
                 return;
             }
         }
         Q.when(req.__compiledWhere__).then(function(where){
+            var result;
             req.__compiledWhere__ = where;
             if (isEmpty(req.__compiledWhere__)) req.__compiledWhere__ = {_id: {$nin: []}};
             if(req.__queryIds__ instanceof Array) req.__compiledWhere__ = {$and: [{_id: {$in:req.__queryIds__}}, req.__compiledWhere__]};
@@ -137,42 +120,45 @@ function doAction(dfd,req,res,controller,action,target,value){
                     result = controller.actions[action].call(req.context,req,res,value);
                 }
                 catch(e){
-                    return dfd.reject("Internal server error: "+ e.message);
+                    return dfd.reject([500,"Internal server error: "+ e.message]);
                 }
             }
-            Q.when(result).
-                then(function(obj){
-                    if (res.__endEnvoked__ === true) return dfd.reject("");
-                    try{
-                        if (obj == null) return dfd.reject("Not found");
-                        var _obj = obj;
-                        if (obj.model && obj.model.middlewareodel == obj.model && target.model != obj.model){
-                            target = obj.model;
-                            controller = target.model.controller;
-                        };
-                        if (obj.__querySet__){ _obj = obj; }
-                        else if (obj instanceof Array) {
-                            _obj = new m.QuerySet(target.model,result);
-                            _obj.controller = controller;
-                        }
-                        else {
-                            if (!(obj instanceof target.model)){
-                                _obj = new target.model(obj);
-                            }
-                        }
-                        dfd.resolve(_obj)
+            var timeout = setTimeout(function(){
+                dfd.reject([408,"Request timeout"]);
+            },30000);
+            Q.when(result).then(function(obj){
+                clearTimeout(timeout);
+                if (res.__endEnvoked__ === true) return dfd.reject([0,""]);
+                try{
+                    if (obj == null) return dfd.reject([404,"Not found"]);
+                    var _obj = obj;
+                    if (obj.model && obj.model.middlewareodel == obj.model && target.model != obj.model){
+                        target = obj.model;
+                        controller = target.model.controller;
+                    };
+                    if (obj.__querySet__){ _obj = obj; }
+                    else if (obj instanceof Array) {
+                        _obj = new m.QuerySet(target.model,result);
+                        _obj.controller = controller;
                     }
-                    catch(e){
-                        dfd.reject("Internal error: "+ e.message);
-                        m.log(e.message);
+                    else {
+                        if (!(obj instanceof target.model)){
+                            _obj = new target.model(obj);
+                        }
                     }
+                    dfd.resolve(_obj)
                 }
-                ,dfd.reject);
+                catch(e){
+                    dfd.reject(500,["Internal error: "+ e.message]);
+                    m.log(e.message);
+                }
+            }
+            ,dfd.reject);
         })
     }
     catch(e){
         _.defer(dfd.reject,"Internal server error: "+ e.toString());
-        m.error(e.message);
+        m.error(e);
     }
 }
 
@@ -188,11 +174,11 @@ function targetIsModel(dfd,req,res,value,action,target){
     action = (action == "get" && !value)?"index":action;
     if (_.isArray(target.permissions) && target.permissions.indexOf("all") == -1){
         if (target.permissions.indexOf(action) == -1){
-            return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
+            return _.defer(dfd.reject,[403,"Action '"+action+"' is not allowed"]);
         }
     }
     if (typeof target.permissions == 'string' && target.permissions.toLowerCase() == "none"){
-        return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
+        return _.defer(dfd.reject,[403,"Action '"+action+"' is not allowed"]);
     }
 
     req.context.controller = controller;
@@ -201,7 +187,7 @@ function targetIsModel(dfd,req,res,value,action,target){
     req.context.model = target.model;
     req.context.value = value;
     req.context.id = value;
-    runDependencies(target,req,res,function(){
+    runDependencies(dfd,target,req,res,function(){
         if(req.context.permissions.indexOf(target.model.modelName) != -1)
             return doAction(dfd,req,res,controller,action,target,value);
         req.context.permissions.push(target.model.modelName)
@@ -210,8 +196,8 @@ function targetIsModel(dfd,req,res,value,action,target){
                 checkPermissions(permissions,controller,action)
                     .then(function(){
                         doAction(dfd,req,res,controller,action,target,value);
-                    },dfd.reject)
-            },dfd.reject)
+                    },dfd.reject).done()
+            },dfd.reject).done()
     });
 }
 
@@ -225,18 +211,18 @@ function targetIsObject(dfd,req,res,value,action,target){
     action = (action == "get" && !value)?"index":action;
     if (_.isArray(target.permissions) && target.permissions.indexOf("all") == -1){
         if (target.permissions.indexOf(action) == -1){
-            return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
+            return _.defer(dfd.reject,[403,"Action '"+action+"' is not allowed"])
         }
     }
     if (typeof target.permissions == 'string' && target.permissions.toLowerCase() == "none"){
-        return; _.defer(dfd.reject,"Action '"+action+"' is not allowed")
+        return _.defer(dfd.reject,403,["Action '"+action+"' is not allowed"])
     }
 
     req.context.controller = controller;
     req.context.target = target;
     req.context.action = action;
     req.context.model = target.model;
-    runDependencies(target.model,req,res,function(){
+    runDependencies(dfd,target.model,req,res,function(){
         if(req.context.permissions.indexOf(target.model.modelName) != -1) return doAction();
         req.context.permissions.push(target.model.modelName)
         getPermissions(target.permissions,req)
@@ -248,10 +234,10 @@ function targetIsObject(dfd,req,res,value,action,target){
                                 checkPermissions(permissions,controller,action)
                                     .then(function(){
                                         doAction(dfd,req,res,controller,action,target,value);
-                                    },dfd.reject)
-                            },dfd.reject)
-                    },dfd.reject)
-            },dfd.reject);
+                                    },dfd.reject).done();
+                            },dfd.reject).done();
+                    },dfd.reject).done();
+            },dfd.reject).done();
     });
 }
 
@@ -289,17 +275,21 @@ function decorate(obj,d,t){
     else return decorateObj(obj,d,t);
 }
 
- function finalize(req,res,target){
+function finalize(req,res,target){
     if (res.__endEnvoked__) return;
     res.writeHead(200, {"Content-Type": "application/json; charset=utf-8"});
     function send(obj){
         try{
+            if (m.cfg.serverMode == "development") return res.end(JSON.stringify(obj));
             var d = req.context.decorator || req.context.controller.decorator || req.context.model.controller.decorator;
             if (!d) return res.end(JSON.stringify(obj));
             if (typeof d != "function") return res.end(JSON.stringify(decorate(obj,d,target)));
             Q.when(d()).then(function(d){
                 res.end(JSON.stringify(decorate(obj,d,target)));
-            })
+            },function(){
+                res.statusCode = 500;
+                res.end("Object decoration fail ");
+            }).done()
         }
         catch(e){
             console.log(e.stack);
@@ -321,9 +311,17 @@ function decorate(obj,d,t){
     }
 }
 
-errorize = function(req,res,data){
-    res.writeHead(404, {"Content-Type": "application/json"});
-    res.end(JSON.stringify({errors: data}));
+ function errorize(req,res,error){
+    var status,data;
+    if (isNaN(parseInt(error[0]))) { status = 500; data = error[0]; }
+    else { status = error[0]; data = error[1]; }
+    if (status == 500) m.error(data);
+    res.writeHead(status, {"Content-Type": "application/json"});
+    res.end(JSON.stringify({
+        statusCode:status,
+        targetName:req.context.target.modelName,
+        error: data
+    }));
 }
 
 module.exports = function(req,res){
@@ -337,7 +335,6 @@ module.exports = function(req,res){
         plugin: [],
         data: {}
     };
-
     var endReponse = res.end;
     res.end = function(){
         res.__endEnvoked__ = true;
@@ -382,7 +379,7 @@ module.exports = function(req,res){
             return finalize(req,res,target);
         }
         getNextObject(req,res,tokens.shift(),tokens.length?"get":targetAction,target)
-            .then(getTarget,_.partial(errorize,req,res));
+            .then(getTarget,_.partial(errorize,req,res)).done();
     };
     getTarget(model);
 }

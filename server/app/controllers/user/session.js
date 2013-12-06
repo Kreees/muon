@@ -3,7 +3,9 @@ var crypto = require("crypto");
     _ = require("underscore");
 
 module.exports = {
-    permissions: ["create","remove"],
+    permissions: function(){
+        return ["create","remove"];
+    },
     actions: {
         "create": function(req,res){
             var md5 = crypto.createHash("md5");
