@@ -1,51 +1,67 @@
 m.ModelView.extend({
 	events:{
-		"click #save_model":"save",
+		"click #save_model":"saveModel",
 		"click #save_asnew_model":"saveNewModel",
 		"click #remove_model":"removeModel",
 		"click .model_data_show_subattr":"showSubattr"
 	},
 	postTemplateRender: function(){
+		// console.log("rerender");
 		var atrs = this.model.attributes;
 		window.view = this;
 		window.mm = this.model;
+		this.nullSets = [];
 		this.originalAttributes = this.model.toJSON();
 		if(!this.model.get("_id")) this.$("#model_data_save").hide();
-		for(var i in atrs){
-			if(i == "_id") continue;
+		for(var attr in atrs){
+			if(attr == "_id") continue;
 			try{
-				this.initControllers(i);
-				try{this.renderAttribute(i).appendTo(this.$(".attributes_wrapper"));
+				if(!this.model.scheme[attr]){
+					try{this.renderAttribute(attr).appendTo(this.$(".attributes_wrapper"));
+					this.message("No scheme for attribute: "+attr);
+					}catch(err){console.log("WARN!: catch error in rendering attribute "+i);}
+					continue;
+				}
+				if(this.model.scheme[attr].nullAllowed == false && (this.model.get(attr) === null || this.model.defaults[attr] === null)){
+					try{this.renderAttribute(attr).addClass("notvalid").appendTo(this.$(".attributes_wrapper"));
+					this.message("Wrong scheme for attribute: "+attr);
+					}catch(err){console.log("WARN!: catch error in rendering attribute "+i);}
+					continue;
+				}
+				var type = this.model.scheme[attr].type;
+				if(type.match(/\[|\]/g)){
+					type = type.replace(/\[|\]/g,"");
+					this[attr+"_controller"] = function(attr, cmd, value){
+						this.commonController(attr, cmd, value);
+						this.arrayController(attr, cmd, value);
+					}
+					this[attr+"_viewController"] = function(attr, cmd, value){
+						this.commonViewController(attr, cmd);
+						this.arrayViewController(attr, cmd, value);
+					}
+					this.initArrayElementController(attr, type);
+					this[attr+"_elViewController"] = this.initElementViewController(type);
+				}else{
+					this[attr+"_controller"] = this.commonController;
+					this.initElementController(attr, type);
+					// var elemC = this.initElementViewController(attr, type);
+					this[attr+"_viewController"] = function(attr, cmd, obj){
+						this.commonViewController(attr, cmd, obj);
+						// elemC(attr, cmd, obj); error
+					}
+				}
+				try{this.renderAttribute(attr).appendTo(this.$(".attributes_wrapper"));
 				}catch(err){console.log("WARN!: catch error in rendering attribute "+i);}
-				if(this.model.get(i) === null) this[i+"_controller"](i,"null");
+				if(this.model.get(attr) === null) this[attr+"_controller"](attr, "null");	
+				
 			}catch(err){console.log("WARN!: catch error in initializing controllers for attribute "+i);}
 		}
 	},
 	
-	initControllers: function(attr){
-		var type = "undefined";
-		if(this.model.scheme[attr]) type = this.model.scheme[attr].type;
-		if(type.match(/\[|\]/g)){
-			type = type.replace(/\[|\]/g,"");
-			this[attr+"_controller"] = function(attr, cmd, value){
-				this.commonController(attr, cmd, value);
-				this.arrayController(attr, cmd, value);
-			}
-			this[attr+"_viewController"] = function(attr, cmd, value){
-				this.commonViewController(attr, cmd);
-				this.arrayViewController(attr, cmd, value);
-			}
-			this.initArrayElementController(attr, type);
-			this[attr+"_elViewController"] = this.initElementViewController(type);
-			return;
-		}
-		this[attr+"_controller"] = this.commonController;
-		this.initElementController(attr, type);
-		// var elemC = this.initElementViewController(attr, type);
-		this[attr+"_viewController"] = function(attr, cmd, obj){
-			this.commonViewController(attr, cmd, obj);
-			// elemC(attr, cmd, obj); error
-		}
+	message: function(msg){
+		if(msg == undefined){ this.$("#message").html(""); return;}
+		this.$("#message").append("<p>"+msg+"</p>");
+		
 	},
 	initElementController: function(attr, type){
 		if(m.models[type]) return;
@@ -53,6 +69,7 @@ m.ModelView.extend({
 			case "object":
 				this["get_"+attr] = function(el){
 					// console.log([attr, "get", el]);
+					if(this.model.get(attr) === null) return null;
 					var jsn = JSON.stringify(this.model.get(attr), null, '\t');
 					var mch = jsn.match(/\t+/g), l = 1;
 					if(mch) l = mch.length+2;
@@ -88,6 +105,7 @@ m.ModelView.extend({
 		if(m.models[type]){
 			this["get_"+attr] = function(el){
 				// console.log([attr, "get", el]);
+				if(this.model.get(attr) === null) return null;
 				var indx = this.getDataSetArrayElementIndex(el);
 				if(indx != undefined) return this.model.get(attr)[indx];
 				else return this.model.get(attr);
@@ -98,6 +116,7 @@ m.ModelView.extend({
 			case "object":
 				this["get_"+attr] = function(el){
 					// console.log([attr, "get", this.getDataSetArrayElementIndex(el) ]);
+					if(this.model.get(attr) === null) return null;
 					var jsn;
 				 	var value = this.model.get(attr);
 				 	var indx = this.getDataSetArrayElementIndex(el);
@@ -128,8 +147,10 @@ m.ModelView.extend({
 			case "number":
 				this["get_"+attr] = function(el){
 					// console.log([attr, "get", this.getDataSetArrayElementIndex(el), ]);
+					if(this.model.get(attr) === null) return null;
 				 	var indx = this.getDataSetArrayElementIndex(el);
-					if(indx != undefined){ 
+					if(indx != undefined){
+						$(el).removeClass("notvalid"); 
 						return this.model.get(attr)[indx];
 					}else return this.model.get(attr);
 				};
@@ -151,8 +172,10 @@ m.ModelView.extend({
 			case "date": case "string":
 			default:
 				this["get_"+attr] = function(el){
-					// console.log([attr, "get"]);
+					// console.log([attr, "get", this.model.get(attr), this.getDataSetArrayElementIndex(el)]);
+					if(this.model.get(attr) === null) return null;
 					var indx = this.getDataSetArrayElementIndex(el);
+					$(el).removeClass("notvalid"); 
 					if(indx != undefined) return this.model.get(attr)[indx];
 					else return this.model.get(attr);
 				}
@@ -172,36 +195,59 @@ m.ModelView.extend({
 	},
 	commonController: function(attr, cmd, value){
 		switch(cmd){
-			case "null":{				
-				if(this.model.scheme[attr]["nullAllowed"] == false) return false;
+			case "null":{
+				if(this.model.scheme[attr]["nullAllowed"] == false) {
+					this.message("Try to set null nullAllowed-false attribute: "+attr);
+					return false;
+				}
+				if(this.model.get(attr) !== null){
+					if(this.nullSets.indexOf(attr) == -1) this.nullSets.push(attr);
+				}
 				this[attr+"_viewController"](attr, "null");
-				this.model.set(attr, null);
 				return;
 			}
-			case "value":{
-				// if(value == undefined) return;
-				if(value === null){ this[attr+"_controller"](attr,"null"); return;}
-				// //need validator
-				// this.model.set(attr, value);
+			case "unNull":{
+				if(this.model.get(attr) === null){
+					var value,
+						type = this.model.scheme[attr].type;
+					if(type.match(/\[|\]/g)){
+						type = type.replace(/\[|\]/g,"");
+						value = [];
+					}else{
+						if(m.models[type])value = "";
+						else{
+							switch(type){
+								case "string": value = new String(); break;
+								case "object": value = new Object(); break;
+								case "number": value = new Number(); break;
+								case "date": value = new Date(); break;
+							}
+						}  
+					}
+					this[attr+"_viewController"](attr, "rerender", value);
+					this.model.set(attr, value)
+				}else{
+					if(this.nullSets.indexOf(attr) != -1) this.nullSets.splice(this.nullSets.indexOf(attr),1);
+				}
 				this[attr+"_viewController"](attr,"value");
 				return;
 			}
 			case "original":{
+				if(this.originalAttributes[attr] === null){ this[attr+"_controller"](attr,"null"); return;}
 				if (_.isEqual(this.originalAttributes[attr],"")) this.model.set(attr,"");
 				else this.model.set(attr, "  ");
-				if(this.originalAttributes[attr] === null){ this[attr+"_controller"](attr,"null"); return;}
 				this[attr+"_viewController"](attr, "rerender", this.originalAttributes[attr]);
 				this.model.set(attr, this.originalAttributes[attr]);
-				this[attr+"_viewController"](attr,"value");
+				this[attr+"_controller"](attr,"unNull");
 				return;
 			}
 			case "default":{
+				if(this.model.defaults[attr] === null){ this[attr+"_controller"](attr,"null"); return;}
 				if (_.isEqual(this.model.defaults[attr],"")) this.model.set(attr,"");
 				else this.model.set(attr, "  ");
-				if(this.model.defaults[attr] === null){ this[attr+"_controller"](attr,"null"); return;}
 				this[attr+"_viewController"](attr, "rerender", this.model.defaults[attr]);
 				this.model.set(attr, this.model.defaults[attr]);
-				this[attr+"_viewController"](attr,"value");
+				this[attr+"_controller"](attr,"unNull");
 				return;
 			}
 		}
@@ -215,8 +261,7 @@ m.ModelView.extend({
 				if(value == undefined){
 					var type = this.model.scheme[attr].type.replace(/\[|\]/g,"");
 					if(m.models[type]){ 
-						return;
-						// value = new m.models[type](); 
+						value = ""; 
 					}else{
 						switch(type){
 							case "string": value = new String(); break;
@@ -264,10 +309,6 @@ m.ModelView.extend({
 	},
 	arrayViewController: function(attr, cmd, obj){
 		switch(cmd){
-			case "null":{
-				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap").html("");
-				break;
-			}
 			case "rerender":{
 				this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap").html("");
 				var $el=this.$(".value_wrap[data-attribute_name="+attr+"] .nonzero_wrap");
@@ -348,29 +389,38 @@ m.ModelView.extend({
 		
 		var $nwrp = $("<div></div>").addClass("set_null_wrap").addClass("attr_sets");
 		var $nsetter = $("<input></input>").attr({"type":"button", "data-attribute_name":attr, "value":"null"});
-		if(scheme && scheme["nullAllowed"] && scheme["nullAllowed"] === true){}
-		else $nsetter.attr("disabled", "true");
-		$nsetter.click(function(ev){
-			_v[_a+"_controller"](_a, "null");
+		if(scheme && scheme["nullAllowed"] && scheme["nullAllowed"] === true){
+			$nsetter.click(function(ev){
+				if($(ev.currentTarget).hasClass("green")){
+					_v[_a+"_controller"](_a, "unNull");
+				}else _v[_a+"_controller"](_a, "null");
 			});
+		}
+		else $nsetter.attr("disabled", "true");
 		$nsetter.appendTo($nwrp);
 		$nwrp.appendTo($el);
 		
 		var $dwrp = $("<div></div>").addClass("set_default_wrap").addClass("attr_sets");
 		var $dsetter = $("<input></input>").attr({"type":"button",	"data-attribute_name":attr, "value":"default"});
-		if(this.model.defaults[attr] == undefined) $dsetter.attr("disabled", true);
-		$dsetter.click(function(){
+		if(this.model.defaults[attr] === undefined) $dsetter.attr("disabled", true);
+		else{
+			$dsetter.click(function(){
 				_v[_a+"_controller"](_a, "default");
 			});
+		}
+		
 		$dsetter.appendTo($dwrp);
 		$dwrp.appendTo($el);
 		
 		var $owrp = $("<div></div>").addClass("set_original_wrap").addClass("attr_sets");
 		var $osetter = $("<input></input>").attr({"type":"button", "data-attribute":attr, "value":"original"});
 		if(!scheme) $osetter.attr("disabled", true);
-		$osetter.click(function(){
-			_v[_a+"_controller"](_a, "original");
+		else{
+			$osetter.click(function(){
+				_v[_a+"_controller"](_a, "original");
 			});
+		}
+		
 		$osetter.appendTo($owrp);
 		$owrp.appendTo($el);
 		
@@ -469,7 +519,32 @@ m.ModelView.extend({
 	removeModel: function(){
 	  	if(this.model) this.model.destroy();
 	},
+	saveModel: function(){
+		if(this.$(".notvalid").length != 0){
+			if(!confirm("В аттрибутах модели имеются ошибки, нажмите ОК чтобы сохранить последние валидные значения, Отмена чтобы продолжить редактирование")){
+				return;
+			}
+		}
+		for(var i in this.nullSets){
+			this.model.set(this.nullSets[i], null);
+		}
+		this.model.save({}, {silent:true, 
+							success:function(obj){
+							},error:function(obj){
+							}});
+		this.nullSets=[];
+		this.$(".attribute_wrap .notvalid").removeClass("notvalid"); 
+	},
 	saveNewModel: function(){
+		if(this.$(".notvalid").length != 0){
+			if(!confirm("В аттрибутах модели имеются ошибки, нажмите ОК чтобы сохранить последние валидные значения, Отмена чтобы продолжить редактирование")){
+				return;
+			}
+		}
+		for(var i in this.nullSets){
+			this.model.set(this.nullSets[i], null);
+		}
+		this.nullSets = [];
 		var view = this;
 		var nm = new this.model.constructor();
 		var att = this.model.toJSON();
@@ -478,6 +553,7 @@ m.ModelView.extend({
 		nm.save({}, {success:function(obj){
 			view.m.setProjection("editor.model", obj);
 		}});
+		
   	}
 
 
