@@ -44,6 +44,9 @@ _.extend(dbQuerySet.prototype,
         });
         return dfd.promise;
     },
+    count: function(){
+        return this.length;
+    },
     eval: function(){
         var ret = [];
         for(var i in this.slice()) ret.push(new this.model(this.__data__[this[i]]));
@@ -81,16 +84,43 @@ var dbModelExtend = {
         var _this = this;
         var a = $(this).find(whereClause);
         var obj = dfd.promise;
-        obj.sort = function(){a = a.sort.apply(a,arguments); return obj;}
-        obj.skip = function(){a = a.skip.apply(a,arguments); return obj;}
-        obj.limit = function(){a = a.limit.apply(a,arguments); return obj;}
+        var stopFlag = false;
+        var countCallback = function(e,len){
+            if (e) dfd.reject([500, e]);
+            else dfd.resolve(len);
+        };
+        var actions = ["sort","count","skip","limit"];
+        for(var i = 0, len = actions.length; i < len; i++){
+            (function(action){
+                if (action == "count")
+                    obj[action] = function(){
+                        a = a[action].apply(a,[countCallback]);
+                        for(var j = 0, jlen = actions.length; i < jlen; i++) delete obj[actions[j]];
+                        stopFlag = true;
+                        return obj;
+                    }
+                else
+                    obj[action] = function(){a = a[action].apply(a,arguments); return obj;}
+            })(actions[i]);
+        }
+
         _.defer(function(){
+            if (stopFlag) return;
             a.toArray(function(e,data){
-                if (e || !data) dfd.reject(500,e);
+                if (e || !data) dfd.reject([500,e]);
                 else dfd.resolve(new dbQuerySet(_this.model,data));
             });
+
         });
         return obj;
+    },
+    count: function(whereClause){
+        var dfd = Q.defer();
+        $(this).find(whereClause || {}).count(function(e,len){
+            if (e) dfd.reject([500, e]);
+            else dfd.resolve(len);
+        });
+        return dfd.promise;
     }
 };
 
