@@ -31,14 +31,13 @@ describe('REST controller', function(){
 
     describe('action GET', function(){
         before(function(done){
-//            var User = m.models['user.user']
             var User = this.User;
             user = new User({nick:'prikha'});
-            user.save().then(function(user){
+            user.save().done(function(user){
                 Mocha.test_user = user;
                 done();
-            })
-        })
+            });
+        });
         it("should be preset", function(){
             this.rest.actions.should.have.property('get');
         })
@@ -100,6 +99,52 @@ describe('REST controller', function(){
         })
     });
 
+    describe('action SEARCH', function(){
+        before(function(done){
+            unique_user = new this.User({nick: 'unique_nickname'});
+            unique_user.save().done(function(unique_user){
+                Mocha.unique_user = unique_user;
+                done();
+            });
+        });
+
+        before(function(done){
+            this.User.db.find().done(function(collection){
+                Mocha.test_collection = collection.slice();
+                done();
+            });
+        })
+        it("should be present",function(){
+            this.rest.actions.should.have.property('search');
+        })
+        it("should respond with collection", function(done){
+            var User = this.User;
+
+            var req = {
+                context:{
+                    model: User,
+                    target: User,
+                    controller: rest,
+                    data: {
+                        nick: 'unique_nickname'
+                    }
+                },
+                __compiledWhere__: {}
+            }
+
+            var res = {end: function(){}}
+
+            var ret = this.rest.actions.search.apply(req.context,[req,res,null]);
+
+            Q.when(ret).done(function(collection){
+                var data = collection.slice();
+                data.length.should.eql(1);
+                done();
+            });
+
+        })
+    });
+
     describe('action CREATE', function() {
         before(function(done){
             this.User.__collection.count(function(err,count){
@@ -128,7 +173,7 @@ describe('REST controller', function(){
             var res = {end: function(){}}
 
             var ret = this.rest.actions.create.apply(req.context,[req,res,test_user]);
-            Q.when(ret).then(function(user){
+            Q.when(ret).done(function(user){
                     User.__collection.count(function(err,count){
                         this.after_user_count = count;
                         this.before_user_count.should.equal(this.after_user_count-1);
@@ -172,14 +217,52 @@ describe('REST controller', function(){
 
             var res = {end: function(){}}
             var ret = this.rest.actions.edit.apply(req.context,[req,res,existing_user.id]);
-            Q.when(ret).then(function(user){
+            Q.when(ret).done(function(user){
                 (user.id).should.equal(Mocha.existing_user.id);
                 user.should.not.eql(this.existing_user);
                 user.attributes.nick.should.equal(changed_user.nick)
-            },function(e){
-                m.log("=======")
-                m.log("Error"+ e.message);
-            }).done(done);
+                done();
+            });
+        });
+    });
+
+    describe('action REMOVE', function(){
+        before(function(done){
+            var User = this.User;
+            var new_user = new User({nick: 'before_edit'});
+            new_user.save().done(function(user){
+                Mocha.existing_user = user;
+                done();
+            });
+        });
+        it('should be present', function(){
+            this.rest.actions.should.have.property('remove');
+        });
+        it('should destroy record',function(done){
+            var User = this.User;
+            var existing_user = Mocha.existing_user;
+            var req = {
+                context:{
+                    model: User,
+                    target: User,
+                    controller: rest,
+                    value: existing_user.id
+                },
+                __compiledWhere__: {}
+            }
+
+            var res = {end: function(){}}
+
+            var ret = this.rest.actions.remove.apply(req.context,[req,res,existing_user.id]);
+
+            Q.when(ret).done(function(user){
+                user.should.eql(existing_user);
+//                TODO: check that the  record does not exist anymore;
+                User.db.find({'_id': user.id}).done(function(collection){
+                    collection.length.should.equal(0);
+                    done();
+                });
+            });
         });
     });
 })
