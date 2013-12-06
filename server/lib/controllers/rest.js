@@ -32,10 +32,7 @@ var rest = {
             try {id = m.objId(id)}
             catch(e){return null;}
             this.model.db.find({$and:[{"_id":id},req.__compiledWhere__]}).
-                then(function(a){
-                    if (a.length == 0) dfd.reject(404,null);
-                    else dfd.resolve(a.eval()[0]);
-                },dfd.reject);
+                then(function(a){dfd.resolve(a.eval()[0]);},dfd.reject);
             return dfd.promise;
         },
         "index": function(req){
@@ -47,19 +44,20 @@ var rest = {
     },
     extend: function(extension){
         var newObject = _.clone(this);
-        delete newObject.dependencies;
-        newObject["actions"] =  _.clone(this.actions || {});
-        (function(object){
-            for(var i in object){
-                if (i == "extend") continue;
-                if (i == "actions"){
-                    _.extend(newObject.actions,object.actions);
-                }
-                else {
-                    newObject[i] = object[i];
-                }
+        newObject.actions =  _.clone(this.actions || {});
+        newObject.dependencies =  (newObject.dependencies || []).map(function(a){
+            var plName = newObject.pluginName;
+            return (plName?plName+":":"")+a;
+        });
+        newObject.pluginName = "";
+        for(var i in extension){
+            if (["extend"].indexOf(i) != -1) continue;
+            switch(i){
+                case "actions": _.extend(newObject.actions,extension.actions); break;
+                case "dependencies": newObject[i] = newObject[i].concat(extension[i]); break;
+                default: newObject[i] = extension[i];
             }
-        })(extension);
+        }
         newObject.super = this;
         newObject.extend = this.extend;
         return newObject;

@@ -63,6 +63,7 @@ module.exports = {
         cfg = cfg || global.m.cfg;
         var modelsPath = cfg.path+"/server/app/models";
         fsExt.tree(modelsPath,function(files){
+            files = files.filter(function(file){ return !file.match(/\/_[a-zA-Z_\d\.]*/); });
             var pluginScope = {}
             var initOrder = [];
             pluginScope.models = {};
@@ -161,17 +162,19 @@ module.exports = {
                         if (_controllerName == controllerName) throw Error();
                         controllerName = _controllerName;
                     }
-                    controller = require(modelFilePath(controllerName,controllersPath));
-
+                    try {controller = require(modelFilePath(controllerName,controllersPath));}
+                    catch(e) {m.kill(e);}
                 }
-                catch(e) { controller = m.super; }
+                catch(e) {
+                    m.log(e);
+                    controller = m.super;
+                }
 
-                if (typeof controller.actions != "object") controller.actions = {}
                 if (typeof controller.extend != "function") controller.extend = rest.extend;
-                controller.pluginName = cfg.name;
+
                 model.controller = controller.extend({});
                 model.controller.super = m.super;
-                model.controller.dependencies = controller.dependencies;
+                model.controller.pluginName = cfg.name;
                 // Выполняем привязку скоупов для моделей. Им
 
                 for(var i in model.scopesList){
@@ -182,25 +185,20 @@ module.exports = {
 
                     var controller;
                     if ('string' == typeof scopeName){
-                        try {
-                            controller = require(controllersPath+name.replace(/\./g,"/")+"/"+scopeName+".js");
-                            controller.pluginName = cfg.name;
-                        }
-                        catch(e){
-                            if (m.super) controller = m.super;
-                            else m.kill("No controller for scope '"+scopeName+"' found for "+name+"! Exit.");
-                        }
+                        if (!fs.existsSync(controllersPath+name.replace(/\./g,"/")+"/"+scopeName+".js"))
+                            controller = m.super;
+                        else
+                            try { controller = require(controllersPath+name.replace(/\./g,"/")+"/"+scopeName+".js"); }
+                            catch(e){ m.kill(e); }
                     }
-                    else m.kill("Syntax error. Scopes should be an array of strings! Exit.");
+                    else m.kill("Model definition error. Scopes should be an array of strings! Exit.");
 
-                    if (typeof controller.actions != "object") controller.actions = {}
                     if (typeof controller.extend != "function") controller.extend = rest.extend;
-                    controller.pluginName = cfg.name;
 
                     var scope = function ModelScope(){}
                     scope.controller = controller.extend({});
                     scope.controller.super = m.super;
-                    scope.controller.dependencies = controller.dependencies;
+                    scope.controller.pluginName = cfg.name;
 
                     scope.model = model;
                     scope.modelName = model.modelName;
@@ -217,25 +215,20 @@ module.exports = {
 
                     var controller = null;
                     if ('string' == typeof objectName){
-                        try {
-                            controller = require(controllersPath+name.replace(/\./g,"/")+"/"+objectName+".js");
-                            controller.pluginName = cfg.name;
-                        }
-                        catch(e){
-                            if (m.super) controller = m.super;
-                            else m.kill("No controller for object '"+objectName+"' found for "+name+"! Exit.");
-                        }
+                        if (!fs.existsSync(controllersPath+name.replace(/\./g,"/")+"/"+objectName+".js"))
+                            controller = m.super;
+                        else
+                            try { controller = require(controllersPath+name.replace(/\./g,"/")+"/"+objectName+".js"); }
+                            catch(e){ m.kill(e); }
                     }
-                    else m.kill("Syntax error. Objects should be an array of strings! Exit.");
-
-                    if (typeof controller.actions != "object") controller.actions = {}
+                    else m.kill("Model definition error. Objects should be an array of strings! Exit.");
                     if (typeof controller.extend != "function") controller.extend = rest.extend;
-                    controller.pluginName = cfg.name;
+
 
                     var object = function ModelObject(){}
                     object.controller = controller.extend({});
-                    object.controller.dependencies = controller.dependencies;
                     object.controller.super = m.super;
+                    object.controller.pluginName = cfg.name;
 
                     object.model = model;
                     object.modelName = model.modelName;

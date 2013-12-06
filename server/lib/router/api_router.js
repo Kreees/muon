@@ -52,10 +52,6 @@ function getPermissions(permissions,req){
 function runDependencies(dfd,target,req,res,next){
     if (req.context.middleware.indexOf(target.modelName) != -1) return next();
     var deps = (target.controller.dependencies || []);
-    deps = (target.controller.super.dependencies || []).map(function(a){
-        var pl = target.controller.super.pluginName;
-        return (pl?pl+":":"")+a;
-    }).concat(deps);
     req.context.middleware.push(target.modelName);
     var nativeModel = req.context.model;
     function run(){
@@ -279,7 +275,7 @@ function decorate(obj,d,t){
     else return decorateObj(obj,d,t);
 }
 
- function finalize(req,res,target){
+function finalize(req,res,target){
     if (res.__endEnvoked__) return;
     res.writeHead(200, {"Content-Type": "application/json; charset=utf-8"});
     function send(obj){
@@ -315,13 +311,17 @@ function decorate(obj,d,t){
     }
 }
 
-errorize = function(req,res,error){
+ function errorize(req,res,error){
     var status,data;
     if (isNaN(parseInt(error[0]))) { status = 500; data = error[0]; }
     else { status = error[0]; data = error[1]; }
     if (status == 500) m.error(data);
     res.writeHead(status, {"Content-Type": "application/json"});
-    res.end(JSON.stringify({errors: data}));
+    res.end(JSON.stringify({
+        statusCode:status,
+        targetName:req.context.target.modelName,
+        error: data
+    }));
 }
 
 module.exports = function(req,res){
