@@ -1,4 +1,4 @@
-describe('REST controller', function(){
+xdescribe('REST controller', function(){
     var Mocha = this;
 //    start server
 //    before(function(done){
