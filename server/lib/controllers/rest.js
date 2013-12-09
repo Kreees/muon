@@ -8,10 +8,11 @@ var rest = {
             return new this.model(this.data).save();
         },
         "edit": function(req,res,id){
+            var _this = this;
             var dfd = Q.defer();
             this.model.db.get(id).then(
                 function(a){
-                    a.set(this.data);
+                    a.set(_this.data);
                     a.save().then(dfd.resolve,dfd.reject).done();
                 },
                 dfd.reject
