@@ -1,9 +1,5 @@
-xdescribe('REST controller', function(){
+describe('REST controller', function(){
     var Mocha = this;
-//    start server
-//    before(function(done){
-//        server.onready = done;
-//    });
 //    assign global variables
     before(function(done){
         this.User = m.models['user.user']
@@ -212,6 +208,7 @@ xdescribe('REST controller', function(){
             var res = {end: function(){}}
             var ret = this.rest.actions.edit.apply(req.context,[req,res,existing_user.id]);
             Q.when(ret).done(function(user){
+                m.log(user);
                 (user.id).should.equal(Mocha.existing_user.id);
                 user.should.not.eql(this.existing_user);
                 user.attributes.nick.should.equal(changed_user.nick)
