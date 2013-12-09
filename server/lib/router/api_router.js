@@ -74,6 +74,7 @@ function runDependencies(dfd,target,req,res,next){
             }
         }
         var dependencyName = deps.shift();
+        console.log(dependencyName);
         if (dependencyName.indexOf(":") != -1){
             var dep_plugin = dependencyName.split(":");
             dependencyName = dep_plugin.pop();

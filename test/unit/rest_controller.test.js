@@ -46,6 +46,7 @@ xdescribe('REST controller', function(){
             var res = {end: function(){}};
             var ret = rest.actions.get.apply(req.context,[req,res,test_user.id]);
 
+
             Q.when(ret).done(function(user){
                 user.should.eql(test_user);
                 done();
