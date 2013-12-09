@@ -9,23 +9,22 @@ var rest = {
         },
         "edit": function(req,res,id){
             var dfd = Q.defer();
-            var _this = this;
             this.model.db.get(id).then(
                 function(a){
-                    a.set(_this.data);
-                    a.save().then(dfd.resolve,dfd.reject);
+                    a.set(this.data);
+                    a.save().then(dfd.resolve,dfd.reject).done();
                 },
                 dfd.reject
-            );
+            ).done();
             return dfd.promise;
         },
         "remove": function(req,res,id){
             var dfd = Q.defer();
             this.model.db.get(id).then(
                 function(a){
-                    a.del().then(dfd.resolve,dfd.reject);
+                    a.del().then(dfd.resolve,dfd.reject).done();
                 },
-                dfd.reject);
+                dfd.reject).done();
             return dfd.promise;
         },
         "get": function(req,res,id){
@@ -33,34 +32,33 @@ var rest = {
             try {id = m.objId(id)}
             catch(e){return null;}
             this.model.db.find({$and:[{"_id":id},req.__compiledWhere__]}).
-                then(function(a){
-                    if (a.length == 0) dfd.reject(null);
-                    else dfd.resolve(a.eval()[0]);
-                },dfd.reject);
+                then(function(a){dfd.resolve(a.eval()[0]);},dfd.reject);
             return dfd.promise;
         },
         "index": function(req){
             return this.model.db.find(req.__compiledWhere__);
         },
         "search": function(req){
-            return this.model.db.find({$and:[req.__compiledWhere__,this.data]})
+            return this.model.db.find({$and:[req.__compiledWhere__,this.data]});
         }
     },
     extend: function(extension){
         var newObject = _.clone(this);
-        newObject["actions"] =  _.clone(this.actions || {});
-        (function(object){
-            for(var i in object){
-                if (i == "extend") continue;
-                if (i == "actions"){
-                    _.extend(newObject.actions,object.actions);
-                }
-                else {
-                    newObject[i] = object[i];
-                }
+        newObject.actions =  _.clone(this.actions || {});
+        newObject.dependencies =  (newObject.dependencies || []).map(function(a){
+            var plName = newObject.pluginName;
+            return (plName?plName+":":"")+a;
+        });
+        newObject.pluginName = "";
+        for(var i in extension){
+            if (["extend"].indexOf(i) != -1) continue;
+            switch(i){
+                case "actions": _.extend(newObject.actions,extension.actions); break;
+                case "dependencies": newObject[i] = newObject[i].concat(extension[i]); break;
+                default: newObject[i] = extension[i];
             }
-        })(extension);
-        newObject.super = rest;
+        }
+        newObject.super = this;
         newObject.extend = this.extend;
         return newObject;
     }
