@@ -1,20 +1,9 @@
-//Test Suite
-
-var should = require('chai').should();
-var Q = require('q');
-var _ = require('underscore');
-global.m = require('../lib/m_init');
-var rest = require('../server/lib/controllers/rest');
-var serv = require('../module').server();
-
-
 describe('REST controller', function(){
     var Mocha = this;
-
 //    start server
-    before(function(done){
-        serv.onready = done;
-    });
+//    before(function(done){
+//        server.onready = done;
+//    });
 //    assign global variables
     before(function(done){
         this.User = m.models['user.user']
@@ -75,6 +64,7 @@ describe('REST controller', function(){
             this.rest.actions.should.have.property('index');
         })
         it("should respond with collection", function(done){
+            var rest = this.rest;
             var User = this.User;
 
             var req = {
@@ -118,6 +108,7 @@ describe('REST controller', function(){
             this.rest.actions.should.have.property('search');
         })
         it("should respond with collection", function(done){
+            var rest = this.rest;
             var User = this.User;
 
             var req = {
@@ -157,6 +148,7 @@ describe('REST controller', function(){
             this.rest.actions.should.have.property('create');
         })
         it('should create record', function(done){
+            var rest = this.rest;
             var User = this.User;
             var test_user = {nick: 'create_test_user',email: 'test@email.com'};
             var req = {
@@ -202,6 +194,7 @@ describe('REST controller', function(){
 
         it('should change record', function(done){
             var User = this.User;
+            var rest = this.rest;
             var changed_user = {nick: 'after_edit'};
             var existing_user = Mocha.existing_user;
             var req = {
@@ -240,6 +233,7 @@ describe('REST controller', function(){
         });
         it('should destroy record',function(done){
             var User = this.User;
+            var rest = this.rest;
             var existing_user = Mocha.existing_user;
             var req = {
                 context:{

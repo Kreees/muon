@@ -62,6 +62,7 @@ module.exports = {
         var dfd = Q.defer();
         cfg = cfg || global.m.cfg;
         var modelsPath = cfg.path+"/server/app/models";
+
         fsExt.tree(modelsPath,function(files){
             var pluginScope = {}
             var initOrder = [];
