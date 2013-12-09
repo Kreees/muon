@@ -1,6 +1,6 @@
 var superagent = require('superagent');
 var http = require("http");
-xdescribe('User API',function(){
+describe('User API',function(){
     var test_user;
     var serv = http.createServer(global.serverHandler);
 
