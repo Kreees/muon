@@ -39,7 +39,7 @@ var rest = {
             return this.model.db.find(req.__compiledWhere__);
         },
         "search": function(req){
-            return this.model.db.find({$and:[req.__compiledWhere__,this.data]})
+            return this.model.db.find({$and:[req.__compiledWhere__,this.data]});
         }
     },
     extend: function(extension){

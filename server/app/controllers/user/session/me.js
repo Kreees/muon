@@ -1,7 +1,7 @@
 module.exports = {
     permissions: function(){
         if (this.session) return ["all"];
-        else return [];
+        else return ["get"];
     },
     actions: {
         get: function(){
