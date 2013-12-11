@@ -89,7 +89,7 @@ var dbModelExtend = {
             if (e) dfd.reject([500, e]);
             else dfd.resolve(len);
         };
-        var actions = ["sort","count","skip","limit"];
+        var actions = ["sort","skip","limit"];
         for(var i = 0, len = actions.length; i < len; i++){
             (function(action){
                 if (action == "count")
@@ -113,6 +113,18 @@ var dbModelExtend = {
 
         });
         return obj;
+    },
+    sort: function(){
+        var cursor = this.find({});
+        return cursor.sort.apply(cursor,arguments);
+    },
+    limit: function(){
+        var cursor = this.find({});
+        return cursor.limit.apply(cursor,arguments);
+    },
+    skip: function(){
+        var cursor = this.find({});
+        return cursor.skip.apply(cursor,arguments);
     },
     count: function(whereClause){
         var dfd = Q.defer();
