@@ -20,9 +20,12 @@ function clear_old_sessions(req,res,next){
     var args = arguments;
     var _this = this;
     this.model.db.find({"expires":{$lt: new Date()}}).then(function(a){
-        a.del().then(function(){
-            findSession.apply(_this,args)
-        });
+        try {
+            a.del().then(function(){
+                findSession.apply(_this,args)
+            });
+        }
+        catch(e){m.error(e);throw e;}
     });
 }
 

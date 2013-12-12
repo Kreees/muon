@@ -70,10 +70,10 @@ var port = argv.port || argv.p || "";
 var detach = argv.d || argv.detach;
 var host = argv.host || argv.h || "";
 var domain = argv.domain || argv.D || "";
-var server_mode = argv._[0] || "";
+var serverMode = argv._[0] || "";
 
 if (detach && (typeof detach == "string")){
-    server_mode = detach; argv._.unshift(detach); detach = true;
+    serverMode = detach; argv._.unshift(detach); detach = true;
 }
 
 for(var i in argv){
@@ -83,7 +83,7 @@ for(var i in argv){
     }
 }
 
-if (["","development","production"].indexOf(server_mode) == -1) {
+if (["","development","production","testing"].indexOf(serverMode) == -1) {
     error_flag = true;
     console.log("Error: wrong server mode");
 }
@@ -110,7 +110,7 @@ if (argv.detach || argv.d){
     catch(e){ var cfg = {}; }
     host = host || cfg.host || "0.0.0.0";
     port = port || cfg.port || "8000";
-    server_mode = server_mode || cfg.server_mode || "development";
+    serverMode = serverMode || cfg.serverMode || "development";
     var new_args = [];
     for(var i in argv){
         if (i == "_" || i == "$0" || i == "detach" || i == "d") continue;
@@ -119,7 +119,7 @@ if (argv.detach || argv.d){
     }
     if (argv._.length > 0) new_args = new_args.concat(argv._);
     var clone = spawn(argv.$0,new_args,{detached: true,stdio:["ignore",out,err]});
-    console.log("Server started in "+server_mode+" mode, listening on "+host+":"+port+" address.");
+    console.log("Server started in "+serverMode+" mode, listening on "+host+":"+port+" address.");
     console.log("Default output log file: ./tmp/out.log");
     console.log("Default error log file: ./tmp/error.log");
     console.log("Process detached with pid: "+clone.pid);
@@ -129,17 +129,21 @@ if (argv.detach || argv.d){
 }
 
 function launch(){
-    process.env.M_SERVER_MODE = server_mode;
-    process.env.M_SERVER_PORT = port;
-    process.env.M_SERVER_HOST = host;
-    process.env.M_SERVER_PROTO = "http";
-    process.env.M_SERVER_DOMAIN = domain;
+    global.__mcfg__ = {
+        serverMode: serverMode,
+        port: port,
+        host: host,
+        protocol: "http",
+        domain: domain
+    };
 
-    var server = require("../module").server();
-    server.listen.apply(server,[port,host]);
-    server.onready = function(){
+    var muon = require("../module");
+    muon.ready(function(){
+        var serv = muon.server();
+        serv.listen(port,host);
+        console.log("Server started in "+m.cfg.serverMode+" mode, listening on "+m.cfg.host+":"+m.cfg.port+" address.");
         console.log("Press Ctrl-C to shut down")
-    }
+    });
 }
 
 var old_pid = fs.readFileSync(".muon","utf-8");
