@@ -10,7 +10,7 @@ function checkPermissions(allowedActions,controller,action){
     else if ((allowedActions.indexOf("all") == -1) && (allowedActions.indexOf(action) == -1))
         _.defer(checkDfd.reject,[403,"Action '"+action+"' is not allowed"]);
     else if (!(action in controller.actions))
-        _.defer(checkDfd.reject,[403,"Action '"+action+"' is not available"]);
+        _.defer(checkDfd.reject,[404,"Action '"+action+"' is not available"]);
     else _.defer(checkDfd.resolve);
     return checkDfd.promise;
 }
@@ -51,7 +51,7 @@ function getPermissions(permissions,req){
 
 function runDependencies(dfd,target,req,res,next){
     if (req.context.middleware.indexOf(target.modelName) != -1) return next();
-    var deps = (target.controller.dependencies || []);
+    var deps = (target.controller.dependencies || []).slice();
     req.context.middleware.push(target.modelName);
     var nativeModel = req.context.model;
     function run(){
@@ -62,10 +62,11 @@ function runDependencies(dfd,target,req,res,next){
                 try {
                     return target.model.middleware.apply(req.context,[req,res,function(){
                         req.context.model = nativeModel;
-                        next();
+                        _.defer(next);
                     }]);
                 }
                 catch(e){ dfd.reject([500,"Middleware exception: "+ e.message]); }
+                return;
             }
             else{
                 req.context.model = nativeModel;
@@ -132,24 +133,20 @@ function doAction(dfd,req,res,controller,action,target,value){
                 try{
                     if (obj == null) return dfd.reject([404,"Not found"]);
                     var _obj = obj;
-                    if (obj.model && obj.model.middlewareodel == obj.model && target.model != obj.model){
+                    if (obj.model && obj.model.model == obj.model && target.model != obj.model){
                         target = obj.model;
                         controller = target.model.controller;
                     };
                     if (obj.__querySet__){ _obj = obj; }
                     else if (obj instanceof Array) {
-                        _obj = new m.QuerySet(target.model,result);
+                        _obj = new m.QuerySet(target.model,obj);
                         _obj.controller = controller;
                     }
-                    else {
-                        if (!(obj instanceof target.model)){
-                            _obj = new target.model(obj);
-                        }
-                    }
+                    else if (!(obj instanceof target.model)) _obj = new target.model(obj);
                     dfd.resolve(_obj)
                 }
                 catch(e){
-                    dfd.reject(500,["Internal error: "+ e.message]);
+                    dfd.reject([500,"Internal error: "+ e.message]);
                     m.log(e.message);
                 }
             }

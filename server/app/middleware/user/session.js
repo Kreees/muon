@@ -1,6 +1,6 @@
 function findSession(req,res,next){
     var _this = this;
-    this.model.db.find({"session_id":req.cookies["muon.session.id"]}).then(function(a){
+    this.model.db.find({"session_id":req.cookies[this.cookieName]}).then(function(a){
         _this.session = a.eval()[0];
         if (_this.session){
             var end = res.end;
@@ -27,5 +27,6 @@ function clear_old_sessions(req,res,next){
 }
 
 module.exports = function(req,res,next){
+    this.cookieName = "session_id_"+this.model.modelName;
     clear_old_sessions.apply(this,arguments)
 };

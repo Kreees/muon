@@ -241,10 +241,12 @@ module.exports = {
             var middlewarePath = cfg.path+"/server/app/middleware/";
             for(var modelIndex = 0, len = initOrder.length; modelIndex < len; modelIndex++){
                 var model = pluginScope.models[initOrder[modelIndex]];
-                try {
-                    model.middleware = require(modelFilePath(initOrder[modelIndex],middlewarePath));
+                if (!fs.existsSync(modelFilePath(initOrder[modelIndex],middlewarePath))) {
+                    if (model.super) model.middleware = model.super.middleware;
                 }
-                catch(e){}
+                else
+                    try { model.middleware = require(modelFilePath(initOrder[modelIndex],middlewarePath)); }
+                    catch(e){m.kill(e);}
             }
 
             var models = pluginScope.modelNames.slice();

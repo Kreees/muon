@@ -23,7 +23,7 @@ var dbQuerySet = function(model,data){
     this.model = model;
     this.modelName = model.modelName;
     this.__data__ = {};
-    for(var i in data){
+    for(var i = 0, len = data.length; i < len; i++){
         this.push(data[i]._id);
         this.__data__[data[i]._id] = data[i];
     }
@@ -39,7 +39,7 @@ _.extend(dbQuerySet.prototype,
         var _this = this;
         var dfd = Q.defer();
         $(this).remove({_id: {$in: this.slice()}},{},function(e,_){
-            if (e) dfd.reject(500,e);
+            if (e) dfd.reject([500,e]);
             else dfd.resolve(_this);
         });
         return dfd.promise;
@@ -66,11 +66,11 @@ var dbModelExtend = {
             var _this = this;
             if (!id) {_.defer(dfd.reject,"No id specified"); break;}
             try {var id = new ObjectID(id);}
-            catch(e) {_.defer(dfd.reject,500,"Wrong ObjectId. Object doesn't exist."); break;}
+            catch(e) {_.defer(dfd.reject,[500,"Wrong ObjectId. Object doesn't exist."]); break;}
             var cursor = $(this).find({_id: id});
             cursor.toArray(function(e,data){
                 if (e) return dfd.reject(e);
-                if (data.length == 0) return dfd.reject(404,"Object "+_this.model.modelName+":"+id+" doesn't exist");
+                if (data.length == 0) return dfd.reject([404,"Object "+_this.model.modelName+":"+id+" doesn't exist"]);
                 var obj = new _this.model(data[0]);
                 obj.id = data[0]._id.toString();
                 dfd.resolve(obj);
@@ -89,7 +89,7 @@ var dbModelExtend = {
             if (e) dfd.reject([500, e]);
             else dfd.resolve(len);
         };
-        var actions = ["sort","count","skip","limit"];
+        var actions = ["sort","skip","limit"];
         for(var i = 0, len = actions.length; i < len; i++){
             (function(action){
                 if (action == "count")
@@ -114,6 +114,18 @@ var dbModelExtend = {
         });
         return obj;
     },
+    sort: function(){
+        var cursor = this.find({});
+        return cursor.sort.apply(cursor,arguments);
+    },
+    limit: function(){
+        var cursor = this.find({});
+        return cursor.limit.apply(cursor,arguments);
+    },
+    skip: function(){
+        var cursor = this.find({});
+        return cursor.skip.apply(cursor,arguments);
+    },
     count: function(whereClause){
         var dfd = Q.defer();
         $(this).find(whereClause || {}).count(function(e,len){
@@ -131,7 +143,7 @@ var dbObjectExtend = {
         if (!this.id) {
             $(this).insert(this.attributes,function(e,a){
                 if (e) return dfd.reject(e);
-                if (!a) return dfd.reject(500,"Can't create new object of "+_this.model.modelName);
+                if (!a) return dfd.reject([500,"Can't create new object of "+_this.model.modelName]);
                 _this.attributes = a[0];
                 _this.id = _this.attributes._id.toString();
                 return dfd.resolve(_this);
@@ -140,8 +152,8 @@ var dbObjectExtend = {
         else {
             delete _this.attributes._id;
             $(this).update({_id: new ObjectID(this.id)},this.attributes,{safe:true,upsert:true},function(e,a){
-                if (e) return dfd.reject(500,e);
-                if (!a) return dfd.reject(404,e);
+                if (e) return dfd.reject([500,e]);
+                if (!a) return dfd.reject([404,e]);
                 _this.attributes._id = new ObjectID(_this.id);
                 dfd.resolve(_this);
             });
@@ -153,7 +165,7 @@ var dbObjectExtend = {
         var _this = this;
         if (this.id) {
             $(this).remove({_id: new ObjectID(this.id)},{},function(e,_){
-                if (e) dfd.reject(500,e);
+                if (e) dfd.reject([500,e]);
                 else dfd.resolve(_this);
             });
         }

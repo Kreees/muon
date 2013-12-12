@@ -4,10 +4,14 @@ var _ = require("underscore");
 
 module.exports = m.rest.extend({
     dependencies: ["user.session"],
-    decorator: [],
     permissions: function(){
         if (this.user && this.user.id == this.value) return ["all"];
-        else return ["create","index"];
+        var dfd = Q.defer();
+        this.model.db.count().then(function(len){
+                if (len == 0) dfd.resolve(["create","index"]);
+                else dfd.resolve(["index"]);
+        });
+        return dfd.promise;
     },
     actions: {
         create: function(req){
