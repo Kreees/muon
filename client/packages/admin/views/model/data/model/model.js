@@ -40,14 +40,11 @@ m.ModelView.extend({
 						this.arrayViewController(attr, cmd, value);
 					}
 					this.initArrayElementController(attr, type);
-					this[attr+"_elViewController"] = this.initElementViewController(type);
 				}else{
 					this[attr+"_controller"] = this.commonController;
 					this.initElementController(attr, type);
-					// var elemC = this.initElementViewController(attr, type);
 					this[attr+"_viewController"] = function(attr, cmd, obj){
 						this.commonViewController(attr, cmd, obj);
-						// elemC(attr, cmd, obj); error
 					}
 				}
 				try{this.renderAttribute(attr).appendTo(this.$(".attributes_wrapper"));
@@ -340,37 +337,6 @@ m.ModelView.extend({
 			}
 		}
 	},
-	initElementViewController: function(type){
-		// switch(type){
-			// case "string":
-				// break;
-// 				
-			// case "object":
-				// return function(attr, cmd, value){
-							// switch(cmd){
-								// case "maximize":{
-									// this.$(".element_wrap[data-attribute_name="+attr+"]").show();
-									// break;
-								// }
-								// case "minimize":{
-									// this.$(".element_wrap[data-attribute_name="+attr+"]").hide();
-									// break;
-								// }
-								// case "resize":{
-// 									
-								// }				
-							// }
-						// }
-				// break;
-			// case "number":
-				// break;
-			// case "date":
-				// break;
-			// case "model":
-				// break;
-		// }
-		
-	},
 	renderAttribute: function(attr){
 		var _v = this;
 		var _a = attr;
@@ -491,7 +457,7 @@ m.ModelView.extend({
 				var $el = $("<div>").addClass("item_content_edit_wrap");
 				var $set = $("<textarea></textarea>").attr({"data-model-set":attr}).appendTo($el);
 				if(this.__rendered__) this.assignModelSetElement($set.get(0));
-				$el.appendTo(ret);
+				$el.hide().appendTo(ret);
 				return ret;
 				break;
 
