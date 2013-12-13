@@ -6,11 +6,11 @@ var fs = require("fs"),
     tar = require("tar"),
     zlib = require("zlib"),
     fstream = require("fstream"),
-    fs_ext = require("../server/lib/utils/fs/fs_ext"),
+    fs_ext = require("../lib/utils/fs/fs_ext"),
     mime = require("mime"),
     crypt = require("crypto");
 
-var server = require("../server/server.js");
+var server = require("../lib/server.js");
 
 server.init(function(){
     var args = require("../lib/bin/pack_client/load_args");

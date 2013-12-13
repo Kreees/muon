@@ -78,7 +78,23 @@ module.exports = {
             callback: function(){m.removeProfile("view_admin");},
             routes: { "client/views/:name": "view" }
         },
-        {route: "data"},
+        {
+        	route: "data",
+        	redirect: "models"
+        },
+        {route: "data/models"},
+        {
+        	route: "data/model/:model",
+        	page: "model_data",
+        	callback: 'model_data'
+        	
+        },
+        {
+        	route: "data/model/:model/:id",
+        	page: "editor_data",
+        	callback: 'editor_data'
+        	
+        },
         {route: "users"},
         {route: "market"},
         {route: "logs"},
@@ -112,6 +128,13 @@ module.exports = {
         "view": function(a){
             m.setProfile("view_admin");
             this.m.setProjection("view_admin",new this.m["project.client.view"](a));
+        },
+        "model_data": function(model){
+        	this.model = model;
+        	// this.m.setProjection("model_data_admin.collection", m.models[model].collection());
+        },
+        "editor_data": function(model, id){
+        	console.log([model,id]);
         }
     },
     ready: function(next){

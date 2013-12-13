@@ -1,5 +1,5 @@
 m.CollectionView.extend({
-	target:"c_list",
+	target:"list",
 	modelView:"item_data",
 	rendered:function(){
 		this.listenTo(this.context, "sync", this.resize);
@@ -7,6 +7,6 @@ m.CollectionView.extend({
 		this.listenTo(this.context, "add", this.resize);
 	},
 	resize:function(){
-		this.$("label#c_size").text(this.context.length);
+		// this.$("label#c_size").text(this.context.length);
 	}
 })

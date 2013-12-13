@@ -1,18 +1,4 @@
-var fs = require("fs");
+module.exports = require("./lib/__init__");
 
-function exit(){
-    fs.writeFileSync(".muon","");
-    process.exit();
-}
-
-process.on('SIGINT',exit);
-process.on('exit',exit);
-
-module.exports = {
-    "server": function() {
-        return require("./lib/app.js")
-    },
-    "plugin" : function() {
-        return require("./server/plugin.js")
-    }
-};
+module.exports.server = function(cfg) { return require("./lib/server.js") };
+module.exports.plugin = function() { return require("./lib/plugin.js") };
