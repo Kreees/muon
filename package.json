@@ -1,53 +1,55 @@
 {
-    "name":"muon",
-    "version":"0.2.0",
-    "description":"client-server web framework for single page application building",
-    "license": "MIT",
-    "author": {
-        "name": "Kirill Sukharev",
-        "email": "SukharevKirill@gmail.com",
-        "url": "https://plus.google.com/112520076349444283739"
-    },
-    "homepage": "http://muonjs.com",
-    "repository": {
-        "type": "git",
-        "url": "http://github.com/Kreees/muonjs.git"
-    },
-    "bugs":{
-        "url": "http://github.com/Kreees/muonjs/issues",
-        "email": "SukharevKirill@gmail.com"
-    },
-    "main": "./module.js",
-    "bin":{
-        "m-init": "./bin/init.js",
-        "m-start": "./bin/start.js",
-        "m-kill": "./bin/kill.js",
-        "m-test": "./bin/test.js",
-        "m-pack-client": "./bin/pack_client.js",
-        "m-gen-sitemap": "./bin/gen_sitemap.js",
-        "m-set-config": "./bin/set_config.js"
-    },
-    "dependencies": {
-        "ejs": "*",
-        "express":"3.1.0",
-        "mongodb":"1.3.20",
-        "underscore": "*",
-        "jade":"*",
-        "less-middleware":"*",
-        "less":"*",
-        "coffee-script":"*",
-        "consolidate":"*",
-        "q": "*",
-        "dox":"*",
-        "mime":"*",
-        "tar": "*",
-        "fstream":"*",
-        "cheerio": "*",
-        "optimist":"*"
-    },
-    "devDependencies":
-    {
-        "mocha": "*",
-        "chai": "*"
-    }
+  "name": "muon",
+  "version": "0.1.7",
+  "description": "client-server web framework for single page application building",
+  "license": "MIT",
+  "author": {
+    "name": "Kirill Sukharev",
+    "email": "SukharevKirill@gmail.com",
+    "url": "https://plus.google.com/112520076349444283739"
+  },
+  "homepage": "http://muonjs.com",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/Kreees/muonjs.git"
+  },
+  "bugs": {
+    "url": "http://github.com/Kreees/muonjs/issues",
+    "email": "SukharevKirill@gmail.com"
+  },
+  "main": "./module.js",
+  "bin": {
+    "m-init": "./bin/init.js",
+    "m-start": "./bin/start.js",
+    "m-kill": "./bin/kill.js",
+    "m-test": "./bin/test.js",
+    "m-pack-client": "./bin/pack_client.js",
+    "m-gen-sitemap": "./bin/gen_sitemap.js",
+    "m-set-config": "./bin/set_config.js"
+  },
+  "dependencies": {
+    "ejs": "*",
+    "express": "3.1.0",
+    "mongodb": "*",
+    "underscore": "*",
+    "jade": "*",
+    "less-middleware": "*",
+    "less": "*",
+    "coffee-script": "*",
+    "consolidate": "*",
+    "q": "*",
+    "dox": "*",
+    "mime": "*",
+    "tar": "*",
+    "fstream": "*",
+    "cheerio": "*",
+    "optimist": "*"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "supertest": "*",
+    "superagent": "*",
+    "chai": "*",
+    "mocha-as-promised": "~1.4.1"
+  }
 }
