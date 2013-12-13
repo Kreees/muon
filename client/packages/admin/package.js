@@ -134,7 +134,7 @@ module.exports = {
         	this.m.setProjection("model_data_admin.model", new m.models[model]());
         },
         "editor_data": function(model, id){
-        	console.log([model,id]);
+        	this.m.setProjection("editor_data_admin.model", new m.models[model]({"_id":id}));
         }
     },
     ready: function(next){
