@@ -9,8 +9,7 @@ m.ModelView.extend {
     @email = @$("#email")
     @pass = @$("#pass")
     @repass = @$("#repass")
-    @$("input").tooltip({placement: "right"});
-
+    @$("input").tooltip({placement: "right"})
   "create": (ev)->
     ev.preventDefault()
     return if @button.hasClass("disabled")

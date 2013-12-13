@@ -16,7 +16,7 @@ global.muon = global.m;
 
 
 var fs = require("fs"),
-    fs_ext = require("../server/lib/utils/fs/fs_ext")
+    fs_ext = require("../lib/utils/fs/fs_ext")
 //    load_config = require("../lib/load_config.js")
 ;
 
@@ -69,7 +69,7 @@ var dirs = [
     "/server/app/controllers/",
     "/server/app/middleware/",
     "/server/app/decorators/",
-    "/server/app/initialisers/",
+    "/server/app/initializers/",
     "/server/helpers/",
     "/tmp/",
     "/lib/"
