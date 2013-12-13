@@ -2,5 +2,6 @@
 --timeout 60000
 --reporter spec
 --ui bdd
-./test/support/init.js
+./test/support/setup.js
+./test/support/waiter.js
 ./test/**/*.test.js

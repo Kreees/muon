@@ -4,11 +4,13 @@ describe('REST controller', function(){
     before(function(done){
         this.User = m.models['user.user']
         this.rest = m.rest;
+        this.db = m.__databases.default;
         done();
     });
+
 //    drop database
     before(function(done){
-        m.db.dropDatabase(function(err){
+        this.db.dropDatabase(function(err){
             if(err){throw err};
             done();
         });
@@ -135,7 +137,7 @@ describe('REST controller', function(){
 
     describe('action CREATE', function() {
         before(function(done){
-            this.User.__collection.count(function(err,count){
+            this.User.db.raw.count(function(err,count){
                 if(err){throw err;}
                 this.before_user_count = count;
                 done();
@@ -163,7 +165,7 @@ describe('REST controller', function(){
 
             var ret = this.rest.actions.create.apply(req.context,[req,res,test_user]);
             Q.when(ret).done(function(user){
-                    User.__collection.count(function(err,count){
+                    User.db.raw.count(function(err,count){
                         this.after_user_count = count;
                         this.before_user_count.should.equal(this.after_user_count-1);
                         (user instanceof User).should.equal(true);

@@ -1,13 +1,18 @@
 var superagent = require('superagent');
 var http = require("http");
+
 describe('User API',function(){
     var test_user;
-    var serv = http.createServer(global.serverHandler);
 
+   before(function(done){
+       m.server().listen(8000,"localhost");
+       done();
+   })
 
     //    drop database
     before(function(done){
-        m.db.dropDatabase(function(err){
+        db = m.__databases.default;
+        db.dropDatabase(function(err){
             if(err){throw err};
             done();
         });
@@ -18,7 +23,6 @@ describe('User API',function(){
         var user = new User({nick:'prikha'});
         user.save().done(function(user){
             test_user = user;
-            serv.listen(8000,"localhost",done);
         });
     });
 
@@ -28,9 +32,9 @@ describe('User API',function(){
             query_set.del().done(function(){done()})});
     });
 
-//    after(function(done){
-//        serv.close(done);
-//    });
+    after(function(done){
+        m.server().close(done);
+    });
 
     it('should return collection on GET /apis/user.user?muon', function(done){
         var agent = superagent.agent();
