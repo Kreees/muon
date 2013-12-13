@@ -1,29 +1,16 @@
-//Test Suite
-
-var should = require('chai').should();
-var Q = require('q');
-var _ = require('underscore');
-global.m = require('../lib/m_init');
-var rest = require('../server/lib/controllers/rest');
-var serv = require('../module').server();
-
-
 describe('REST controller', function(){
     var Mocha = this;
-
-//    start server
-    before(function(done){
-        serv.onready = done;
-    });
 //    assign global variables
     before(function(done){
         this.User = m.models['user.user']
         this.rest = m.rest;
+        this.db = m.__databases.default;
         done();
     });
+
 //    drop database
     before(function(done){
-        m.db.dropDatabase(function(err){
+        this.db.dropDatabase(function(err){
             if(err){throw err};
             done();
         });
@@ -57,6 +44,7 @@ describe('REST controller', function(){
             var res = {end: function(){}};
             var ret = rest.actions.get.apply(req.context,[req,res,test_user.id]);
 
+
             Q.when(ret).done(function(user){
                 user.should.eql(test_user);
                 done();
@@ -75,6 +63,7 @@ describe('REST controller', function(){
             this.rest.actions.should.have.property('index');
         })
         it("should respond with collection", function(done){
+            var rest = this.rest;
             var User = this.User;
 
             var req = {
@@ -118,6 +107,7 @@ describe('REST controller', function(){
             this.rest.actions.should.have.property('search');
         })
         it("should respond with collection", function(done){
+            var rest = this.rest;
             var User = this.User;
 
             var req = {
@@ -147,7 +137,7 @@ describe('REST controller', function(){
 
     describe('action CREATE', function() {
         before(function(done){
-            this.User.__collection.count(function(err,count){
+            this.User.db.raw.count(function(err,count){
                 if(err){throw err;}
                 this.before_user_count = count;
                 done();
@@ -157,6 +147,7 @@ describe('REST controller', function(){
             this.rest.actions.should.have.property('create');
         })
         it('should create record', function(done){
+            var rest = this.rest;
             var User = this.User;
             var test_user = {nick: 'create_test_user',email: 'test@email.com'};
             var req = {
@@ -174,7 +165,7 @@ describe('REST controller', function(){
 
             var ret = this.rest.actions.create.apply(req.context,[req,res,test_user]);
             Q.when(ret).done(function(user){
-                    User.__collection.count(function(err,count){
+                    User.db.raw.count(function(err,count){
                         this.after_user_count = count;
                         this.before_user_count.should.equal(this.after_user_count-1);
                         (user instanceof User).should.equal(true);
@@ -202,6 +193,7 @@ describe('REST controller', function(){
 
         it('should change record', function(done){
             var User = this.User;
+            var rest = this.rest;
             var changed_user = {nick: 'after_edit'};
             var existing_user = Mocha.existing_user;
             var req = {
@@ -218,6 +210,7 @@ describe('REST controller', function(){
             var res = {end: function(){}}
             var ret = this.rest.actions.edit.apply(req.context,[req,res,existing_user.id]);
             Q.when(ret).done(function(user){
+                m.log(user);
                 (user.id).should.equal(Mocha.existing_user.id);
                 user.should.not.eql(this.existing_user);
                 user.attributes.nick.should.equal(changed_user.nick)
@@ -240,6 +233,7 @@ describe('REST controller', function(){
         });
         it('should destroy record',function(done){
             var User = this.User;
+            var rest = this.rest;
             var existing_user = Mocha.existing_user;
             var req = {
                 context:{

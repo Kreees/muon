@@ -69,7 +69,7 @@ var dirs = [
     "/server/app/controllers/",
     "/server/app/middleware/",
     "/server/app/decorators/",
-    "/server/app/initialisers/",
+    "/server/app/initializers/",
     "/server/helpers/",
     "/tmp/",
     "/lib/"
