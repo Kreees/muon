@@ -48,6 +48,7 @@
   "devDependencies": {
     "mocha": "*",
     "supertest": "*",
+    "superagent": "*",
     "chai": "*",
     "mocha-as-promised": "~1.4.1"
   }
