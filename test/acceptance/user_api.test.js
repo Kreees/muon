@@ -22,7 +22,6 @@ describe('User API',function(){
         var user = new User({nick:'prikha'});
         user.save().done(function(user){
             test_user = user;
-            m.log(test_user);
             done();
         });
     });
@@ -49,7 +48,7 @@ describe('User API',function(){
             })
     });
 
-    it('should return user on GET /apis/user.user/:id?muon',function(done){
+    it('should restict to GET /apis/user.user/:id?muon',function(done){
         var agent = superagent.agent();
         var path = 'http://0.0.0.0:8000/apis/user.user/'+test_user.id+'?muon';
         m.log(path);
@@ -57,6 +56,8 @@ describe('User API',function(){
             .end(function(err,res){
                 should.not.exist(err)
                 res.status.should.eql(200);
+
+                //TODO: assert equality of users retrieved
 
                 //TODO: assert equality of users retrieved
                 m.log(res.body);

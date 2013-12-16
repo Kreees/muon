@@ -21,6 +21,7 @@
   "bin": {
     "m-init": "./bin/init.js",
     "m-start": "./bin/start.js",
+    "m-console": "./bin/console.js",
     "m-kill": "./bin/kill.js",
     "m-test": "./bin/test.js",
     "m-pack-client": "./bin/pack_client.js",
@@ -54,6 +55,7 @@
     "supertest": "*",
     "superagent": "*",
     "chai": "*",
-    "mocha-as-promised": "~1.4.1"
+    "mocha-as-promised": "~1.4.1",
+    "repl.history":"*"
   }
 }
