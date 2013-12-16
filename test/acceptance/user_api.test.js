@@ -1,15 +1,14 @@
 var superagent = require('superagent');
-var http = require("http");
+//var http = require("http");
 
 describe('User API',function(){
     var test_user;
 
-   before(function(done){
-       m.server().listen(8000,"localhost");
-       done();
+   before(function(){
+       this.server = m.server().listen(8000,"localhost");
    })
 
-    //    drop database
+//        drop database
     before(function(done){
         db = m.__databases.default;
         db.dropDatabase(function(err){
@@ -23,6 +22,7 @@ describe('User API',function(){
         var user = new User({nick:'prikha'});
         user.save().done(function(user){
             test_user = user;
+            done();
         });
     });
 
@@ -32,8 +32,8 @@ describe('User API',function(){
             query_set.del().done(function(){done()})});
     });
 
-    after(function(done){
-        m.server().close(done);
+    after(function(){
+        this.server.close();
     });
 
     it('should return collection on GET /apis/user.user?muon', function(done){
@@ -48,12 +48,16 @@ describe('User API',function(){
             })
     });
 
-    it('should return user on GET /apis/user.user/:id?muon',function(done){
+    it('should restict to GET /apis/user.user/:id?muon',function(done){
         var agent = superagent.agent();
-        agent.get('http://0.0.0.0:8000/apis/user.user?muon')
+        var path = 'http://0.0.0.0:8000/apis/user.user/'+test_user.id+'?muon';
+        m.log(path);
+        agent.get(path)
             .end(function(err,res){
                 should.not.exist(err)
                 res.status.should.eql(200);
+
+                //TODO: assert equality of users retrieved
                 m.log(res.body);
                 done();
             });
