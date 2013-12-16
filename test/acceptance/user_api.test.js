@@ -58,6 +58,8 @@ describe('User API',function(){
                 res.status.should.eql(200);
 
                 //TODO: assert equality of users retrieved
+
+                //TODO: assert equality of users retrieved
                 m.log(res.body);
                 done();
             });
