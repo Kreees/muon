@@ -1,14 +1,23 @@
 m.ModelView.extend({
+	tagName: "tr",
 	rendered: function(){
+		// console.log("render item");
 		var _this = this;
 		this.listenTo(this.context, 'destroy', this.remove);
-		$("<td>").text("lolo").appendTo(this.$("tr"));
-		this.$("a").attr({
-			"data-route":"/data/model/"+this.model.constructor.modelName+"/"+this.model.id,
-			"href":"/admin/data/model/"+this.model.constructor.modelName+"/"+this.model.id
-		});
-		this.$("tr").click(function(){
-			m.router.navigate(_this.$("a").attr("href"));
+		this.$el.click(function(){
+			m.router.navigate("/admin/data/model/"+_this.model.constructor.modelName+"/"+_this.model.id);
 		})
+	},
+	setNumber: function(num){
+		this.$("td._number").text(num);
+	},
+	filterAttributes: function(items){
+		this.$el.html("");
+		$("<td class='_number'>").text("#").appendTo(this.$el); 
+		if(items){
+			for(var i in items){
+				$("<td>").text(this.model.get(items[i])).appendTo(this.$el);
+			}
+		}
 	}
 })
