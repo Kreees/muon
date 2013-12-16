@@ -1,5 +1,5 @@
 var superagent = require('superagent');
-var http = require("http");
+//var http = require("http");
 
 describe('User API',function(){
     var test_user;
@@ -10,30 +10,31 @@ describe('User API',function(){
    })
 
     //    drop database
-    before(function(done){
-        db = m.__databases.default;
-        db.dropDatabase(function(err){
-            if(err){throw err};
-            done();
-        });
-    });
+//    before(function(done){
+//        db = m.__databases.default;
+//        db.dropDatabase(function(err){
+//            if(err){throw err};
+//            done();
+//        });
+//    });
 
-    before(function(done){
-        var User = m.models['user.user'];
-        var user = new User({nick:'prikha'});
-        user.save().done(function(user){
-            test_user = user;
-        });
-    });
+//    before(function(done){
+//        var User = m.models['user.user'];
+//        var user = new User({nick:'prikha'});
+//        user.save().done(function(user){
+//            test_user = user;
+//        });
+//    });
+
+//    after(function(done){
+//        var User = m.models['user.user'];
+//        User.db.find().done(function(query_set){
+//            query_set.del().done(function(){done()})});
+//    });
 
     after(function(done){
-        var User = m.models['user.user'];
-        User.db.find().done(function(query_set){
-            query_set.del().done(function(){done()})});
-    });
-
-    after(function(done){
-        m.server().close(done);
+        m.server().close();
+        done();
     });
 
     it('should return collection on GET /apis/user.user?muon', function(done){
