@@ -1,23 +1,16 @@
 module.exports = {
     attrs: {
        "nick": {
-           type: "string",
-           null_allowed: false,
-           defaults: ""
+           type: "number"
        },
        "password": {
-           type: "md5",
-           null_allowed: false,
-           defaults: ""
+           type: "boolean"
        },
        "email":{
-           type: "email",
-           null_allowed: true,
-           defaults: ""
+           type: "text"
        },
        "roles": {
-           type: ["user.role"],
-           defaults: []
+           type: "text"
        }
     },
     objects: ["me"]
