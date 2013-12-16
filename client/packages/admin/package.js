@@ -130,11 +130,11 @@ module.exports = {
             this.m.setProjection("view_admin",new this.m["project.client.view"](a));
         },
         "model_data": function(model){
-        	this.model = model;
         	// this.m.setProjection("model_data_admin.collection", m.models[model].collection());
+        	this.m.setProjection("model_data_admin.model", new m.models[model]());
         },
         "editor_data": function(model, id){
-        	console.log([model,id]);
+        	this.m.setProjection("editor_data_admin.model", new m.models[model]({"_id":id}));
         }
     },
     ready: function(next){
