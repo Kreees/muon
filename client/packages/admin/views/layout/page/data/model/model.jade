@@ -1,0 +1,19 @@
+.row
+	.span9
+		span Имя модели:
+		span#model-name 
+.row
+	.span9
+		span размер коллекции:
+		span#totalItems
+.row
+	.span9
+		#coll-container 
+			div(data-collection-view="collection_data", data-projection="model_data_admin.collection") 
+.row
+	.span9
+		.pagination.pagination-mini.pagination-centered
+			ul
+.row
+	.span9
+		div(data-projection="model_data_admin.model")
