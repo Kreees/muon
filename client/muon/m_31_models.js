@@ -112,17 +112,15 @@ m.Model = __b__.Model.extend({
         destroy: function(args){
             var dfd = $.Deferred();
             var _this = this;
-            __b__.Model.prototype.destroy.call(this,{
-                success: function(){
-                    if (args) if ('function' === typeof args.success) args.success.apply(_this,arguments);
-                    delete _this.constructor.__objects__[_this.id];
-                    dfd.resolve(_this);
-                },
-                error: function(){
-                    if (args) if ('error' === typeof args.error) args.error.apply(_this,arguments);
-                    dfd.reject(arguments);
-                }
-            });
+            var args_wait;
+            args = args || {};
+            args_wait = args.success;
+            args.wait = function(){
+                args_wait && args_wait.apply(_this,arguments);
+                delete _this.constructor.__objects__[_this.id];
+                dfd.resolve(_this);
+            }
+            __b__.Model.prototype.destroy.call(this,args);
             return dfd.promise();
         }
     },

@@ -1,47 +1,59 @@
 m.CollectionView.extend({
 	target:"list",
 	modelView:"item_data",
+    events:{
+        "click button._remove ": "removeSelected"
+    },
 	rendered:function(){
+	    window.cv = this;
 		// console.log(["rerender Collection "]);
-		this.setAttrFilter(5);
-		this.listenTo(this.context, "sync", this.resize);
-		this.listenTo(this.context, "remove", this.resize);
+		this.setAttrFilter(4);
+		this.listenTo(this.context, "sync", this.numbering);
 		this.listenTo(this.context, "add", this.__addItem);
-		this.resize();
+		this.numbering();
 	},
-	resize:function(){
-		// console.log("resize")
-		var start = this.context.startNum;
-		for(var i in this.childModels){
-			this.childModels[i].filterAttributes(this.attributes);
-			this.childModels[i].setNumber(++start);
+	numbering:function(){
+	    var start = this.context.startNum;
+        for(var i in this.childModels){
+            this.childModels[i].setNumber(++start);
+        }
+	},
+	__addItem: function(model){
+		var tag = this.$el.find('tr[id="'+model.id+'"]')[0];
+		if(tag.muonView){
+		   tag.muonView.filterAttributes(this.filter);
 		}
 	},
-	__addItem: function(ev){
-		// console.log(["__addItem",ev]);
+	removeSelected:function(){
+	    var _this = this;
+	    if(this.$("input._remove:checked").length == 0) return;
+	    if(confirm("A you shure to remove selected items?")){
+	        this.$("input._remove:checked").each(function(){
+	            var _id = $(this).closest("tr").attr("id");
+	            var _m = _this.collection.get(_id);
+	            if(_m){
+	                _m.destroy({wait: true});
+	            }
+	        });
+	    }
 	},
 	setAttrFilter: function(num){
-		var filter = [];
+		var items = [];
 		var _empt = new this.collection.model();
-		filter.push(_empt.idAttribute);
+		items.push(_empt.idAttribute);
 		var iter = num;
 		for(var i in _empt.attributes){
 			if(iter == 0) break;
-			filter.push(i);
+			items.push(i);
 			iter--;
 		}
-		this.filterAttributes(filter);
-		this.attributes = filter;
-	},
-	filterAttributes: function(items){
-		this.$("thead tr").html("")
-		$("<th>").text("#").appendTo(this.$("thead tr")); 
-		if(items){
-			for(var i in items){
-				$("<th>").text(items[i]).appendTo(this.$("thead tr"));
-			}
-		}
-		
+		this.filter = items;
+		this.$("thead tr th:gt(1)").html("")
+        if(items){
+            for(var i in items){
+                $("<th>").text(items[i]).appendTo(this.$("thead tr"));
+            }
+        }
 	}
 	
 })
