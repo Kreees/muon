@@ -9,20 +9,18 @@ m.CollectionView.extend({
 		// console.log(["rerender Collection "]);
 		this.setAttrFilter(4);
 		this.listenTo(this.context, "sync", this.numbering);
+		this.listenTo(this.context, "sort", this.numbering);
 		this.listenTo(this.context, "add", this.__addItem);
 		this.numbering();
 	},
 	numbering:function(){
 	    var start = this.context.startNum;
-        for(var i in this.childModels){
-            this.childModels[i].setNumber(++start);
+        for(var i in this.collection.models){
+            this.childModels[this.collection.models[i].id].setNumber(++start);
         }
 	},
 	__addItem: function(model){
-		var tag = this.$el.find('tr[id="'+model.id+'"]')[0];
-		if(tag.muonView){
-		   tag.muonView.filterAttributes(this.filter);
-		}
+		if(this.childModels[model.id]) this.childModels[model.id].filterAttributes(this.filter);
 	},
 	removeSelected:function(){
 	    var _this = this;
@@ -51,7 +49,7 @@ m.CollectionView.extend({
 		this.$("thead tr th:gt(1)").html("")
         if(items){
             for(var i in items){
-                $("<th>").text(items[i]).appendTo(this.$("thead tr"));
+                $("<th class='attribute'>").text(items[i]).appendTo(this.$("thead tr"));
             }
         }
 	}

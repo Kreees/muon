@@ -9,6 +9,7 @@ m.ModelView.extend({
 		    if($(ev.target).hasClass("_remove")) return;
 			m.router.navigate("/admin/data/model/"+_this.model.constructor.modelName+"/"+_this.model.id);
 		})
+		this.filterAttributes();
 	},
 	setNumber: function(num){
 		this.$("td._number").text(num);

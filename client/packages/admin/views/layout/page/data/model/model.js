@@ -1,6 +1,7 @@
 m.ModelDataPageLayoutView = m.LayoutView.extend({
 	events:{
-		"click ul li": "selectPageEv"
+		"click ul li": "selectPageEv",
+		"click th.attribute": "sort"
 	},
 	rendered: function(){
 		// console.log("rerender ModelDataPageLayoutView")
@@ -102,6 +103,12 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
         this.$(".pagination ul li:nth-child("+num+")").addClass("active");
         this.setPage();
     },
+    nextPage: function(){
+        
+    },
+    previousPage: function(){
+        
+    },
     setPage: function(){
         // console.log(["Paginate: ", num]);
         var _this = this;
@@ -125,6 +132,13 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
             _this.updatePager();
         });
        this.m.setProjection("model_data_admin.collection", this.currentColl);
-    }
+    },
+     sort: function(ev){
+         var att = $(ev.currentTarget).text();
+         if(this.mm.get(att) || att == this.mm.idAttribute){
+            this.currentColl.comparator = att;
+            this.currentColl.sort();
+         } 
+     }
 	
 });
