@@ -1,4 +1,4 @@
-describe('REST controller', function(){
+xdescribe('REST controller', function(){
     var Mocha = this;
 //    assign global variables
     before(function(done){

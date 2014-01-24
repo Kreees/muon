@@ -1,7 +1,10 @@
 var path = require('path');
 
-describe('MODELS module', function(){
+// Тестирование lib/models/models.js
 
+// модуль
+
+xdescribe('MODELS module', function(){
     before(function(){
         this.models = require('../../lib/models/models');
         this.cfg = {path: path.resolve('./test/fixtures')};

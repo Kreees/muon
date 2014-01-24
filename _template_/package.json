@@ -9,5 +9,17 @@
     },
     "dependencies": {
         "muon": "*"
+    },
+    "devDependencies": {
+        "q":"*",
+        "underscore":"*",
+        "mocha": "*",
+        "supertest": "*",
+        "superagent": "*",
+        "chai": "*",
+        "chai-spies": "*",
+        "node-mocks-http":"*",
+        "mocha-as-promised": "~1.4.1",
+        "repl.history":"*"
     }
 }

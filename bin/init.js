@@ -16,7 +16,7 @@ global.muon = global.m;
 
 
 var fs = require("fs"),
-    fs_ext = require("../lib/utils/fs/fs_ext")
+    fsExt = require("../lib/utils/fs/fs_ext")
 //    load_config = require("../lib/load_config.js")
 ;
 
@@ -31,9 +31,9 @@ if (process.argv.length != 3){
 
 var project_name = process.argv[2],
     path = process.cwd();
-var project_dir = path+"/"+project_name;
+var projectDir = path+"/"+project_name;
 
-if (fs.existsSync(project_dir)) {
+if (fs.existsSync(projectDir)) {
     console.log("Directory '"+project_name+"' already exists! Exiting.");
     process.kill();
 }
@@ -72,10 +72,15 @@ var dirs = [
     "/server/app/initializers/",
     "/server/helpers/",
     "/tmp/",
-    "/lib/"
+    "/lib/",
+    "/test/",
+    "/test/__init__/",
+    "/test/acceptance/",
+    "/test/unit/",
+    "/test/integration/"
 ];
 
-var tr_dirs = [
+var trDirs = [
     "/client/packages/application/tr/#{lang}/",
     "/client/packages/application/tr/#{lang}/layout/",
     "/client/packages/application/tr/#{lang}/layout/page/",
@@ -93,27 +98,27 @@ var tr_dirs = [
 
 for(var i in dirs){
     console.log("Creating: "+dirs[i]);
-    fs.mkdirSync(project_dir+dirs[i]);
+    fs.mkdirSync(projectDir+dirs[i]);
 }
 
-for(var i in tr_dirs){
+for(var i in trDirs){
     var langs = ["default","ru"];
     for(var j in langs){
-        var dir = tr_dirs[i].replace(/#\{lang\}/g,langs[j]);
+        var dir = trDirs[i].replace(/#\{lang\}/g,langs[j]);
         console.log("Creating: "+dir);
-        fs.mkdirSync(project_dir+dir);
+        fs.mkdirSync(projectDir+dir);
     }
 }
 
-fs_ext.traverse_dir(__dirname+"/../_template_",function(file){
+fsExt.traverseDir(__dirname+"/../_template_",function(file){
     var f_data = fs.readFileSync(file,"utf-8");
     f_data = f_data.replace(/#\{project\}/g,project_name);
     f_data = f_data.replace(/#\{user\}/g,process.env.USER);
     f_data = f_data.replace(/#\{lang\}/g,process.env.LANG.substr(0,2) || "en");
     f_data = f_data.replace(/#\{version\}/g,muon_cfg.version);
-    fs.writeFileSync(project_dir+file.replace(__dirname+"/../_template_",""),f_data);
+    fs.writeFileSync(projectDir+file.replace(__dirname+"/../_template_",""),f_data);
 },function(){
-    fs.writeFileSync(project_dir+".muon","");
+    fs.writeFileSync(projectDir+"/.muon","");
     var complete = "Complete!";
     console.log(complete);
 });

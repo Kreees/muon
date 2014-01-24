@@ -1,10 +1,10 @@
 module.exports = function(req,res,next){
     var _this = this;
     if (!this.session) return next();
-    this.model.db.find({_id: this.session.get("user")}).then(function(a){
-        _this.user = a.eval()[0];
+    this.model.get(this.session.user).run(function(e,user){
+        _this.user = user;
         if (!_this.user){
-            _this.session.del();
+            _this.session.remove();
             delete _this.session;
         }
         next();

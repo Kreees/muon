@@ -1,14 +1,16 @@
 module.exports = {
-    use_app_layout: true,
+    useAppLayout: true,
     pages: ["*"],
     models: ["*"],
     middleware: [],
     routes: [
-        {route: ""},
-	{
-	    route: "*a",
-            page: "error"
-	}
+        {
+            route: ""
+        },
+        {
+            route: "*a",
+                page: "error"
+        }
     ],
     surrogate: {}
 }

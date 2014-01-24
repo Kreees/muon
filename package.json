@@ -29,9 +29,12 @@
     "m-set-config": "./bin/set_config.js"
   },
   "dependencies": {
+    "async": "*",
     "ejs": "*",
     "express": "3.1.0",
     "orm": "*",
+    "orm-timestamps": "*",
+    "orm-paging": "*",
     "mysql": "2.0.0-alpha9",
     "pg": "2.6.2",
     "sqlite3": "*",
@@ -55,6 +58,8 @@
     "supertest": "*",
     "superagent": "*",
     "chai": "*",
+    "chai-spies": "*",
+    "node-mocks-http":"*",
     "mocha-as-promised": "~1.4.1",
     "repl.history":"*"
   }

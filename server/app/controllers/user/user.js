@@ -7,9 +7,9 @@ module.exports = m.rest.extend({
     permissions: function(){
         if (this.user && this.user.id == this.value) return ["all"];
         var dfd = Q.defer();
-        this.model.db.count().then(function(len){
-                if (len == 0) dfd.resolve(["create","index"]);
-                else dfd.resolve(["index"]);
+        this.model.count(function(e,len){
+            if (len == 0) dfd.resolve(["create","index"]);
+            else dfd.resolve(["index"]);
         });
         return dfd.promise;
     },
@@ -21,7 +21,7 @@ module.exports = m.rest.extend({
 
             this.data.password = this.data.password || "";
 
-            this.model.db.find({nick:this.data.nick}).then(function(a){
+            this.model.find({nick:this.data.nick},function(e,a){
                 if (a.length > 0)
                     return dfd.reject([409,{error: "User with such Nick already exists"}]);
                 var md5 = crypto.createHash("md5");

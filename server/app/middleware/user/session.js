@@ -1,13 +1,13 @@
 function findSession(req,res,next){
     var _this = this;
-    this.model.db.find({"session_id":req.cookies[this.cookieName]}).then(function(a){
-        _this.session = a.eval()[0];
+    this.model.find({"session_id":req.cookies[this.cookieName]}).run(function(e,a){
+        _this.session = a[0];
         if (_this.session){
             var end = res.end;
             res.end = function(){
                 end.apply(res,arguments);
                 if (_this.session){
-                    _this.session.set("last_viewed",new Date());
+                    _this.session.last_viewed = new Date();
                     _this.session.save();
                 }
             }
@@ -19,13 +19,9 @@ function findSession(req,res,next){
 function clear_old_sessions(req,res,next){
     var args = arguments;
     var _this = this;
-    this.model.db.find({"expires":{$lt: new Date()}}).then(function(a){
-        try {
-            a.del().then(function(){
-                findSession.apply(_this,args)
-            });
-        }
-        catch(e){m.error(e);throw e;}
+    this.model.find({"expires":m.orm.lt(new Date())}).remove(function(e){
+        if (e) m.error(e,true);
+        else findSession.apply(_this,args);
     });
 }
 

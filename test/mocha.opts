@@ -5,3 +5,5 @@
 ./test/support/setup.js
 ./test/support/waiter.js
 ./test/**/*.test.js
+./test/**/*.mtest.js
+./**/*.mtest.js

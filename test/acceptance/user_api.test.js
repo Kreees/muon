@@ -1,7 +1,7 @@
 var superagent = require('superagent');
 //var http = require("http");
 
-describe('User API',function(){
+xdescribe('User API',function(){
     var test_user;
 
    before(function(){

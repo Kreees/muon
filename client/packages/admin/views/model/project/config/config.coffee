@@ -16,8 +16,8 @@ m.ModelView.extend {
   attention: (ev)->
     el = ev.currentTarget
     $el = $(el)
-    if attention_list[el.dataset.modelSet]
-      $el.next(".help-inline").text(attention_list[el.dataset.modelSet]($el.val()))
+    if attention_list[el.getAttribute("data-model-set")]
+      $el.next(".help-inline").text(attention_list[el.getAttribute("data-model-set")]($el.val()))
   verify: (ev)->
     @attention(ev)
   prevent: (ev)->
