@@ -24,17 +24,17 @@ var muon_cfg = JSON.parse(fs.readFileSync(__dirname+"/../package.json"));
 
 if (process.argv.length != 3){
     var help = "Use: "+process.argv[1].substring(process.argv[1].lastIndexOf("/")+1,process.argv[1].length);
-    help += " <project_name>\n"
+    help += " <projectName>\n"
     console.log(help);
     process.kill();
 }
 
-var project_name = process.argv[2],
+var projectName = process.argv[2],
     path = process.cwd();
-var projectDir = path+"/"+project_name;
+var projectDir = path+"/"+projectName;
 
 if (fs.existsSync(projectDir)) {
-    console.log("Directory '"+project_name+"' already exists! Exiting.");
+    console.log("Directory '"+projectName+"' already exists! Exiting.");
     process.kill();
 }
 
@@ -112,7 +112,7 @@ for(var i in trDirs){
 
 fsExt.traverseDir(__dirname+"/../template",function(file){
     var f_data = fs.readFileSync(file,"utf-8");
-    f_data = f_data.replace(/#\{project\}/g,project_name);
+    f_data = f_data.replace(/#\{project\}/g,projectName.toLocaleLowerCase());
     f_data = f_data.replace(/#\{user\}/g,process.env.USER);
     f_data = f_data.replace(/#\{lang\}/g,process.env.LANG.substr(0,2) || "en");
     f_data = f_data.replace(/#\{version\}/g,muon_cfg.version);
