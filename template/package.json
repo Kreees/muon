@@ -2,11 +2,6 @@
     "name": "#{project}",
     "version": "0.0.1",
     "author":"#{user}",
-    "scripts": {
-        "start": "node app.js 1>access.log 2>error.log &",
-        "stop": "kill -9 `cat .muon`",
-        "reload": "npm stop && npm start"
-    },
     "dependencies": {
         "muon": "*"
     },
