@@ -1,0 +1,7 @@
+--require test/__init__/setup
+--timeout 60000
+--reporter spec
+--ui bdd
+./test/__init__/waiter.js
+./test/**/*.test.js
+./test/**/*.mtest.js
