@@ -12,7 +12,6 @@ xdescribe('MODELS module', function(){
 
     it('should return an instance of new model', function(done){
         this.models.init(this.cfg).done(function(models){
-            models.modelNames.should.eql(['user']);
             done();
         });
     })

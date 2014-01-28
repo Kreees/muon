@@ -8,10 +8,5 @@ module.exports = {
     db: "default",
     methods: {
         "run": function(){/*do run*/ return;}
-    },
-    hooks: {
-        afterLoad: function(){
-            this.dummyAttribute = "attr"
-        }
     }
 }
