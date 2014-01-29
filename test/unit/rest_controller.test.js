@@ -59,7 +59,7 @@ describe('REST controller', function(){
                 testUsers.push(new User());
                 testUsers[i].nick = "user"+(i+1);
             }
-            async.parallel(m._.pluck(testUsers,"save"),done);
+            async.parallel(m.utils._.pluck(testUsers,"save"),done);
         });
         before(function(done){
             var req = httpMock.createRequest({
@@ -93,7 +93,7 @@ describe('REST controller', function(){
                 users[i].nick = "user"+(i+1);
             }
             testUsers = users.slice(1,3);
-            async.parallel(m._.pluck(users,"save"),done);
+            async.parallel(m.utils._.pluck(users,"save"),done);
         });
         before(function(done){
             var req = httpMock.createRequest({
@@ -182,7 +182,7 @@ describe('REST controller', function(){
             result.parent_id.should.have.be.eql(testUser.parent_id);
         });
         it("reference should match",function(){
-            m._.pluck(relations,"_id").should.be.eql([refUser._id]);
+            m.utils._.pluck(relations,"_id").should.be.eql([refUser._id]);
         })
     });
 
@@ -239,7 +239,7 @@ describe('REST controller', function(){
             result.parent_id.should.be.eql(refUser._id);
         });
         it("reference should match",function(){
-            m._.pluck(relations,"_id").should.be.eql([refUser._id]);
+            m.utils._.pluck(relations,"_id").should.be.eql([refUser._id]);
         });
     });
 
