@@ -7,7 +7,11 @@ module.exports = {
     objects: ["obj1","obj2","obj3"],
     scopes: ["scope1","scope2"],
     hasOne: {
-        "parent": "other_user"
+        "parent": {
+            type: "other_user",
+            reverse: "users",
+            required: true
+        }
     },
     hasMany: {
         "dummies": "other_user"

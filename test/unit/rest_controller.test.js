@@ -23,20 +23,15 @@ describe('REST controller', function(){
     beforeEach(clearModels);
     after(clearModels);
 
-    xdescribe('action GET', function(){
-        var testUser;
+    describe('action GET', function(){
+        var testUser,result;
         before(function(done){
-            testUser = new User();
-            testUser.save({ nick:'prikha' },function(err){
-                if (err) throw err;
+            User.create({ nick:'prikha'},function(err,its){
+                testUser = its;
                 done();
             });
         });
-        it("should be present", function(done){
-            rest.actions.should.have.property('get');
-            done();
-        })
-        it("should respond with valid object",function(done){
+        before(function(done){
             var req = httpMock.createRequest({
                 model: User,
                 controller: rest,
@@ -46,13 +41,19 @@ describe('REST controller', function(){
             var res = httpMock.createResponse();
             var ret = rest.actions.get.apply(req.context,[req,res,testUser._id]);
             Q.when(ret).done(function(user){
-                user.should.eql(testUser);
+                result = user
                 done();
             });
         })
+        it("should be present", function(){
+            rest.actions.should.have.property('get');
+        })
+        it("should respond with valid object",function(){
+            result.should.eql(testUser);
+        })
     });
 
-    xdescribe('action INDEX', function(){
+    describe('action INDEX', function(){
         var testUsers = [],result;
         before(function(done){
             for(var i = 0; i < 10; i++){
@@ -74,17 +75,15 @@ describe('REST controller', function(){
                 done();
             });
         });
-        it("should be present",function(done){
+        it("should be present",function(){
             rest.actions.should.have.property('index');
-            done();
         })
-        it("should respond with collection", function(done){
+        it("should respond with collection", function(){
             result.should.eql(testUsers);
-            done();
         })
     });
 
-    xdescribe('action SEARCH', function(){
+    describe('action SEARCH', function(){
         var testUsers = [],result;
         before(function(done){
             var users = [];
@@ -118,8 +117,8 @@ describe('REST controller', function(){
         it("should respond with collection", function(done){done();});
     });
 
-    xdescribe('action CREATE', function() {
-        var testUser,refUser,result;
+    describe('action CREATE', function() {
+        var testUser,refUser,result,relations;
         before(function(done){
            refUser = new OtherUser();
            refUser.save(function(){
@@ -152,7 +151,6 @@ describe('REST controller', function(){
             });
         });
 
-        var relations;
         before(function(done){
            testUser.getDummies(function(e,data){
                relations = data;
@@ -164,11 +162,11 @@ describe('REST controller', function(){
             rest.actions.should.have.property('create');
         });
         it('result should have properties',function(){
-            result.should.have.property("nick");
-            result.should.have.property("email");
-            result.should.have.property("password");
-            result.should.have.property("parent_id");
-            result.should.not.have.property("wrong");
+            expect(result).to.have.property("nick");
+            expect(result).to.have.property("email");
+            expect(result).to.have.property("password");
+            expect(result).to.have.property("parent_id");
+            expect(result).to.not.have.property("wrong");
         });
         it('should create record', function(){
             result.nick.should.be.eql("some");
@@ -190,15 +188,20 @@ describe('REST controller', function(){
         //    save one user as this.existing_user
         var testUser,refUser;
         before(function(done){
-            testUser = new User();
-            testUser.nick = "before_some";
-            testUser.email = "before_some@before_some.before_some";
-            testUser.password = "before_some";
-            testUser.save(done);
+            testUser = new User.create({
+                nick: "before_some",
+                email: "before_some@before_some.before_some",
+                password: "before_some"
+            },function(e,a){
+                testUser = a;
+                done();
+            });
         });
         before(function(done){
-            refUser = new OtherUser();
-            refUser.save(done);
+            OtherUser.create({},function(e,a){
+                refUser = a;
+                done();
+            });
         })
         before(function(done){
             var req = httpMock.createRequest({
@@ -243,7 +246,7 @@ describe('REST controller', function(){
         });
     });
 
-    xdescribe('action REMOVE', function(){
+    describe('action REMOVE', function(){
         var testUser,refUser,presentResult;
         before(function(done){
             testUser = new User();
@@ -289,7 +292,7 @@ describe('REST controller', function(){
             presentResult.length.should.be.eql(0)
         });
     });
-})
+});
 
 
 
