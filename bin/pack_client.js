@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-global.m = require("../lib/m_init");
+require("../module.js");
 var fs = require("fs"),
     q = require("q"),
     tar = require("tar"),
@@ -10,9 +10,10 @@ var fs = require("fs"),
     mime = require("mime"),
     crypt = require("crypto");
 
-var server = require("../lib/server.js");
 
-server.init(function(){
+
+m.ready(function(){
+    var serverHandler = m.server();
     var args = require("../lib/bin/pack_client/load_args");
     if (!fs.existsSync(args.index_file)) m.error(e.message);
 
@@ -51,7 +52,7 @@ try{
             req.path = "/"+i;
             res.file_path = "pack/"+i;
             req.query = {lang:"ru"};
-            server.package_render(req,res);
+            serverHandler.server.packageRender(req,res);
             pack_data_counter++;
 
             packs.push(i)
@@ -79,7 +80,7 @@ try{
             req.path = "/"+langs[i];
             res.file_path = "pack_translation/"+langs[i];
             req.query = {packs:packs.join(",")};
-            server.package_translation(req,res);
+            serverHandler.server.packageTranslation(req,res);
             pack_data_counter++;
         }
 
@@ -140,24 +141,8 @@ try{
             manifest.secure = args.secure;
             manifest.hash = crypt.createHash("sha256").update(JSON.stringify(manifest,0,2)).digest("hex");
             fs.writeFileSync(temp_dir+"/manifest.json",JSON.stringify(manifest,0,2));
-            process.kill();
+            process.exit();
         }
-//    var callback = null;
-
-//    var r = fstream.Reader({'path': temp_dir, 'type': 'Directory'});
-
-//    r.on("end",function(){
-//        fs_ext.tree(temp_dir,function(files){
-//            for(var i in files) fs.unlinkSync(files[i]);
-//        });
-//        fs.rmdirSync(temp_dir);
-//
-
-//    })
-//
-//    r.pipe(tar.Pack())
-//        .pipe(zlib.Gzip())
-//        .pipe(fstream.Writer({'path': "./"+args.output_name+".tgz"}));
 }
 catch(e){
     m.log(e);
