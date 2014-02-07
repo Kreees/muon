@@ -435,8 +435,22 @@ __onReady__.push(function(){
         location.pathname = "/";
         return;
     }
-    m.router.route("/","#{default_pack}",m.requirePack("application"));
-    _.defer(_.bind(__b__.history.start,__b__.history),(__staticApp__?{}:{pushState:true}));
+    console.log("*__onReady__* server mode: " + __serverMode__);
+    if(__serverMode__ == "testing"){
+         m.requirePack("application", function(){
+             // jasmineEnv.execute();
+             // mocha.setup({grep:"testik"});
+             });
+         m.requirePack("MUON:admin", function(){
+             // jasmineEnv.execute();
+             // mocha.setup({grep:"MUON:admin"});
+             mocha.run();
+         });
+    }else{
+        m.router.route("/","#{default_pack}",m.requirePack("application"));
+        _.defer(_.bind(__b__.history.start,__b__.history),(__staticApp__?{}:{pushState:true}));
+    }
+    
     $("body").addClass("muon").delegate("a[data-route]","click",function(ev){
         ev.preventDefault();
         this.href = this.href || this.dataset.route;

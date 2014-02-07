@@ -1,3 +1,6 @@
+/** CollectionView предназначен для отображения понумерованного списка моделей, 
+    с возможностью фильтрации, сортировки, удаления
+*/
 m.CollectionView.extend({
 	target:"list",
 	modelView:"item_data",
