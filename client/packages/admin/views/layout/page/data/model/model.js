@@ -76,6 +76,7 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
         $ul.append("<li class='next'><a>&raquo;</a></li>");
     },
 	selectPageEv: function(ev){
+	    console.log("select event");
 		var $el = $(ev.currentTarget);
 		if($el.hasClass("next")) return this.nextPage();
 		if($el.hasClass("previous")) return this.previousPage();
@@ -88,27 +89,21 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
         this.$(".pagination ul li").removeClass("active");
         var li_num = this.currentPage+1;
         this.$(".pagination ul li:nth-child("+li_num+")").addClass("active");
-        this.updateCollection();
+        this.setPageCollection((this.currentPage-1)*this.pageLimit, this.pageLimit);
     },
-    updateCollection: function(){
-        var start = (this.currentPage-1)*this.pageLimit;
-        if(this.currentColl){
-            this.currentColl.reset();
-            this.currentColl.stopListening();
-        }
+    setPageCollection: function(skip, limit){
         var coll = new m.Collection([],{
-                url: this.mm.urlRoot+"?__action__=paginator&__limit__="+this.pageLimit+"&__skip__="+start,
+                url: this.mm.urlRoot+"?__action__=paginator&__limit__="+limit+"&__skip__="+skip,
                 model: this.mm.constructor,
-                startNum: start
+                startNum: skip
             });
-        this.currentColl = coll;
         coll.fetch();
         coll.on("remove", function(){
-            // console.log("autoupade on remove Ev"+ num);
+            console.log("autoupade on remove Ev");
             if(_this.$("input._remove:checked").length != 0) return;
             _this.updateMe();
         });
-       this.m.setProjection("model_data_admin.collection", this.currentColl); 
+       this.m.setProjection("model_data_admin.collection", coll); 
     },
     nextPage: function(){
         if(this.currentPage+1 > this.totalPages) return;
@@ -119,7 +114,7 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
         this.selectPage(this.currentPage-1);
     },
     
-    sort: function(ev){
+    sort: function(ev){ //TODO move to collection
         var att = $(ev.currentTarget).text();
         if(this.mm.get(att) || att == this.mm.idAttribute){
            this.currentColl.comparator = att;
@@ -129,8 +124,8 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
 	
 });
 describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", function() {
-    var model, newModel, spies, total, vw;
-    var mockk = {
+    var model, newModel, spies, total, vw, collection;
+    var stub = {
         successAction:function(total){
             if(total == undefined) total = [101];
             return function(name,obj,callback){
@@ -147,17 +142,40 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
             }
         },
         model:function(modelName, count){
-            if(!modelName) modelName = "thisIsMockkModel";
-            if(!count) count = 43;
-            var obj = new m.Model();
-            obj.constructor.prototype.modelName = modelName;
-            model.action = mockk.successAction([100]);
-        }
+            // if(!modelName) modelName = "thisIsMockkModel";
+            // if(!count) count = 43;
+            // var obj = new m.Model();
+            // obj.constructor.prototype.modelName = modelName;
+            // model.action = stub.successAction([100]);
+        },
+        collection:{
+            fetch:function(){
+                var prms = this.url.match(/__action__=paginator&__limit__=([0-9]+)&__skip__=([0-9]+)/);
+                if(prms){
+                    stub.__paginate(this, collection, Number(prms[2]), Number(prms[1]));
+                }
+            }
+        },
+        __paginate:function(context, coll, skip, limit){
+            for(var i = skip; i < (skip+limit); i++){
+                if(coll.models[i]) context.add(coll.models[i]);
+                // console.log(coll.models[i].get("property1"));
+            }
+            // console.log(context);
+        } 
     }
     before(function(done){
+        collection = new m.Collection();
+        for(var i = 1; i <= 100; i++){
+            var mm = new m.Model({"property1":i});
+            mm.constructor.prototype.modelName = "thisIsTestCollectionModel";
+            collection.add(mm)
+        };
+        console.log(collection);
         model = new m.Model();
         model.constructor.prototype.modelName = "thisIsModel";
-        model.action = mockk.successAction([100]);
+        model.action = stub.successAction([100]);
+        m.Collection.prototype.fetch = stub.collection.fetch;
         vw = new m.ModelDataPageLayoutView();
         vw.on("rendered", function(){
             done();
@@ -169,7 +187,10 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
             __errorUpdate: sinon.spy(vw,"__errorUpdate"),
             __successUpdate: sinon.spy(vw,"__successUpdate"),
             selectPage: sinon.spy(vw,"selectPage"),
-            updateCollection: sinon.spy(vw, "updateCollection")
+            setPageCollection: sinon.spy(vw, "setPageCollection"),
+            selectPageEv: sinon.spy(vw,"selectPageEv"),
+            nextPage: sinon.spy(vw,"nextPage"),
+            previousPage: sinon.spy(vw,"previousPage")
         };
     });
     after(function(){
@@ -233,7 +254,7 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
                 var NewModel = m.Model.extend({lolo:function(){}});
                 newModel = new NewModel();
                 model.constructor.prototype.modelName = "thisIsNewModel";
-                newModel.action = mockk.successAction();
+                newModel.action = stub.successAction();
                 spies.clearMe.reset();
                 spies.updateMe.reset();
                 vw.updateModel(newModel);
@@ -308,7 +329,7 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
             before(function(){
                 obj = [50,10,20];
                 spies.__successUpdate.reset();
-                vw.mm.action = mockk.successAction(obj);
+                vw.mm.action = stub.successAction(obj);
                 vw.updateMe();
             });
             it(".__successUpdate(val) -> called once with val",function(){
@@ -323,7 +344,7 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
             before(function(){
                 obj = "this is test";
                 spies.__errorUpdate.reset();
-                vw.mm.action = mockk.errorAction(obj);
+                vw.mm.action = stub.errorAction(obj);
                 vw.updateMe();
             });
             it(".__errorUpdate()",function(){
@@ -460,13 +481,33 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
         });
     });
     
-    describe("TODO UNIT .selectPageEv(ev)",function(){
+    
+    
+    
+    
+    
+    describe("UNIT .selectPageEv(ev)",function(){
         var ev;
         before(function(){
-            
+            vw.totalPages = 5;
+            vw.renderPaginator();
+            spies.nextPage.reset();
+            spies.selectPageEv.reset();
+            vw.$(".pagination ul li.next").trigger("click");
+            setTimeout(function(){},1000);
         })
+        it("next button clicked: .selectPageEv -> called once",function(){
+            // expect(spies.selectPageEv.calledOnce).to.be(true);
+            // expect(spies.nextPage.calledOnce).to.be(true);
+        });
         it.skip("TODO",function(){});
     });
+    
+    
+    
+    
+    
+    
     
     describe("UNIT .selectPage(num)",function(){
         before(function(){
@@ -476,7 +517,8 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
         describe("num is correct Number",function(){
             before(function(){
                vw.currentPage = 3;
-               spies.updateCollection.reset();
+               vw.pageLimit = 10;
+               spies.setPageCollection.reset();
                vw.selectPage(5) 
             });
             it(".currentPage -> selected num",function(){
@@ -488,11 +530,26 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
             it("HTML (.pagination ... li.active) -> is current page",function(){
                 expect(vw.$(".pagination ul li:nth-child("+6+")").hasClass("active")).to.be(true);
             });
-            it(".updateCollection() -> called once",function(){
-                expect(spies.updateCollection.calledOnce).to.be(true); 
+            it(".setPageCollection() -> called once",function(){
+                expect(spies.setPageCollection.calledOnce).to.be(true); 
+            });
+            it(".setPageCollection() -> called with right skip, limit",function(){
+                expect(spies.setPageCollection.calledWith(40, 10)).to.be(true); 
+            });
+            it(".setPageCollection() ->(+) called with right skip, limit",function(){
+                vw.pageLimit = 3;
+                vw.selectPage(6);
+                expect(spies.setPageCollection.calledWith(15, 3)).to.be(true); 
             });
         });
         describe("num is wrong -> no changes, no calls",function(){
+            var prj;
+            before(function(){
+                prj = new m.Collection([],{
+                    url: "testUrl"
+                });
+                vw.m.setProjection("model_data_admin.collection", prj);
+            })
             beforeEach(function(){
                vw.currentPage = 3;
             });
@@ -510,22 +567,26 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
                 vw.selectPage(-2); 
                 expect(vw.currentPage).to.be(3);
             });
+            it("Projection model_data_admin.collection -> not changed",function(){
+                expect(vw.m.getProjection("model_data_admin.collection")).to.be(prj);
+            });
         });
     });
     
-    describe("UNIT .updateCollection()",function(){
-        before(function(){
-            
-        })
-        it(".m.setProjection() ->",function(){
-            expect()
+    describe("UNIT .setPageCollection()",function(){
+        it("total=100, limit = 5, skip = 10 Collection length -> 5, first model -> 11",function(){
+            vw.setPageCollection(10, 5);
+            var coll = vw.m.getProjection("model_data_admin.collection");
+            expect(coll.length).to.be(5);
+            expect(coll.models[0].get("property1")).to.be(11);
         });
-        
-        it.skip("TODO",function(){});
+        it("total=100, limit = 5, skip = 97 Collection length -> 3, first model -> 98",function(){
+            vw.setPageCollection(97, 5);
+            var coll = vw.m.getProjection("model_data_admin.collection");
+            expect(coll.length).to.be(3);
+            expect(coll.models[0].get("property1")).to.be(98);
+        });
     });
-    
-    
-    
     
     describe("UNIT .nextPage()",function(){
         describe("nextPage > .totalPages",function(){
