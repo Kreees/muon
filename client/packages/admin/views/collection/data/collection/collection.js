@@ -5,7 +5,8 @@ m.CollectionView.extend({
 	target:"list",
 	modelView:"item_data",
     events:{
-        "click button._remove ": "removeSelected"
+        "click button._remove ": "removeSelected",
+        "click th.attribute": "sort"
     },
 	rendered:function(){
 	    window.cv = this;
@@ -28,7 +29,7 @@ m.CollectionView.extend({
 	removeSelected:function(){
 	    var _this = this;
 	    if(this.$("input._remove:checked").length == 0) return;
-	    if(confirm("A you shure to remove selected items?")){
+	    if(confirm("A you shure to remove selected items from database?")){
 	        this.$("input._remove:checked").each(function(){
 	            var _id = $(this).closest("tr").attr("id");
 	            var _m = _this.collection.get(_id);
@@ -55,6 +56,32 @@ m.CollectionView.extend({
                 $("<th class='attribute'>").text(items[i]).appendTo(this.$("thead tr"));
             }
         }
-	}
+	},
+	sort: function(ev){ //TODO move to collection
+        var att = $(ev.currentTarget).text();
+        // if(this.mm.get(att) || att == this.mm.idAttribute){
+           this.collection.comparator = att;
+           this.collection.sort();
+        // } 
+    }
 	
-})
+});
+
+describe("collection/data/collection/collection.js CollectionView", function(){
+    var view, coll, filter;
+    before(function(){
+        coll = new m.Collection();
+        // for(var i = 1; i <= 10; i++){
+            // var mm = new m.Model({"property1":i});
+            // mm.constructor.prototype.modelName = "thisIsTestCollectionModel";
+            // collection.add(mm);
+        // };
+        view = new m.packages["MUON:admin"].views.collection.collection_data(coll);
+        
+    });
+    describe("",function(){
+        
+    });
+});
+
+

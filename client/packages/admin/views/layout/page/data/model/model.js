@@ -9,8 +9,7 @@
 */
 m.ModelDataPageLayoutView = m.LayoutView.extend({
 	events:{
-		"click ul li": "selectPageEv",
-		"click th.attribute": "sort"
+		"click ul li": "selectPageEv"
 	},
 	rendered: function(){
 		// console.log(["rerender ModelDataPageLayoutView"]);
@@ -76,7 +75,6 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
         $ul.append("<li class='next'><a>&raquo;</a></li>");
     },
 	selectPageEv: function(ev){
-	    console.log("select event");
 		var $el = $(ev.currentTarget);
 		if($el.hasClass("next")) return this.nextPage();
 		if($el.hasClass("previous")) return this.previousPage();
@@ -112,18 +110,10 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
     previousPage: function(){
         if(this.currentPage-1 < 1) return;
         this.selectPage(this.currentPage-1);
-    },
-    
-    sort: function(ev){ //TODO move to collection
-        var att = $(ev.currentTarget).text();
-        if(this.mm.get(att) || att == this.mm.idAttribute){
-           this.currentColl.comparator = att;
-           this.currentColl.sort();
-        } 
     }
 	
 });
-describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", function() {
+describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
     var model, newModel, spies, total, vw, collection;
     var stub = {
         successAction:function(total){
@@ -141,13 +131,6 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
                 }
             }
         },
-        model:function(modelName, count){
-            // if(!modelName) modelName = "thisIsMockkModel";
-            // if(!count) count = 43;
-            // var obj = new m.Model();
-            // obj.constructor.prototype.modelName = modelName;
-            // model.action = stub.successAction([100]);
-        },
         collection:{
             fetch:function(){
                 var prms = this.url.match(/__action__=paginator&__limit__=([0-9]+)&__skip__=([0-9]+)/);
@@ -159,9 +142,7 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
         __paginate:function(context, coll, skip, limit){
             for(var i = skip; i < (skip+limit); i++){
                 if(coll.models[i]) context.add(coll.models[i]);
-                // console.log(coll.models[i].get("property1"));
             }
-            // console.log(context);
         } 
     }
     before(function(done){
@@ -171,11 +152,13 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
             mm.constructor.prototype.modelName = "thisIsTestCollectionModel";
             collection.add(mm)
         };
-        console.log(collection);
         model = new m.Model();
         model.constructor.prototype.modelName = "thisIsModel";
         model.action = stub.successAction([100]);
         m.Collection.prototype.fetch = stub.collection.fetch;
+        evSpies = {
+            selectPageEv: sinon.spy(m.ModelDataPageLayoutView.prototype,"selectPageEv")
+        }
         vw = new m.ModelDataPageLayoutView();
         vw.on("rendered", function(){
             done();
@@ -188,7 +171,6 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
             __successUpdate: sinon.spy(vw,"__successUpdate"),
             selectPage: sinon.spy(vw,"selectPage"),
             setPageCollection: sinon.spy(vw, "setPageCollection"),
-            selectPageEv: sinon.spy(vw,"selectPageEv"),
             nextPage: sinon.spy(vw,"nextPage"),
             previousPage: sinon.spy(vw,"previousPage")
         };
@@ -481,33 +463,46 @@ describe("layout/page/data/model/model.mtest.js ModelDataPageLayoutView", functi
         });
     });
     
-    
-    
-    
-    
-    
-    describe("UNIT .selectPageEv(ev)",function(){
-        var ev;
+    describe("UNIT EVENT .selectPageEv(ev)",function(){
         before(function(){
             vw.totalPages = 5;
             vw.renderPaginator();
-            spies.nextPage.reset();
-            spies.selectPageEv.reset();
-            vw.$(".pagination ul li.next").trigger("click");
-            setTimeout(function(){},1000);
         })
-        it("next button clicked: .selectPageEv -> called once",function(){
-            // expect(spies.selectPageEv.calledOnce).to.be(true);
-            // expect(spies.nextPage.calledOnce).to.be(true);
+        it("paginator(5 pages) li clicked: .selectPageEv -> called (7)",function(done){
+            evSpies.selectPageEv.reset();
+            setTimeout(function(){
+                expect(evSpies.selectPageEv.callCount).to.be(7);
+                done();},100);
+            vw.$(".pagination ul li").trigger("click");
         });
-        it.skip("TODO",function(){});
+        it("next button clicked: .nextPage -> called once",function(done){
+            spies.nextPage.reset();
+            setTimeout(function(){
+                expect(spies.nextPage.calledOnce).to.be(true);
+                done();},100);
+            vw.$(".pagination ul li.next").trigger("click");
+        });
+        it("previous button clicked: .previousPage -> called once",function(done){
+            spies.previousPage.reset();
+            setTimeout(function(){
+                expect(spies.previousPage.calledOnce).to.be(true);
+                done();},100);
+            vw.$(".pagination ul li.previous").trigger("click");
+        });
+        describe("page(3) clicked",function(){
+            before(function(done){
+                spies.selectPage.reset();
+                setTimeout(function(){done();},100);
+                vw.$(".pagination ul li:nth-child(4)").trigger("click");
+            });
+            it(".selectPage -> called",function(){
+                expect(spies.selectPage.called).to.be(true);
+            });
+            it(".selectPage -> called with 3",function(){
+                expect(spies.selectPage.calledWith(3)).to.be(true);
+            });
+        })
     });
-    
-    
-    
-    
-    
-    
     
     describe("UNIT .selectPage(num)",function(){
         before(function(){
