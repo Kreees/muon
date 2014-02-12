@@ -6,4 +6,3 @@
 ./test/__init__/waiter.js
 ./test/**/*.test.js
 ./test/**/*.mtest.js
-./**/*.mtest.js

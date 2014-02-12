@@ -1,7 +1,8 @@
+var api_router = m.__require__("/router/api_router");
+
 var path = require("path");
-var fixtPath = path.normalize(path.resolve(m.__syspath+'/test/fixtures'));
-var httpMock = require(m.__syspath+"/lib/testing/http_mock");
-var api_router = require("./api_router");
+var fixtPath = path.normalize(path.resolve(m.__syspath+'/test/__fixtures__'));
+var httpMock = m.__require__("/testing/http_mock");
 var express = require("express");
 
 xdescribe("API_router",function(){
