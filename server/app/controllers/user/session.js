@@ -44,6 +44,6 @@ module.exports = {
             }).done();
             return dfd.promise;
         },
-        "remove": m.rest.actions.remove
+        "remove": m.ResourceController.actions.remove
     }
 };

@@ -1,1 +1,1 @@
-module.exports = m.rest;
+module.exports = m.ResourceController;

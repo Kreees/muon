@@ -10,7 +10,7 @@ module.exports = {
         remove: function(req,res){
             var id = this.session.id;
             delete this.session;
-            return m.rest.actions.remove.apply(this,[req,res,id]);
+            return m.ResourceController.actions.remove.apply(this,[req,res,id]);
         }
     }
 }

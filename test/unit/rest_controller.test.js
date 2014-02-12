@@ -6,7 +6,7 @@ describe('REST controller', function(){
     before(function(done){
         User = m.models['user']
         OtherUser = m.models['other_user']
-        rest = m.rest;
+        rest = m.ResourceController;
         done();
     });
 
@@ -24,12 +24,22 @@ describe('REST controller', function(){
     after(clearModels);
 
     describe('action GET', function(){
-        var testUser,result;
+        var testUser,refUser,result;
         before(function(done){
-            User.create({ nick:'prikha'},function(err,its){
-                testUser = its;
-                done();
+            OtherUser.create({},function(err,its){
+                refUser = its;
+                done(err);
             });
+        });
+        before(function(done){
+            testUser = new User();
+            testUser.nick = 'prikha';
+            testUser.setParent(refUser,function(err){
+                if (err) done(err);
+                else testUser.save(function(err){
+                    done(err);
+                });
+            })
         });
         before(function(done){
             var req = httpMock.createRequest({
@@ -49,6 +59,7 @@ describe('REST controller', function(){
             rest.actions.should.have.property('get');
         })
         it("should respond with valid object",function(){
+            delete testUser.parent;
             result.should.eql(testUser);
         })
     });
@@ -136,7 +147,7 @@ describe('REST controller', function(){
                     email: "some@some.some",
                     password: "some",
                     wrong: "some",
-                    parent:refUser._id,
+                    parent: refUser._id,
                     dummies: [refUser._id]
                 }
             });

@@ -1,4 +1,4 @@
-module.exports = m.rest.extend({
+module.exports = m.ResourceController.extend({
     dependencies: [
         "user.user"
     ],

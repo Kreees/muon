@@ -9,8 +9,7 @@ module.exports = {
     hasOne: {
         "parent": {
             type: "other_user",
-            reverse: "users",
-            required: true
+            reverse: "users"
         }
     },
     hasMany: {
