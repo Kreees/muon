@@ -3,12 +3,11 @@ var finalize = finalizeModule.finalize;
 var errorize = finalizeModule.errorize;
 
 var path = require("path");
-var fixtPath = path.normalize(path.resolve(m.__syspath+'/test/fixtures'));
 var httpMock = m.__require__("/testing/http_mock");
 var async = require("async");
 var express = require("express");
 
-xdescribe("Finalize module",function(){
+describe("Finalize module",function(){
     this.timeout(1000);
     var context = {
         old: {},
@@ -27,10 +26,6 @@ xdescribe("Finalize module",function(){
     });
 
     beforeEach(function(done){
-        m.reload({ path: fixtPath },done);
-    });
-
-    beforeEach(function(done){
         async.parallel([
             createUser,createUser,
             createUser,createUser
@@ -43,7 +38,7 @@ xdescribe("Finalize module",function(){
             method: "GET",
             url: "user",
             model: m.models.user,
-            controller: m.models.user.controller,
+            actionModule: m.models.user.actionModule,
             target: m.models.user
         });
         done();
@@ -87,7 +82,7 @@ xdescribe("Finalize module",function(){
             }),context.models);
     });
 
-    it("Success finalize method - non model object",function(done){
+    xit("Success finalize method - non model object",function(done){
         finalize(context.request,
             httpMock.createResponse(function(res){
                 res.statusCode.should.be.equal(200);
@@ -102,7 +97,7 @@ xdescribe("Finalize module",function(){
             }),{some: "other",data: "superdata"});
     });
 
-    it("Success finalize method - non model collection",function(done){
+    xit("Success finalize method - non model collection",function(done){
         finalize(context.request,
             httpMock.createResponse(function(res){
                 res.statusCode.should.be.equal(200);

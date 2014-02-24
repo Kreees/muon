@@ -3,20 +3,20 @@ var fixtPath = path.normalize(path.resolve(m.__syspath+'/test/fixtures'));
 var fixtServerPath = path.normalize(path.resolve(m.__syspath+'/test/fixtures/server/app'));
 
 var checkController = function(type,ctrlr,path,sup){
-    ctrlr.should.ownProperty("super",type+" controller should have super controller reference");
-    ctrlr.should.ownProperty("actions",type+" controller should have dictionary actions");
-    ctrlr.should.ownProperty("extend",type+" controller should have method extend");
-    ctrlr.should.ownProperty("permissions",type+" controller should have property permissions");
-    ctrlr.should.ownProperty("dependencies",type+" controller should have property dependencies");
-    ctrlr.should.ownProperty("modulePath",type+" controller should have property modulePath");
-    ctrlr.should.ownProperty("pluginName",type+" controller should have property pluginName");
+    ctrlr.should.ownProperty("super",type+" actionModule should have super actionModule reference");
+    ctrlr.should.ownProperty("actions",type+" actionModule should have dictionary actions");
+    ctrlr.should.ownProperty("extend",type+" actionModule should have method extend");
+    ctrlr.should.ownProperty("permissions",type+" actionModule should have property permissions");
+    ctrlr.should.ownProperty("dependencies",type+" actionModule should have property dependencies");
+    ctrlr.should.ownProperty("modulePath",type+" actionModule should have property modulePath");
+    ctrlr.should.ownProperty("pluginName",type+" actionModule should have property pluginName");
 
     ctrlr.modulePath.should.be.equal(path);
     ctrlr.super.should.be.equal(sup);
     ctrlr.pluginName.should.be.equal("DUMMY");
 }
 
-xdescribe('MODELS module', function(){
+describe('MODELS module', function(){
     before(function(){
         this.module = require('./../../lib/models/models');
         this.cfg = {
@@ -38,7 +38,7 @@ xdescribe('MODELS module', function(){
                     User.should.ownProperty("dbName");
                     User.should.ownProperty("collection");
                     User.should.ownProperty("collectionName");
-                    User.should.ownProperty("controller");
+                    User.should.ownProperty("actionModule");
                     User.should.ownProperty("fullName");
                     User.should.ownProperty("id");
                     User.should.ownProperty("idName");
@@ -69,12 +69,12 @@ xdescribe('MODELS module', function(){
                     User.collection.should.be.equal("DUMMY_user");
                     User.collection.should.be.equal(User.collectionName);
 
-//            controller
+//            actionModule
 
-                    User.controller.should.be.instanceOf(Object);
+                    User.actionModule.should.be.instanceOf(Object);
 
                     checkController("Model",
-                        User.controller,
+                        User.actionModule,
                         path.normalize(fixtServerPath + "/controllers/user.js"),
                         require(path.normalize(fixtServerPath + "/controllers/user.js"))
                     );
@@ -111,15 +111,15 @@ xdescribe('MODELS module', function(){
                     User.objects.should.ownProperty("obj2");
                     User.objects.should.ownProperty("obj3");
 
-                    User.objects.obj1.should.have.keys(["objectName","controller","model","modelName"],"Model Object should have keys");
+                    User.objects.obj1.should.have.keys(["objectName","actionModule","model","modelName"],"Model Object should have keys");
                     User.objects.obj1.model.should.be.equal(User);
                     User.objects.obj1.modelName.should.be.equal(User.modelName);
                     User.objects.obj1.objectName.should.be.equal("obj1");
 
                     checkController("Object",
-                        User.objects.obj1.controller,
+                        User.objects.obj1.actionModule,
                         path.normalize(fixtServerPath + "/controllers/user/obj1.js"),
-                        User.controller
+                        User.actionModule
                     );
 
 //            scopes
@@ -128,15 +128,15 @@ xdescribe('MODELS module', function(){
                     User.scopes.should.ownProperty("scope1");
                     User.scopes.should.ownProperty("scope2");
 
-                    User.scopes.scope1.should.have.keys(["scopeName","controller","model","modelName"],"Model Object should have keys");
+                    User.scopes.scope1.should.have.keys(["scopeName","actionModule","model","modelName"],"Model Object should have keys");
                     User.scopes.scope1.model.should.be.equal(User);
                     User.scopes.scope1.modelName.should.be.equal(User.modelName);
                     User.scopes.scope1.scopeName.should.be.equal("scope1");
 
                     checkController("Scope",
-                        User.scopes.scope1.controller,
+                        User.scopes.scope1.actionModule,
                         path.normalize(fixtServerPath + "/controllers/user/scope1.js"),
-                        User.controller
+                        User.actionModule
                     );
 
 //            urls

@@ -3,6 +3,4 @@
 --reporter spec
 --ui bdd
 ./test/__init__/setup.js
-./test/__init__/waiter.js
-./test/**/*.test.js
-./test/**/*.mtest.js
+./test/__init__/run.js

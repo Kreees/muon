@@ -66,7 +66,7 @@ var dirs = [
     "/server/",
     "/server/app/",
     "/server/app/models/",
-    "/server/app/controllers/",
+    "/server/app/actions/",
     "/server/app/middleware/",
     "/server/app/initializers/",
     "/server/helpers/",

@@ -19,7 +19,7 @@ function findSession(req,res,next){
 function clear_old_sessions(req,res,next){
     var args = arguments;
     var _this = this;
-    this.model.find({"expires":m.orm.lt(new Date())}).remove(function(e){
+    this.model.find({"expires":m.utils.orm.lt(new Date())}).remove(function(e){
         if (e) m.error(e,true);
         else findSession.apply(_this,args);
     });
