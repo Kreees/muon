@@ -1,6 +1,6 @@
 var tests = {};
 
-var testPath = m.__syspath+"/test/";
+var testPath = m.sys.path+"/test/";
 
 var testDirs = m.utils.fs.readdirSync(testPath);
 for(var i in testDirs){

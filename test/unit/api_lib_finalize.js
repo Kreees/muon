@@ -1,9 +1,9 @@
-var finalizeModule = m.__require__("/router/api_lib/finalize");
+var finalizeModule = m.sys.require("/router/api_lib/finalize");
 var finalize = finalizeModule.finalize;
 var errorize = finalizeModule.errorize;
 
 var path = require("path");
-var httpMock = m.__require__("/testing/http_mock");
+var httpMock = m.sys.require("/testing/http_mock");
 var async = require("async");
 var express = require("express");
 

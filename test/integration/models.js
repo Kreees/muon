@@ -1,6 +1,6 @@
 var path = require('path');
-var fixtPath = path.normalize(path.resolve(m.__syspath+'/test/fixtures'));
-var fixtServerPath = path.normalize(path.resolve(m.__syspath+'/test/fixtures/server/app'));
+var fixtPath = path.normalize(path.resolve(m.sys.path+'/test/fixtures'));
+var fixtServerPath = path.normalize(path.resolve(m.sys.path+'/test/fixtures/server/app'));
 
 var checkController = function(type,ctrlr,path,sup){
     ctrlr.should.ownProperty("super",type+" actionModule should have super actionModule reference");
