@@ -3,8 +3,8 @@
 var server = require("../module").server();
 var spawn = require("child_process").spawn;
 var env = process.env;
-env["PWD"] = m.__syspath+"lib/lib/get_sitemap/";
-var ph = spawn("phantomjs",["phantom.js"],{cwd: m.__syspath+"lib/lib/get_sitemap/",env: env});
+env["PWD"] = m.sys.path+"lib/lib/get_sitemap/";
+var ph = spawn("phantomjs",["phantom.js"],{cwd: m.sys.path+"lib/lib/get_sitemap/",env: env});
 
 m.cfg.serverMode = "sitemap";
 try{ server.listen(); }
