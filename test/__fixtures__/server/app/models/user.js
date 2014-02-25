@@ -2,7 +2,8 @@ module.exports = {
     attributes: {
         "nick": "text",
         "password": "text",
-        "email": "text"
+        "email": "text",
+        "sex": "boolean"
     },
     objects: ["obj1","obj2","obj3"],
     scopes: ["scope1","scope2"],
@@ -13,6 +14,10 @@ module.exports = {
         }
     },
     hasMany: {
-        "dummies": "other_user"
+        "dummies": "other_user",
+        projects: {
+            type: "project",
+            reverse: "owner"
+        }
     }
 }
