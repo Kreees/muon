@@ -21,15 +21,15 @@ describe('Run MUON complete test:',function(){
     });
 
     for(var i in tests){
-        describe("\n\n\t\t==================== "+i+" ====================\n\n",function(){
+        describe(i+":",function(){
             tests[i].modules.forEach(function(a){
                 if (/x\./.test(a)){
-                    xdescribe("\n>>>>>>> "+a+":\n",function(){
+                    xdescribe(a+": ",function(){
                         require(tests[i].path+"/"+a);
                     })
                 }
                 else {
-                    describe("\n>>>>>>> "+a+":\n",function(){
+                    describe(a+": ",function(){
                         require(tests[i].path+"/"+a);
                     })
                 }
