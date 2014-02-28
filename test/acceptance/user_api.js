@@ -3,7 +3,7 @@ var request = require('supertest');
 var test_user;
 
 
-var clearUsers = function(done){
+var clearUsers = function(done) {
     var User = m.models['user'];
     User.find().remove(done);
 }
@@ -111,6 +111,138 @@ describe('REST', function(){
                         })
                     })
             });
+    });
+});
+
+describe('Scope',function(){
+    describe('female',function(){
+        xit('should return collection with query applied')
+        xit('should not repornd to actions blocked by permission')
+    });
+});
+
+describe('Special object', function(){
+    describe('me', function(){
+        xit('should return valid user')
+    })
+})
+
+describe('Association', function(){
+
+    var finished_project;
+    var unfinished_project;
+
+    before(function(done){
+        var Project = m.models['project'];
+        finished_project = new Project()
+
+        finished_project.name = 'finished';
+        finished_project.finished = true;
+        test_user.addProjects(finished_project,function(){
+            finished_project.save(done);
+        });
+    });
+    before(function(done){
+        var Project = m.models['project'];
+        unfinished_project = new Project();
+
+        unfinished_project.name = 'unfinished';
+        unfinished_project.finished = false;
+
+        test_user.addProjects(unfinished_project,function(){
+            unfinished_project.save(done);
+        });
+
+    });
+
+    describe('#index', function(){
+        it('should return collection', function(done){
+            request('http://localhost:8000')
+                .get('/apis/user/'+test_user._id+'/projects?muon')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err,res){
+                    if(err){ return done(err) }
+                    res.body.should.be.instanceOf(Array);
+                    res.body.length.should.eq(2);
+                    done();
+                })
+        });
+    });
+    describe('#show', function(){
+        it('should return resource', function(done){
+            request('http://localhost:8000')
+                .get('/apis/user/'+test_user._id+'/projects/'+finished_project._id+'?muon')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err,res){
+                    if(err){ return done(err) }
+                    resource = res.body
+                    resource.should.be.instanceOf(Object);
+                    resource._id.should.be.equal(finished_project._id);
+                    m.utils._.keys(resource).should.include('name', 'finished')
+                    done();
+                })
+        });
+    });
+
+    describe('#create', function(){
+        it('should create resource', function(done){
+                request('http://localhost:8000')
+                    .post('/apis/user/'+test_user._id+'/projects/?muon')
+                    .send({ name: 'project name'})
+                    .expect('Content-Type', /json/)
+                    .expect(200)
+                    .end(function(err,res){
+                        if(err){ return done(err) }
+                        resource = res.body;
+                        resource._id.should.not.eq(null);
+                        test_user.projects.count(function(err, count){
+                            if(err){return done(err)}
+                            count.should.eq(3)
+                            done();
+                        });
+                    })
+            }
+        );
+    });
+    describe('#update', function(){
+        it('should change existing resource', function(done){
+                request('http://localhost:8000')
+                    .put('/apis/user/'+test_user._id+'/projects/'+finished_project._id+'?muon')
+                    .send({ name: 'new project name', finished: true})
+                    .expect('Content-Type', /json/)
+                    .expect(200)
+                    .end(function(err,res){
+                        if(err){ return done(err) }
+                        resource = res.body;
+                        resource.name.should.equal('new project name');
+                        resource.finished.should.equal(true);
+                        done();
+                    })
+            }
+        );
+    });
+    describe('#delete', function(){
+        it('should create resource', function(done){
+            request('http://localhost:8000')
+                .del('/apis/user/'+test_user._id+'/projects/'+finished_project._id+'?muon')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err,res){
+                    if(err){ return done(err) }
+                    resource = res.body;
+                    var User = m.models['user']
+                    User.get(resource._id,function(user){
+                        user.code.should.equal(2)
+                        test_user.projects.count(function(err,count){
+                            if(err){ return done(err) }
+                            count.should.equal(1);
+                            done()
+                        });
+                    })
+                })
+        });
     });
 });
 
