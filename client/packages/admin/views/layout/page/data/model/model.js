@@ -89,11 +89,10 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
         this.$(".pagination ul li:nth-child("+li_num+")").addClass("active");
         this.setPageCollection((this.currentPage-1)*this.pageLimit, this.pageLimit);
     },
-    setPageCollection: function(skip, limit){
+    setPageCollection: function(skip, limit, callback){
         var coll = new m.Collection([],{
                 url: this.mm.urlRoot+"?__action__=paginator&__limit__="+limit+"&__skip__="+skip,
-                model: this.mm.constructor,
-                startNum: skip
+                model: this.mm.constructor
             });
         coll.fetch();
         coll.on("remove", function(){
@@ -113,8 +112,9 @@ m.ModelDataPageLayoutView = m.LayoutView.extend({
     }
 	
 });
-describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
-    var model, newModel, spies, total, vw, collection;
+
+describe("UNIT layout/page/data/model/model.js ModelDataPageLayoutView", function(){
+    var model, newModel, spies, total, vw, collection, evSpies;
     var stub = {
         successAction:function(total){
             if(total == undefined) total = [101];
@@ -132,7 +132,7 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             }
         },
         collection:{
-            fetch:function(){
+            fetch:function(obj){
                 var prms = this.url.match(/__action__=paginator&__limit__=([0-9]+)&__skip__=([0-9]+)/);
                 if(prms){
                     stub.__paginate(this, collection, Number(prms[2]), Number(prms[1]));
@@ -140,6 +140,7 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             }
         },
         __paginate:function(context, coll, skip, limit){
+            console.log(["paginate", skip, limit])
             for(var i = skip; i < (skip+limit); i++){
                 if(coll.models[i]) context.add(coll.models[i]);
             }
@@ -181,33 +182,24 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
     describe("UNIT .rendered()",function(){
         describe("init parameters validation",function(){
             it(".currentPage -> is 1",function(){
-                expect(vw.currentPage).to.be(1);
-            });
+                expect(vw.currentPage).to.be(1); });
             it(".pageLimit -> is more than 0",function(){
-                expect(vw.pageLimit).to.be.greaterThan(0);
-            }); 
+                expect(vw.pageLimit).to.be.greaterThan(0); }); 
             it(".totalPages -> is 0",function(){
-                expect(vw.totalPages).to.be(0);
-            });
+                expect(vw.totalPages).to.be(0); });
             it(".totalItems -> is 0",function(){
-                expect(vw.totalItems).to.be(0);
-            });
+                expect(vw.totalItems).to.be(0); });
             it(".mm -> is {}",function(){
-                expect(vw.mm).to.eql({});
-            });
+                expect(vw.mm).to.eql({}); });
             it("Projection model_data_admin.model -> is undefined",function(){
-                expect(vw.m.getProjection("model_data_admin.model")).to.be.an('undefined');
-            });
+                expect(vw.m.getProjection("model_data_admin.model")).to.be.an('undefined'); });
             it("Projection model_data_admin.collection -> is undefined",function(){
-                expect(vw.m.getProjection("model_data_admin.collection")).to.be.an('undefined');
-            });
+                expect(vw.m.getProjection("model_data_admin.collection")).to.be.an('undefined'); });
         });
         describe("HTML $el",function(){
             it("(#totalItems) text -> empty",function(){
-                expect(vw.$("#totalItems").html()).to.be("");
-            });
-            it.skip("TODO all jade-after-rendered test",function(){
-            });
+                expect(vw.$("#totalItems").html()).to.be(""); });
+            it.skip("TODO all jade-after-rendered test",function(){ });
         });
     });
     
@@ -216,16 +208,13 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             var model2;
             before(function(){
                 vw.mm = model;
-                model2 = new m.Model();
-            });
+                model2 = new m.Model(); });
             it("model2.constructor == model.constructor",function(){
-                expect(model.constructor).to.be(model2.constructor);
-            });
+                expect(model.constructor).to.be(model2.constructor); });
             it("call .updateMe() once",function(){
                 spies.updateMe.reset();
                 vw.updateModel(model2);
-                expect(spies.updateMe.calledOnce).to.be(true);
-            });
+                expect(spies.updateMe.calledOnce).to.be(true); });
         });
         
         describe(".mm != model",function(){
@@ -242,23 +231,17 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                 vw.updateModel(newModel);
             });
             it("IN newModel !-> model",function(){
-                expect(model.constructor).not.to.be(newModel.constructor);
-            });
+                expect(model.constructor).not.to.be(newModel.constructor); });
             it(".clearMe() -> called once",function(){
-                expect(spies.clearMe.calledOnce).to.be(true);
-            });
+                expect(spies.clearMe.calledOnce).to.be(true); });
             it(".mm -> newModel",function(){
-                expect(vw.mm).to.be(newModel);
-            });
+                expect(vw.mm).to.be(newModel); });
             it(".currentPage -> 1",function(){
-                expect(vw.currentPage).to.be(1);
-            });
+                expect(vw.currentPage).to.be(1);  });
             it("HTML $el (#model-name) -> newModel modelname",function(){
-                expect(vw.$("#model-name").text()).to.be(newModel.constructor.prototype.modelName);
-            });
+                expect(vw.$("#model-name").text()).to.be(newModel.constructor.prototype.modelName); });
             it(".updateMe() -> called once",function(){
-                expect(spies.updateMe.calledOnce).to.be(true);
-            });
+                expect(spies.updateMe.calledOnce).to.be(true); });
             
         });
     });
@@ -273,24 +256,18 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             vw.clearMe();
         });
         it(".totalPages -> 0",function(){
-            expect(vw.totalPages).to.be(0);
-        });
+            expect(vw.totalPages).to.be(0); });
         it(".totalItems -> 0",function(){
-            expect(vw.totalItems).to.be(0);
-        });
+            expect(vw.totalItems).to.be(0); });
         it(".currentPage -> 1",function(){
-            expect(vw.currentPage).to.be(1);
-        });
+            expect(vw.currentPage).to.be(1); });
         it("Projection model_data_admin.collection -> is undefined",function(){
-            expect(vw.m.getProjection("model_data_admin.collection")).to.be.an('undefined');
-        });
+            expect(vw.m.getProjection("model_data_admin.collection")).to.be.an('undefined'); });
         it(".renderPaginator -> called once",function(){
-           expect(spies.renderPaginator.calledOnce).to.be(true); 
-        });
+           expect(spies.renderPaginator.calledOnce).to.be(true);  });
         describe("HTML .$el",function(){
             it("(#totalItems) text -> empty ",function(){
-                expect(vw.$("#totalItems").text()).to.be("");
-            });
+                expect(vw.$("#totalItems").text()).to.be(""); });
         });
     });
     
@@ -301,11 +278,9 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             vw.updateMe();
         });
         it(".mm.action() -> called once",function(){
-            expect(spies.action.calledOnce).to.be(true);
-        });
+            expect(spies.action.calledOnce).to.be(true); });
         it(".mm.action() -> action - length",function(){
-            expect(spies.action.calledWith("length")).to.be(true);
-        });
+            expect(spies.action.calledWith("length")).to.be(true); });
         describe("call success .mm.action()",function(){
             var obj;
             before(function(){
@@ -315,11 +290,9 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                 vw.updateMe();
             });
             it(".__successUpdate(val) -> called once with val",function(){
-                expect(spies.__successUpdate.calledOnce).to.be(true);
-            });
+                expect(spies.__successUpdate.calledOnce).to.be(true); });
             it("IFACE .__successUpdate(val) val -> is first from array",function(){
-                expect(spies.__successUpdate.calledWith(obj[0])).to.be(true);
-            });
+                expect(spies.__successUpdate.calledWith(obj[0])).to.be(true); });
         });
         describe("call error .mm.action() ",function(){
             var obj;
@@ -330,11 +303,9 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                 vw.updateMe();
             });
             it(".__errorUpdate()",function(){
-                expect(spies.__errorUpdate.calledOnce).to.be(true);
-            });
+                expect(spies.__errorUpdate.calledOnce).to.be(true); });
             it("IFACE .__errorUpdate(val) val -> is ok",function(){
-                expect(spies.__errorUpdate.calledWith(obj)).to.be(true);
-            });
+                expect(spies.__errorUpdate.calledWith(obj)).to.be(true); });
         });
     });
        
@@ -344,8 +315,7 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             vw.__errorUpdate();
         });
         it(".clearMe() -> called once",function(){
-            expect(spies.clearMe.calledOnce).to.be(true);
-        });
+            expect(spies.clearMe.calledOnce).to.be(true); });
     });
     
     describe("UNIT .__successUpdate(val)",function(){
@@ -354,16 +324,13 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             describe("interface",function(){
                 it("val -> typeof number, >= 0",function(){
                     expect(val).to.be.a('number');
-                    expect(val).not.to.be.lessThan(0);
-                });
+                    expect(val).not.to.be.lessThan(0); });
                 it(".pageLimit -> typeof number, > 0",function(){
                     expect(vw.pageLimit).to.be.a('number');
-                    expect(vw.pageLimit).to.be.greaterThan(0);
-                });
+                    expect(vw.pageLimit).to.be.greaterThan(0); });
                 it(".currentPage -> typeof number, > 0",function(){
                     expect(vw.pageLimit).to.be.a('number');
-                    expect(vw.pageLimit).to.be.greaterThan(0);
-                });
+                    expect(vw.pageLimit).to.be.greaterThan(0); });
             });
         };
         before(function(){
@@ -372,11 +339,9 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             vw.__successUpdate(49);
         });
         it("IFACE .pageLimit -> is more than 0",function(){
-                expect(vw.pageLimit).to.be.greaterThan(0);
-            }); 
+            expect(vw.pageLimit).to.be.greaterThan(0); }); 
         it(".totalItems == val",function(){
-            expect(vw.totalItems).to.be(49);
-        });
+            expect(vw.totalItems).to.be(49); });
         
         describe(".totalPages",function(){
             it("целая часть округленная в большую сторону val / limit",function(){
@@ -417,14 +382,11 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                 vw.__successUpdate(100);
             });
             it(".renderPaginator() -> called once", function(){
-                expect(spies.renderPaginator.calledOnce).to.be(true);
-            });
+                expect(spies.renderPaginator.calledOnce).to.be(true); });
             it(".selectPage(val) -> called once", function(){
-                expect(spies.selectPage.calledOnce).to.be(true);
-            });
+                expect(spies.selectPage.calledOnce).to.be(true); });
             it(".selectPage(val) val -> .currentPage", function(){
-                expect(spies.selectPage.calledWith(vw.currentPage)).to.be(true);
-            });
+                expect(spies.selectPage.calledWith(vw.currentPage)).to.be(true); });
         })
     });
    
@@ -436,29 +398,22 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                     vw.renderPaginator();
                 })
                 it("(.pagination ul) -> one",function(){
-                    expect(vw.$(".pagination ul").length).to.be(1);
-                });
+                    expect(vw.$(".pagination ul").length).to.be(1); });
                 it("(.pagination ul li.previous) -> one",function(){
-                    expect(vw.$(".pagination ul li.previous").length).to.be(1);
-                });
+                    expect(vw.$(".pagination ul li.previous").length).to.be(1); });
                 it("(.pagination ul li.next) -> one",function(){
-                    expect(vw.$(".pagination ul li.next").length).to.be(1);
-                });
+                    expect(vw.$(".pagination ul li.next").length).to.be(1); });
                 it("(.pagination ul li) -> count of pages +2",function(){
-                    expect(vw.$(".pagination ul li").length).to.be(5+2);
-                });
+                    expect(vw.$(".pagination ul li").length).to.be(5+2); });
                 it("(.pagination ul li.active) -> zero",function(){
-                    expect(vw.$(".pagination ul li.active").length).to.be(0);
-                });
+                    expect(vw.$(".pagination ul li.active").length).to.be(0); });
             });
             describe("totalPages == 0 ",function(){
                 before(function(){
                     vw.totalPages = 0;
-                    vw.renderPaginator();
-                });
+                    vw.renderPaginator(); });
                 it("(.pagination ul) html -> empty ",function(){
-                    expect(vw.$(".pagination ul").html()).to.be("");
-                });
+                    expect(vw.$(".pagination ul").html()).to.be(""); });
             });
         });
     });
@@ -467,7 +422,7 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
         before(function(){
             vw.totalPages = 5;
             vw.renderPaginator();
-        })
+        });
         it("paginator(5 pages) li clicked: .selectPageEv -> called (7)",function(done){
             evSpies.selectPageEv.reset();
             setTimeout(function(){
@@ -496,12 +451,10 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                 vw.$(".pagination ul li:nth-child(4)").trigger("click");
             });
             it(".selectPage -> called",function(){
-                expect(spies.selectPage.called).to.be(true);
-            });
+                expect(spies.selectPage.called).to.be(true); });
             it(".selectPage -> called with 3",function(){
-                expect(spies.selectPage.calledWith(3)).to.be(true);
-            });
-        })
+                expect(spies.selectPage.calledWith(3)).to.be(true); });
+        });
     });
     
     describe("UNIT .selectPage(num)",function(){
@@ -517,25 +470,19 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                vw.selectPage(5) 
             });
             it(".currentPage -> selected num",function(){
-                expect(vw.currentPage).to.be(5);
-            });
+                expect(vw.currentPage).to.be(5); });
             it("HTML (.pagination ... li.active) -> is one",function(){
-                expect(vw.$(".pagination ul li.active").length).to.be(1);
-            });
+                expect(vw.$(".pagination ul li.active").length).to.be(1); });
             it("HTML (.pagination ... li.active) -> is current page",function(){
-                expect(vw.$(".pagination ul li:nth-child("+6+")").hasClass("active")).to.be(true);
-            });
+                expect(vw.$(".pagination ul li:nth-child("+6+")").hasClass("active")).to.be(true); });
             it(".setPageCollection() -> called once",function(){
-                expect(spies.setPageCollection.calledOnce).to.be(true); 
-            });
+                expect(spies.setPageCollection.calledOnce).to.be(true);  });
             it(".setPageCollection() -> called with right skip, limit",function(){
-                expect(spies.setPageCollection.calledWith(40, 10)).to.be(true); 
-            });
+                expect(spies.setPageCollection.calledWith(40, 10)).to.be(true);  });
             it(".setPageCollection() ->(+) called with right skip, limit",function(){
                 vw.pageLimit = 3;
                 vw.selectPage(6);
-                expect(spies.setPageCollection.calledWith(15, 3)).to.be(true); 
-            });
+                expect(spies.setPageCollection.calledWith(15, 3)).to.be(true); });
         });
         describe("num is wrong -> no changes, no calls",function(){
             var prj;
@@ -543,44 +490,40 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
                 prj = new m.Collection([],{
                     url: "testUrl"
                 });
-                vw.m.setProjection("model_data_admin.collection", prj);
-            })
+                vw.m.setProjection("model_data_admin.collection", prj); });
+            
             beforeEach(function(){
-               vw.currentPage = 3;
-            });
+               vw.currentPage = 3; });
+               
             it("num = undefined",function(){
                 vw.selectPage(); 
-                expect(vw.currentPage).to.be(3);
-            });
+                expect(vw.currentPage).to.be(3); });
             it("num > totalPages",function(){
                 vw.selectPage(11); 
-                expect(vw.currentPage).to.be(3);
-            });
+                expect(vw.currentPage).to.be(3); });
             it("num < 1",function(){
                 vw.selectPage(0); 
                 expect(vw.currentPage).to.be(3);
                 vw.selectPage(-2); 
-                expect(vw.currentPage).to.be(3);
-            });
+                expect(vw.currentPage).to.be(3); });
             it("Projection model_data_admin.collection -> not changed",function(){
-                expect(vw.m.getProjection("model_data_admin.collection")).to.be(prj);
-            });
+                expect(vw.m.getProjection("model_data_admin.collection")).to.be(prj); });
         });
     });
     
     describe("UNIT .setPageCollection()",function(){
         it("total=100, limit = 5, skip = 10 Collection length -> 5, first model -> 11",function(){
+            vw.totalPages = 100;
             vw.setPageCollection(10, 5);
             var coll = vw.m.getProjection("model_data_admin.collection");
             expect(coll.length).to.be(5);
-            expect(coll.models[0].get("property1")).to.be(11);
-        });
+            expect(coll.models[0].get("property1")).to.be(11); });
         it("total=100, limit = 5, skip = 97 Collection length -> 3, first model -> 98",function(){
+            vw.totalPages = 100;
             vw.setPageCollection(97, 5);
             var coll = vw.m.getProjection("model_data_admin.collection");
             expect(coll.length).to.be(3);
-            expect(coll.models[0].get("property1")).to.be(98);
-        });
+            expect(coll.models[0].get("property1")).to.be(98); });
     });
     
     describe("UNIT .nextPage()",function(){
@@ -588,22 +531,18 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             before(function(){
                vw.currentPage = 5;
                vw.totalPages = 5; 
-               vw.nextPage();
-            });
+               vw.nextPage(); });
             it(".currentPage -> not changed",function(){
-                expect(vw.currentPage).to.be(5);
-            });
+                expect(vw.currentPage).to.be(5); });
         });
         describe("nextPage <= .totalPages",function(){
             before(function(){
                vw.currentPage = 1;
                vw.totalPages = 4; 
                spies.selectPage.reset();
-               vw.nextPage();
-            });
+               vw.nextPage(); });
             it(".selectPage() -> called with next page",function(){
-                expect(spies.selectPage.calledWith(2)).to.be(true);
-            });
+                expect(spies.selectPage.calledWith(2)).to.be(true); });
         });
     });
     
@@ -612,20 +551,116 @@ describe("layout/page/data/model/model.js ModelDataPageLayoutView", function(){
             before(function(){
                vw.currentPage = 5;
                spies.selectPage.reset();
-               vw.previousPage();
-            });
+               vw.previousPage(); });
             it(".selectPage() -> called with previous page",function(){
-                expect(spies.selectPage.calledWith(4)).to.be(true);
-            });
+                expect(spies.selectPage.calledWith(4)).to.be(true); });
         });
         describe("previousPage < 1",function(){
             before(function(){
                vw.currentPage = 1;
-               vw.previousPage();
-            });
+               vw.previousPage(); });
             it(".currentPage -> 1",function(){
-                expect(vw.currentPage).to.be(1);
-            });
+                expect(vw.currentPage).to.be(1); });
         });
     });
+});
+describe("IFACE ModelDataPageLayoutView layout/page/data/model/model.js",function(){
+    
+    var ModelClass, model1, view;
+    var spies = {};
+    var stub = {
+        successAction:function(total){
+            if(total == undefined) total = [99];
+            return function(name,obj,callback){
+                if(name == "length"){
+                    if(typeof callback.success == "function") callback.success(total);
+                }
+            }
+        },
+        errorAction:function(){
+            return function(name,obj,callback){
+                if(name == "length"){
+                    if(typeof callback["error"] == "function") callback["error"]();
+                }
+            }
+        },
+        fetch:function(){}
+    }
+    before(function(){
+            m.Collection.prototype.fetch = stub.fetch;
+            ModelClass = m.Model.extend({
+                modelName: "thisIsTestCollectionModel",
+                url: "testModelUrl" });
+            ModelClass2 = m.Model.extend({
+                modelName: "thisIsTestCollectionModel2",
+                url: "testModelUrl2" });
+        });
+    describe("ModelDataPageLayoutView rendered, page limit = 12, server models count = 100",function(){
+        var skip, limit;
+        before(function(done){
+            model1 = new ModelClass();
+            model1.action = stub.successAction([100]);
+            model2 = new ModelClass2();
+            model2.action = stub.successAction([50]);
+            m.ModelDataPageLayoutView.prototype.m.setProjection("model_data_admin.collection", undefined);
+            view = new m.ModelDataPageLayoutView();
+            view.pageLimit = 12;
+            spies.updateCollPrj = sinon.spy();
+            $(view.m).bind("projection_updated.model_data_admin.collection", spies.updateCollPrj);
+            view.on("rendered", function(){
+                done();
+            });
+        });
+        it('Projection("model_data_admin.collection") = undefined',function(){
+            expect(view.m.getProjection("model_data_admin.collection")).to.be(undefined); });
+        
+        describe("set undefined projection('model_data_admin.model') to model1 ",function(){
+            before(function(done){
+                $(view.m).one("projection_updated.model_data_admin.collection", function(){
+                    done();
+                });
+                view.m.setProjection("model_data_admin.model", model1);
+            });
+            it('IFACE projection "model_data_admin.collection" updated',function(){
+                expect(spies.updateCollPrj.called).to.be(true); });
+            it('IFACE "__skip__" in "model_data_admin.collection" projection = 0 ',function(){
+                expect(Number(view.m.getProjection("model_data_admin.collection").url.match(/__skip__=([0-9]+)/)[1])).to.be(0);            });
+            it('IFACE "__limit__" in "model_data_admin.collection" projection = 12 ',function(){
+                expect(Number(view.m.getProjection("model_data_admin.collection").url.match(/__limit__=([0-9]+)/)[1])).to.be(12);            });
+            it("HTML .$el (#model-name) -> model1 modelname",function(){
+                expect(view.$("#model-name").text()).to.be(model1.modelName); });
+            it("HTML .$el (#totalItems) text -> 100",function(){
+                expect(view.$("#totalItems").html()).to.be("100"); });
+            it("HTML .$el (ul li.active) length -> 1",function(){
+                expect(view.$("ul li.active").length).to.be(1); });
+            it("HTML .$el (ul li) length -> 11(+prev/next)",function(){
+                expect(view.$("ul li").length).to.be(9+2); });
+        });
+        describe("set model1 projection('model_data_admin.model') to model2 ",function(){
+            before(function(done){
+                spies.updateCollPrj.reset();
+                $(view.m).one("projection_updated.model_data_admin.collection", function(){
+                    done();
+                });
+                view.m.setProjection("model_data_admin.model", model2);
+            });
+            it('IFACE projection "model_data_admin.collection" updated',function(){
+                expect(spies.updateCollPrj.called).to.be(true); });
+            it('IFACE "__skip__" in "model_data_admin.collection" projection = 0 ',function(){
+                expect(Number(view.m.getProjection("model_data_admin.collection").url.match(/__skip__=([0-9]+)/)[1])).to.be(0);            });
+            it('IFACE "__limit__" in "model_data_admin.collection" projection = 12 ',function(){
+                expect(Number(view.m.getProjection("model_data_admin.collection").url.match(/__limit__=([0-9]+)/)[1])).to.be(12);            });
+            it("HTML .$el (#model-name) -> model2 modelname",function(){
+                expect(view.$("#model-name").text()).to.be(model2.modelName); });
+            it("HTML .$el (#totalItems) text -> 100",function(){
+                expect(view.$("#totalItems").html()).to.be("50"); });
+            it("HTML .$el (ul li.active) length -> 1",function(){
+                expect(view.$("ul li.active").length).to.be(1); });
+            it("HTML .$el (ul li) length -> 7(+prev/next)",function(){
+                expect(view.$("ul li").length).to.be(5+2); });
+        });
+        
+        
+    });
+    
 });

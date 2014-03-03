@@ -443,8 +443,15 @@ __onReady__.push(function(){
              });
          m.requirePack("MUON:admin", function(){
              // jasmineEnv.execute();
-             // mocha.setup({grep:"MUON:admin"});
-             mocha.run();
+             console.log("Package loaded - MUON:admin");
+             mocha.setup({grep:"IFACE"});
+             if (window.mochaPhantomJS){ 
+                 console.log("RUN mochaPhantomJS");
+                 mochaPhantomJS.run(); 
+             }else { 
+                 console.log("RUN mocha");
+                 mocha.run(); 
+             }
          });
     }else{
         m.router.route("/","#{default_pack}",m.requirePack("application"));
