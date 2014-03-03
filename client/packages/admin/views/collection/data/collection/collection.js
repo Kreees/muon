@@ -18,12 +18,15 @@ m.CollectionView.extend({
 		this.synced();
 	},
 	synced: function(){
-	    var mch = this.collection.url && this.collection.url.match(/__skip__=([0-9]+)/);
-        if(!mch) mch = [];
-        this.startNumber = Number(mch[1])+1 || 1;
+	    this.setStartNumber();
 	    for(var i in this.collection.models){
             this.filterModelAttributes(this.collection.models[i]); }
         this.renumber();
+	},
+	setStartNumber:function(){
+	    var mch = this.collection.url && this.collection.url.match(/__skip__=([0-9]+)/);
+        if(!mch) mch = [0];
+        this.startNumber = Number(mch[1])+1 || 1;
 	},
 	renumber:function(){
 	    var start = this.startNumber;
