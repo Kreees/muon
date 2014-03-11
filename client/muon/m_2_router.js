@@ -441,7 +441,26 @@ __onReady__.push(function(){
     _.defer(_.bind(__b__.history.start,__b__.history),(__staticApp__?{}:{pushState:true}));
     $("body").addClass("muon").delegate("a[data-route]","click",function(ev){
         ev.preventDefault();
-        var path = this.href.replace(/(^\s+)|(\s+$)/g,"");
+        if (!this.href){
+            var route = this.getAttribute("data-route");
+            var packName = this.getAttribute("data-pack") || "application";
+            if (!(packName in m.packages)) return;
+            if (m.packages[packName].routerPath){
+                if (route.match(/^\/\//)) route = route.replace(/\/{2,}/g,"/");
+                else if (route.match(/^\//))
+                    route = (m.packages[packName].routerPath+"/"+route).replace(/\/{2,}/g,"/");
+                else route = "~"+route.replace(/\/{2,}/g,"/");
+                route = (__staticApp__?"#":"")+route.replace(/\^|\$/g,"");
+            }
+            $(this).attr("href",route).data("pack",packName);
+            console.log(route);
+        }
+
+        var path = this.href;
+
+        if (__staticApp__) path = path.substring(path.indexOf("#")+1,path.length);
+
+        path = path.replace(/(^\s+)|(\s+$)/g,"");
         path = path.replace(this.host,"")
                    .replace(this.protocol+"//","")
                    .replace(/^\/\#/,"")

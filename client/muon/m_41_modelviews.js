@@ -24,7 +24,7 @@ function __updateModelView__(attrs){
     var _this = this;
     if (this.$el.find("[data-model-attr]").length != 0){
         for(var i in attrs){
-            var dataAttrType = this.getAttribute("data-attr-type");
+            var dataAttrType = this.el.getAttribute("data-attr-type");
             var $subElement = this.$el.find("[data-model-attr^='"+i+"']");
             if (!$subElement.length) continue;
             $subElement.each(function(){

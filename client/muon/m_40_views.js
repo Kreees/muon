@@ -99,6 +99,7 @@ var __procProjection__ = {
 };
 
 function __getViewNameByType__(viewType,viewName,_contextName,pack,recursive){
+    if (!viewName) viewName = _contextName;
     pack = pack || __basePackage__;
     _contextName = _contextName || "";
     pack = pack || __basePackage__;
