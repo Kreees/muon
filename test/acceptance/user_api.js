@@ -14,7 +14,6 @@ before(function(done) {
 
 before(function(done) {
     var User = m.models['user'];
-    User = m.models['user'];
     done();
 });
 
@@ -134,17 +133,33 @@ describe('Scope',function(){
                     if(err){ return done(err) }
                     collection = res.body;
                     collection.should.be.instanceOf(Array);
+                    var genders = collection.map(function(a){return a.sex});
                     genders.every(function(a){return !a.sex}).should.be.true;
                     done();
                 })
         });
-        xit('should not repond to actions blocked by permission')
+        xit('should not respond to actions blocked by permission')
     });
 });
 
 describe('Special object', function(){
-    describe('me', function(){
-        xit('should return valid user')
+    describe('one', function(){
+        it('should return valid user', function(done){
+            request('http://localhost:8000')
+                .get('/apis/user/one?muon')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err,res){
+                    if(err){ return done(err) }
+                    resource = res.body
+                    m.utils._.keys(resource).should.include('nick', 'sex')
+                    done();
+                })
+        });
+
+         describe('associations', function(){
+             xit('get projects', function(done){return done});
+         })
     })
 });
 
@@ -225,7 +240,6 @@ xdescribe('Association', function(){
                 })
         });
     });
-
     describe('#create', function(){
         it('should create resource', function(done){
                 request('http://localhost:8000')
