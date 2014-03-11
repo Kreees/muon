@@ -14,7 +14,6 @@ module.exports = {
         }
     },
     hasMany: {
-        "dummies": "other_user",
         projects: {
             type: "project",
             reverse: "owner"

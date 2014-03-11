@@ -28,6 +28,15 @@ before(function(done){
     });
 });
 
+
+describe('.hasManyRelations', function(){
+    it('should return projects', function(done){
+        var User = m.models.user
+        m.utils._.keys(User.hasManyRelations).should.include('projects')
+        done();
+    })
+})
+
 describe('REST', function(){
     describe('#index', function(){
         it('should return collection', function(done){
