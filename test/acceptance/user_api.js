@@ -115,9 +115,30 @@ describe('REST', function(){
 });
 
 describe('Scope',function(){
+    before(function(done){
+        var User = m.models['user'];
+        var user = new User({nick:'neila', sex: false});
+        user.save(function(){
+            test_user = user;
+            done();
+        });
+    });
+
     describe('female',function(){
-        xit('should return collection with query applied')
-        xit('should not repornd to actions blocked by permission')
+        it('should return collection with query applied', function(done){
+            request('http://localhost:8000')
+                .get('/apis/user/female?muon')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err,res){
+                    if(err){ return done(err) }
+                    collection = res.body;
+                    collection.should.be.instanceOf(Array);
+                    genders.every(function(a){return !a.sex}).should.be.true;
+                    done();
+                })
+        });
+        xit('should not repond to actions blocked by permission')
     });
 });
 
@@ -125,9 +146,28 @@ describe('Special object', function(){
     describe('me', function(){
         xit('should return valid user')
     })
-})
+});
 
-describe('Association', function(){
+describe('Permissions', function(){
+    describe('permitted', function(){
+        it('should be 200', function(done){
+            request('http://localhost:8000')
+                .get('/apis/user?muon&__action__=permitted')
+                .expect(200, done)
+        });
+    });
+
+    describe('fobidden', function(){
+       it('should be 404', function(done){
+           request('http://localhost:8000')
+               .get('/apis/user/muon?muon&__action__=forbidden')
+               .expect(403, done)
+       });
+    });
+
+});
+
+xdescribe('Association', function(){
 
     var finished_project;
     var unfinished_project;
@@ -245,6 +285,8 @@ describe('Association', function(){
         });
     });
 });
+
+
 
 after(function(done) { clearUsers(done); });
 
