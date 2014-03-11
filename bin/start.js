@@ -131,7 +131,6 @@ if (argv.detach || argv.d){
 function launch(){
     global.__mcfg__ = {
         serverMode: serverMode,
-        protocol: "http",
         domain: domain
     };
 
