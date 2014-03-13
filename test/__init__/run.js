@@ -23,16 +23,8 @@ describe('Run MUON complete test:',function(){
     for(var i in tests){
         describe(i+":",function(){
             tests[i].modules.forEach(function(a){
-                if (/x\./.test(a)){
-                    xdescribe(a+": ",function(){
-                        require(tests[i].path+"/"+a);
-                    })
-                }
-                else {
-                    describe(a+": ",function(){
-                        require(tests[i].path+"/"+a);
-                    })
-                }
+                if (!/x\./.test(a)) describe(a+": ",function(){ require(tests[i].path+"/"+a); })
+                else xdescribe(a+": ",function(){ require(tests[i].path+"/"+a); })
             })
         });
     }

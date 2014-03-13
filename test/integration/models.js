@@ -142,12 +142,6 @@ describe('MODELS module', function(){
 //            urls
 
                     User.url.should.be.equal("user","Model api url should respond to file name in case when url property is not defined explicitly")
-
-//            TODO check validators
-
-
-
-
                     done();
                 }
                 catch(e){
