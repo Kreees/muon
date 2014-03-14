@@ -1,5 +1,5 @@
 module.exports = {
-    attrs: {
+    attributes: {
        "nick": {
            type: "number"
        },

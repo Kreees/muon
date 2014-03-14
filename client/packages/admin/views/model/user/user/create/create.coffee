@@ -21,7 +21,7 @@ m.ModelView.extend {
     }).then(=>
       window.some = this;
       m.removeProfile("first_user")
-      new @m.model_user_session().save({login:@email.val(),password:md5(@pass.val())}).then( ->
+      new @m.model["user.session"]().save({login:@email.val(),password:md5(@pass.val())}).then( ->
         m.set_profile("logined")
       )
     )

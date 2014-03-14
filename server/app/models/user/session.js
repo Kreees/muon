@@ -1,5 +1,5 @@
 module.exports = {
-    attrs: {
+    attributes: {
 //        "user": {
 //            type: "user.user",
 //            null_allowed: false
