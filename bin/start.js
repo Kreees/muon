@@ -131,17 +131,20 @@ if (argv.detach || argv.d){
 function launch(){
     global.__mcfg__ = {
         serverMode: serverMode,
-        port: port,
-        host: host,
-        protocol: "http",
         domain: domain
     };
+
+    if (host) global.__mcfg__.host = host;
+    if (isFinite(port)) global.__mcfg__.host = port;
+
 
     var muon = require("../module");
     muon.ready(function(){
         var serv = muon.server();
+        host = m.cfg.host;
+        port = m.cfg.port;
         serv.listen(port,host);
-        console.log("Server started in "+m.cfg.serverMode+" mode, listening on "+m.cfg.host+":"+m.cfg.port+" address.");
+        console.log("Server started in "+m.cfg.serverMode+" mode, listening on "+host+":"+port+" address.");
         console.log("Press Ctrl-C to shut down")
     });
 }

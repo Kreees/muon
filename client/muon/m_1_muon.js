@@ -38,7 +38,7 @@ var __syncNames__ = {},
     __currentPackage__ = "",
     __currentPlugin__ = "",
     __onReady__ = [],
-    __staticApp__ = false,
+    __staticApp__ = true,
     __basePackage__ = "application",
     __applicationView__ = null,
     __viewBackboneExtend__ = __b__.View.extend,
@@ -55,6 +55,8 @@ function __getAllViewEls__(){
 
 window.getAllView = __getAllViewEls__;
 window.profiles = __profiles__;
+
+var __timeStart__ = Date.now();
 
 function __mDeepExtend__(dst,src){
     for(var i in src){
@@ -74,13 +76,16 @@ _.extend(MuonPlugin.prototype,{
         return this.__projections__[key];
     },
     setProjection: function(key,val){
+        if (_.isEqual(val,this.__projections__[key])) return;
         this.__projections__[key] = val;
-        $(this).trigger("projection_updated."+key);
+//        m.log("projection was updated: ",key);
+        $(this).trigger("projection_updated."+key,val);
     },
     removeProjection: function(key){
         try{
             var ret = this.__projections__[key];
             delete this.__projections__[key];
+//            m.log("projection was removed: ",key);
             $(this).trigger("projection_removed."+key);
             return ret;
         }
@@ -94,6 +99,15 @@ var m = _.extend(new    MuonPlugin(""),{
     __views__: __views__,
     MuonPackage: MuonPackage,
     MuonPlugin: MuonPlugin,
+    on: function(){
+
+    },
+    off: function(){
+
+    },
+    once: function(){
+
+    },
     isDebug: function(){
         return __debug__;
     },
@@ -140,6 +154,7 @@ var m = _.extend(new    MuonPlugin(""),{
         });
         profilesToFilter = profilesToFilter.filter(function(p){return m.hasProfile(p);});
         if (profilesToFilter.length == 0) return;
+//        m.log("profile has set: "+ profile);
         var templates = [];
         for(var i in profilesToFilter){
             templates = templates.concat(__profiles__[profilesToFilter[i]]);
@@ -158,6 +173,7 @@ var m = _.extend(new    MuonPlugin(""),{
             profilesToFilter = profilesToFilter.filter(function(p){return m.hasProfile(p);});
             $("body").removeClass(profile);
             if (profilesToFilter.length == 0) return;
+//            m.log("profile has removed: "+ profile);
             var templates = [];
             for(var i in profilesToFilter){
                 templates = templates.concat(__profiles__[profilesToFilter[i]]);
@@ -176,10 +192,14 @@ var m = _.extend(new    MuonPlugin(""),{
         return document.body.className.split(/\s+/).sort().join(".");
     },
     log: function(){
-        console.log.apply(console,arguments);
+        var args = [].slice.apply(arguments);
+        args.unshift("["+(Date.now()-__timeStart__)/1000+"]")
+        console.log.apply(console,args);
     },
     error: function(){
-        console.error.apply(console,arguments);
+        var args = [].slice.apply(arguments);
+        args.unshift("["+(Date.now()-__timeStart__)/1000+"]");
+        console.error.apply(console,args);
     }
 });
 m.packages[""] = new m.MuonPackage("");

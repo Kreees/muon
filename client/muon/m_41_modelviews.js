@@ -2,13 +2,14 @@
 
 function __setGetElementValue__(view,getter){
     function set(val){
-        if (!this.dataset["attrType"]){
+        var dataAttrType = this.getAttribute("data-attr-type");
+        if (!dataAttrType){
             if (this.tagName == "INPUT" || this.tagName == "SELECT" || this.tagName == "TEXTAREA") $(this).val(val);
             else this.innerText = val;
         }
-        else if (this.dataset["attrType"] == "text") this.innerText = val;
-        else if (this.dataset["attrType"] == "html") this.innerHTML = val;
-        else $(this).attr(this.dataset["attrType"],val);
+        else if (dataAttrType == "text") this.innerText = val;
+        else if (dataAttrType == "html") this.innerHTML = val;
+        else $(this).attr(dataAttrType,val);
     }
     if (typeof view["get_"+getter] == "function"){
         var val = view["get_"+getter](this);
@@ -23,10 +24,11 @@ function __updateModelView__(attrs){
     var _this = this;
     if (this.$el.find("[data-model-attr]").length != 0){
         for(var i in attrs){
+            var dataAttrType = this.el.getAttribute("data-attr-type");
             var $subElement = this.$el.find("[data-model-attr^='"+i+"']");
             if (!$subElement.length) continue;
             $subElement.each(function(){
-                var attrsList = this.dataset["modelAttr"].split(".");
+                var attrsList = this.getAttribute("data-model-attr").split(".");
                 var attrValue = attrs[attrsList.shift()];
                 try {
                     while(attrsList.length != 0){
@@ -36,17 +38,17 @@ function __updateModelView__(attrs){
                 catch(e){
                     attrValue = attrValue.toString();
                 }
-                if (!this.dataset["attrType"]) this.innerText = attrValue;
-                else if (this.dataset["attrType"] == "text") this.innerText = attrValue;
-                else if (this.dataset["attrType"] == "html") this.innerHTML = attrValue;
-                else $(this).attr(this.dataset["attrType"],attrValue);
+                if (!dataAttrType) this.innerText = attrValue;
+                else if (dataAttrType == "text") this.innerText = attrValue;
+                else if (dataAttrType == "html") this.innerHTML = attrValue;
+                else $(this).attr(dataAttrType,attrValue);
             });
         }
     }
     
     // Если datamodelset and data-model-get назначены одновременно
     this.$el.find("[data-model-get],[data-model-set]").each(function(){
-        __setGetElementValue__.call(this,_this,this.dataset.modelGet || this.dataset.modelSet);
+        __setGetElementValue__.call(this,_this,this.getAttribute("data-model-get") || this.getAttribute("data-model-set"));
     });
     __renderDataRoutes__.call(this);
 }
@@ -61,20 +63,20 @@ m.ModelView = m.View.extend({
         m.View.prototype.initialize.apply(this,arguments);
     },
     assignModelSetElement: function(el){
-        var setter = el.dataset.modelSet;
+        var setter = el.getAttribute("data-model-set");
         var _this = el;
         var view = this;
         var interval = null;
         view.listenTo(view.model,"sync",function(){
             __setGetElementValue__.call(_this,view,setter);
         });
-        if (!(el.dataset.silent || view.silent || view.el.dataset.silent)){
+        if (!(el.getAttribute("data-silent") || view.silent || view.el.getAttribute("data-silent"))){
             $(el).keyup(function(){
                 clearTimeout(interval);
                 interval = setTimeout(function(){$(_this).trigger("change");},150);
             });
             $(el).change(function(){
-                if (this.dataset.silent || view.silent || view.el.dataset.silent) return;
+                if (this.getAttribute("data-silent") || view.silent || view.el.getAttribute("data-silent")) return;
                 if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
                 else view.model.set(setter,$(this).val());
             });
@@ -103,7 +105,7 @@ m.ModelView = m.View.extend({
     save: function(){
         var view = this;
         this.$el.find("[data-model-set]").each(function(){
-            var setter = this.dataset.modelSet;
+            var setter = this.getAttribute("data-model-set");
             if (typeof view["set_"+setter] == "function") view["set_"+setter]($(this).val(),this);
             else view.model.set(setter,$(this).val(),{silent: true});
         });

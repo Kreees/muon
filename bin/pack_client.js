@@ -1,39 +1,52 @@
 #!/usr/bin/env node
 
-global.m = require("../lib/m_init");
 var fs = require("fs"),
     q = require("q"),
     tar = require("tar"),
     zlib = require("zlib"),
     fstream = require("fstream"),
-    fs_ext = require("../lib/utils/fs/fs_ext"),
     mime = require("mime"),
     crypt = require("crypto");
 
-var server = require("../lib/server.js");
+var args = require("../lib/bin/pack_client/load_args");
 
-server.init(function(){
-    var args = require("../lib/bin/pack_client/load_args");
-    if (!fs.existsSync(args.index_file)) m.error(e.message);
 
+
+global.__mcfg__ = {};
+global.__mcfg__.serverMode = "production";
+args.domain && (global.__mcfg__.domain = args.domain);
+args.port && (global.__mcfg__.port = args.port);
+args.secure && (global.__mcfg__.protocol = args.secure?"https":"http");
+
+
+require("../module.js");
+
+var fs_ext = require("../lib/utils/fs/fs_ext");
+
+m.ready(function(){
+    if (!m.cfg.domain) console.log("WARNING! Server domain is not specified.")
+    var serverHandler = m.server();
+
+    if (!fs.existsSync(args.index_file)) {
+        console.error(args.index_file+": file doesn't exists");
+        process.exit();
+    }
     var packages = require("../lib/bin/pack_client/get_packages");
     require("../lib/bin/pack_client/get_index")(args,function(index_context){
 try{
         var temp_dir = "./"+args.output_name;
         fs.mkdirSync(temp_dir);
-        fs.writeFile(temp_dir+"/index.html",index_context.data,"utf-8");
+        fs.writeFileSync(temp_dir+"/index.html",index_context.data,"utf-8");
+
 
         var assets = index_context.assets;
-
         var req = {
             path: "",
             get: function(){},
             query: {}
         }
         var res = {
-            end: function(data){
-                callback(this.file_path,this.mime,data);
-            },
+            end: function(data){ callback(this.file_path,this.mime,data); },
             set: function(a,b){
                 /content-type/i.test(a) && (this.mime = b);
             }
@@ -42,24 +55,17 @@ try{
         fs.mkdirSync(temp_dir+"/pack");
         fs.mkdirSync(temp_dir+"/pack_src");
         fs.mkdirSync(temp_dir+"/pack_translation");
-        var pack_data_counter = 0;
+
+        var packAssetCounter = 0;
         var langs = [];
         var packs = [];
+
         for(var i in packages){
-            var req = Object.create(res);
-            var res = Object.create(req);
-            req.path = "/"+i;
-            res.file_path = "pack/"+i;
-            req.query = {lang:"ru"};
-            server.package_render(req,res);
-            pack_data_counter++;
+            packAssetCounter++;
+            for(var tr in packages[i].tr){ if (langs.indexOf(packages[i].tr[tr]) == -1) langs.push(packages[i].tr[tr]); }
 
-            packs.push(i)
-            for(var tr in packages[i].tr){
-                if (langs.indexOf(packages[i].tr[tr]) == -1) langs.push(packages[i].tr[tr]);
-            }
-
-            if (packages[i].dep_src)
+            if (packages[i].dep_src){
+                packAssetCounter++;
                 (function(dep_src,pack){
                     fs_ext.tree(dep_src,function(files){
                         files.map(function(a){
@@ -68,29 +74,42 @@ try{
                                 mime: mime.lookup(a)
                             }
                         });
+                        callback();
                     })
                 })(packages[i].dep_src,i)
+            }
 
+            var req = Object.create(req);
+            var res = Object.create(res);
+            req.path = "/"+i;
+            res.file_path = "pack/"+i;
+            req.query = {lang:"ru"};
+            packs.push(i)
+            console.log("Compiling "+i+" package...");
+            serverHandler.driver.packageRender(req,res);
         }
 
         for(var i in langs){
-            var req = Object.create(res);
-            var res = Object.create(req);
+            packAssetCounter++;
+            var req = Object.create(req);
+            var res = Object.create(res);
             req.path = "/"+langs[i];
             res.file_path = "pack_translation/"+langs[i];
-            req.query = {packs:packs.join(",")};
-            server.package_translation(req,res);
-            pack_data_counter++;
+            req.query = { packs:packs.join(",")};
+            console.log("Compiling "+langs[i]+" translation...");
+            serverHandler.driver.packageTranslation(req,res);
         }
 
         function callback(path,mime,data){
-            assets[path] = {
-                data: data,
-                mime: mime
-            };
-            pack_data_counter--;
+            if (path) {
+                assets[path] = {
+                    data: data,
+                    mime: mime
+                };
+            }
+            packAssetCounter--;
 
-            if (!pack_data_counter) client_assets_files();
+            if (!packAssetCounter) { client_assets_files(); }
         }
 
         function client_assets_files(){
@@ -135,29 +154,14 @@ try{
                 mime: "text/html",
                 hash: crypt.createHash("sha256").update(index_context.data.toString("utf8")).digest("hex")
             }
-            manifest.domain = args.domain;
+            manifest.domain = m.cfg.domain;
             manifest.package = args.default_pack;
-            manifest.secure = args.secure;
+            manifest.secure = (m.cfg.protocol.toLowerCase() == "https");
             manifest.hash = crypt.createHash("sha256").update(JSON.stringify(manifest,0,2)).digest("hex");
             fs.writeFileSync(temp_dir+"/manifest.json",JSON.stringify(manifest,0,2));
-            process.kill();
+            console.log("Complete!");
+            process.exit();
         }
-//    var callback = null;
-
-//    var r = fstream.Reader({'path': temp_dir, 'type': 'Directory'});
-
-//    r.on("end",function(){
-//        fs_ext.tree(temp_dir,function(files){
-//            for(var i in files) fs.unlinkSync(files[i]);
-//        });
-//        fs.rmdirSync(temp_dir);
-//
-
-//    })
-//
-//    r.pipe(tar.Pack())
-//        .pipe(zlib.Gzip())
-//        .pipe(fstream.Writer({'path': "./"+args.output_name+".tgz"}));
 }
 catch(e){
     m.log(e);

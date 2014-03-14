@@ -243,10 +243,11 @@ function __procProfiledViews__(pack){
         var name = this.id.replace(/_template$/,"");
         var type = name.match(/_([a-zA-Z0-9]*?)$/)[1];
         name = name.replace(RegExp("_"+type+"$"),"");
+        var profile = this.getAttribute("data-profile");
         m.packages[pack].views[type][name].profiles = m.packages[pack].views[type][name].profiles || [];
-        m.packages[pack].views[type][name].profiles.push(this.dataset.profile);
-        if (!(__profiles__[this.dataset.profile] instanceof Array)) __profiles__[this.dataset.profile] = [];
-        __profiles__[this.dataset.profile].push("[data-muon='"+name+"_"+type+"'][data-pack='"+pack+"']");
+        m.packages[pack].views[type][name].profiles.push(profile);
+        if (!(__profiles__[profile] instanceof Array)) __profiles__[profile] = [];
+        __profiles__[profile].push("[data-muon='"+name+"_"+type+"'][data-pack='"+pack+"']");
     });
 }
 
@@ -293,7 +294,7 @@ m.requirePack = function(pack,callback,parentPack){
         else {
             var callbackName = "mpackcallback"+Date.now();
             m[callbackName] = function(){
-                packLoaded();
+                _.defer(packLoaded);
                 delete m[callbackName];
             };
 
@@ -431,6 +432,7 @@ m.requirePack = function(pack,callback,parentPack){
 
 m.router = new __Router__();
 __onReady__.push(function(){
+    if ($.browser && $.browser.msie) __staticApp__ = true;
     if (__staticApp__ && !/^file/.test(location.protocol) && location.pathname.replace(/^\//,"")){
         location.pathname = "/";
         return;
@@ -439,9 +441,30 @@ __onReady__.push(function(){
     _.defer(_.bind(__b__.history.start,__b__.history),(__staticApp__?{}:{pushState:true}));
     $("body").addClass("muon").delegate("a[data-route]","click",function(ev){
         ev.preventDefault();
-        this.href = this.href || this.dataset.route;
-        var path = this.href.replace(/(^\s+)|(\s+$)/,"");
-        path = path.replace(this.host,"").replace(this.protocol+"//","");
+        if (!this.href){
+            var route = this.getAttribute("data-route");
+            var packName = this.getAttribute("data-pack") || "application";
+            if (!(packName in m.packages)) return;
+            if (m.packages[packName].routerPath){
+                if (route.match(/^\/\//)) route = route.replace(/\/{2,}/g,"/");
+                else if (route.match(/^\//))
+                    route = (m.packages[packName].routerPath+"/"+route).replace(/\/{2,}/g,"/");
+                else route = "~"+route.replace(/\/{2,}/g,"/");
+                route = (__staticApp__?"#":"")+route.replace(/\^|\$/g,"");
+            }
+            $(this).attr("href",route).data("pack",packName);
+            console.log(route);
+        }
+
+        var path = this.href;
+
+        if (__staticApp__) path = path.substring(path.indexOf("#")+1,path.length);
+
+        path = path.replace(/(^\s+)|(\s+$)/g,"");
+        path = path.replace(this.host,"")
+                   .replace(this.protocol+"//","")
+                   .replace(/^\/\#/,"")
+                   .replace(/^~/,"");
         m.router.navigate(path,{trigger: true});
     });
 });
