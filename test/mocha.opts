@@ -1,4 +1,4 @@
-g--require test/__init__/setup
+--require test/__init__/setup
 --timeout 2000
 --reporter spec
 --ui bdd

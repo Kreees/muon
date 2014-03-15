@@ -1,1 +1,0 @@
-muon.CollectionView.extend {}

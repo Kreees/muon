@@ -111,8 +111,8 @@ for(var i in trDirs){
 fsExt.traverseDir(__dirname+"/../template",function(file){
     var f_data = fs.readFileSync(file,"utf-8");
     f_data = f_data.replace(/#\{project\}/g,projectName.toLocaleLowerCase());
-    f_data = f_data.replace(/#\{user\}/g,process.env.USER);
-    f_data = f_data.replace(/#\{lang\}/g,process.env.LANG.substr(0,2) || "en");
+    f_data = f_data.replace(/#\{user\}/g,process.env.USER?process.env.USER:"");
+    f_data = f_data.replace(/#\{lang\}/g,process.env.LANG?process.env.LANG.substr(0,2) || "en":"en");
     f_data = f_data.replace(/#\{version\}/g,muon_cfg.version);
     fs.writeFileSync(projectDir+file.replace(__dirname+"/../template",""),f_data);
 },function(){

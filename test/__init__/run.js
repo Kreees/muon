@@ -1,6 +1,6 @@
 var tests = {};
 
-var testPath = m.sys.path+"/test/";
+var testPath = m.cfg.path+"/test/";
 
 var testDirs = m.utils.fs.readdirSync(testPath);
 for(var i in testDirs){
@@ -14,6 +14,8 @@ for(var i in testDirs){
         return /.js$/.test(a) && !/^\./.test(a) && !/^_/.test(a) ;
     });
 }
+
+
 
 describe('Run MUON complete test:',function(){
     before(function(done){
