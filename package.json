@@ -59,8 +59,14 @@
     "superagent": "*",
     "chai": "*",
     "chai-spies": "*",
-    "node-mocks-http":"*",
+    "node-mocks-http": "*",
     "mocha-as-promised": "~1.4.1",
-    "repl.history":"*"
+    "repl.history": "*",
+    "grunt": "~0.4.4",
+    "mocha-phantomjs": "~3.3.2",
+    "sinon": "~1.9.0",
+    "expect": "~0.1.1",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-watch": "~0.6.0"
   }
 }
