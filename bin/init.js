@@ -17,7 +17,6 @@ global.muon = global.m;
 
 var fs = require("fs"),
     fsExt = require("../lib/utils/fs/fs_ext")
-//    load_config = require("../lib/load_config.js")
 ;
 
 var muon_cfg = JSON.parse(fs.readFileSync(__dirname+"/../package.json"));
@@ -70,7 +69,6 @@ var dirs = [
     "/server/app/middleware/",
     "/server/app/initializers/",
     "/tmp/",
-    "/lib/",
     "/test/",
     "/test/__init__/",
     "/test/acceptance/",
