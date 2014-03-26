@@ -46,12 +46,14 @@
     "coffee-script": "*",
     "consolidate": "*",
     "q": "*",
+    "util":"*",
     "dox": "*",
     "mime": "*",
     "tar": "*",
     "fstream": "*",
     "cheerio": "*",
-    "optimist": "*"
+    "optimist": "*",
+    "querystring":"*"
   },
   "devDependencies": {
     "mocha": "*",
