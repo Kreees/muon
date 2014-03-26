@@ -1,7 +1,44 @@
 module.exports = function(grunt) {
   var mu = require('./module.js');
+  var prjPath = '/home/neila/Aptana/back/';
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    concat:{
+        client:{
+            options: {
+              stripBanners: true,
+              banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' +
+                '<%= grunt.template.today("yyyy-mm-dd") %> */ \n\n (function(){\n',
+              footer: (function(){
+                          return "__domain__ = '"+ (m.cfg.domain || m.cfg.host +":"+ m.cfg.port)+"',"+
+                                  "__serverMode__ = '"+m.cfg.serverMode+"',"+
+                                  "__protocol__ = '"+ m.cfg.protocol +"';"+
+                                  "\n})();\n\n";
+                      }).call(), 
+            },
+            files: {
+              'tmp/grunt/concatmuon.js': ['lib/client/muonjs/*.js'],
+            }
+        }
+    },
+    uglify:{
+        client: {
+            src: 'tmp/grunt/concatmuon.js',
+            dest: prjPath+'client/assets/muon.js'
+          }
+    },
+    watch:{
+        reload:{
+            options:{livereload:true},
+            files:['lib/client/muonjs/*js'],
+            tasks:[]
+        }
+    },
+    clean:{
+        client:['tmp/grunt'],
+    },
+    
+    
     mocha_phantomjs:{
         all:{
             options:{
@@ -11,29 +48,14 @@ module.exports = function(grunt) {
             }
         }
     },
-    concat:{
-        options: {
-          stripBanners: true,
-          banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' +
-            '<%= grunt.template.today("yyyy-mm-dd") %> */ \n\n (function(){\n',
-          footer: '\n})();\n\n', 
-        },
-        dist: {
-            src: ['lib/client/muonjs/*.js'],
-            dest: 'client/assets/concatmuon.js'
-          }
-    },
-    uglify:{
-        dist: {
-            src: 'client/assets/concatmuon.js',
-            dest: 'client/assets/muon.js'
-          }
-    },
-    watch:{
-        reload:{
-            options:{livereload:true},
-            files:['lib/client/muonjs/*js'],
-            tasks:[]
+    jade:{
+        test:{
+            options:{
+                debug: true
+            },
+            files:{
+                'tmp/lolo.html': prjPath+'client/packages/application/views/model/subject/subject.jade'
+            }  
         }
     }
   });
@@ -41,8 +63,11 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-contrib-jade');
   grunt.loadNpmTasks('grunt-shell');
   grunt.registerTask('default',['mocha_phantomjs']);
-  grunt.registerTask('client_mrender',['concat', 'addinfo','uglify']);
-  // console.log(mu.server.compileMuonJs());
+  grunt.registerTask('testing',['mocha_phantomjs']);
+  grunt.registerTask('client_render',['concat:client','uglify:client','clean:client']);
+  // console.log(m.sys.path);
 }
