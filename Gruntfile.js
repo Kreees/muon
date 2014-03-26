@@ -69,5 +69,8 @@ module.exports = function(grunt) {
   grunt.registerTask('default',['mocha_phantomjs']);
   grunt.registerTask('testing',['mocha_phantomjs']);
   grunt.registerTask('client_render',['concat:client','uglify:client','clean:client']);
+  grunt.registerTask('db','create dbs and tables with mysql',function(){
+      var sync = require('sql-ddl-sync');
+  })
   // console.log(m.sys.path);
 }

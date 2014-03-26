@@ -37,7 +37,7 @@
     "orm-paging": "*",
     "mysql": "2.0.0-alpha9",
     "pg": "2.6.2",
-    "sqlite3": "*",
+    "sqlite3": "2.1.7",
     "mongodb": "*",
     "underscore": "*",
     "jade": "*",
@@ -46,14 +46,12 @@
     "coffee-script": "*",
     "consolidate": "*",
     "q": "*",
-    "util":"*",
     "dox": "*",
     "mime": "*",
     "tar": "*",
     "fstream": "*",
     "cheerio": "*",
-    "optimist": "*",
-    "querystring":"*"
+    "optimist": "*"
   },
   "devDependencies": {
     "mocha": "*",
