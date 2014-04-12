@@ -1,0 +1,13 @@
+{
+    "version": "0.0.1",
+    "maintainence": "SukharevKirill@gmail.com",
+    "dependency": [
+        "process-manager",
+        "logger",
+        "models-manager"
+    ],
+    "interface": {
+        "initPlugin": "Attach plugin to application by name, it's path or url"
+    },
+    "public": {}
+}
