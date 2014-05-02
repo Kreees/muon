@@ -13,5 +13,5 @@ var fs = require("fs"),
 var server = require("../lib/server.js");
 
 server.init(function(){
-    process.kill();
+    process.exit();
 });

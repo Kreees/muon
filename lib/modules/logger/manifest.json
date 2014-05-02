@@ -1,0 +1,13 @@
+{
+    "version": "0.0.1",
+    "maintenance": "SukharevKirill@gmail.com",
+    "dependency": [
+        "utils",
+        "config",
+        "process",
+        "sys"
+    ],
+    "public": [
+        "log","error","exception"
+    ]
+}

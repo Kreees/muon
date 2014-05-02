@@ -1,0 +1,10 @@
+{
+    "dependency": [
+        "utils",
+        "config",
+        "logger",
+        "plugins",
+        "models",
+        "request-processing"
+    ]
+}

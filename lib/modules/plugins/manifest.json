@@ -1,0 +1,11 @@
+{
+    "maintenance": "SukharevKirill@gmail.com",
+    "dependency": [
+        "config",
+        "models",
+        "helpers"
+    ],
+    "interface": [
+        "initPlugin"
+    ]
+}

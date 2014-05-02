@@ -3,16 +3,14 @@
 var fs = require("fs");
 var argv = require("optimist").argv;
 
-
-
 if (!fs.existsSync(__dirname+"/../module.js")){
-    console.error("You should run it from the root of your project. Exiting.");
+    console.error("You should run it from the root of your project.");
     console.log("Error: "+e.message);
     return -1;
 }
 
 if (!fs.existsSync(".muon")){
-    console.error("You should run it from the root of your project. Exiting.")
+    console.error("You should run it from the root of your project.")
     console.log("Error: file .muon does not exists in this directory.");
     console.log("Error: If you're in the root of muon.js project, try to create this file manually.");
     return -1;
@@ -119,6 +117,7 @@ if (argv.detach || argv.d){
     }
     if (argv._.length > 0) new_args = new_args.concat(argv._);
     var clone = spawn(argv.$0,new_args,{detached: true,stdio:["ignore",out,err]});
+
     console.log("Server started in "+serverMode+" mode, listening on "+host+":"+port+" address.");
     console.log("Default output log file: ./tmp/out.log");
     console.log("Default error log file: ./tmp/error.log");
@@ -137,25 +136,14 @@ function launch(){
     if (host) global.__mcfg__.host = host;
     if (isFinite(port)) global.__mcfg__.host = port;
 
-
-    var muon = require("../module");
-    muon.ready(function(){
-        var serv = muon.server();
-        host = m.cfg.host;
-        port = m.cfg.port;
-        serv.listen(port,host);
-        console.log("Server started in "+m.cfg.serverMode+" mode, listening on "+host+":"+port+" address.");
-        console.log("Press Ctrl-C to shut down")
-    });
+    require("../module");
 }
 
 var old_pid = fs.readFileSync(".muon","utf-8");
 if (old_pid.length == 0) launch();
 else {
     var pkill = spawn("kill",["-16",old_pid],{});
-    pkill.stderr.on("data",function(){
-        fs.writeFileSync(".muon","");
-    });
+    pkill.stderr.on("data",function(){ fs.writeFileSync(".muon",""); });
     pkill.on("close",launch);
 }
 

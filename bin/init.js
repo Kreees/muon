@@ -25,7 +25,7 @@ if (process.argv.length != 3){
     var help = "Use: "+process.argv[1].substring(process.argv[1].lastIndexOf("/")+1,process.argv[1].length);
     help += " <projectName>\n"
     console.log(help);
-    process.kill();
+    process.exit();
 }
 
 var projectName = process.argv[2],
@@ -33,8 +33,8 @@ var projectName = process.argv[2],
 var projectDir = path+"/"+projectName;
 
 if (fs.existsSync(projectDir)) {
-    console.log("Directory '"+projectName+"' already exists! Exiting.");
-    process.kill();
+    console.log("Directory '"+projectName+"' already exists.");
+    process.exit();
 }
 
 var dirs = [

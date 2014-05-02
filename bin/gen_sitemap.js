@@ -8,7 +8,7 @@ var ph = spawn("phantomjs",["phantom.js"],{cwd: m.sys.path+"lib/lib/get_sitemap/
 
 m.cfg.serverMode = "sitemap";
 try{ server.listen(); }
-catch(e){console.log(e.message);process.kill();}
+catch(e){console.log(e.message);process.exit();}
 
 server.onready = function(){
     var first_time = true;
@@ -29,7 +29,7 @@ server.onready = function(){
 
     ph.on("close",function(code){
         console.log("Phantomjs exited");
-        process.kill();
+        process.exit();
     });
 }
 

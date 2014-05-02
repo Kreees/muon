@@ -53,8 +53,8 @@ try{
         }
 
         fs.mkdirSync(temp_dir+"/pack");
-        fs.mkdirSync(temp_dir+"/pack_src");
-        fs.mkdirSync(temp_dir+"/pack_translation");
+        fs.mkdirSync(temp_dir+"/pack-src");
+        fs.mkdirSync(temp_dir+"/pack-translation");
 
         var packAssetCounter = 0;
         var langs = [];
@@ -69,7 +69,7 @@ try{
                 (function(dep_src,pack){
                     fs_ext.tree(dep_src,function(files){
                         files.map(function(a){
-                            assets["pack_src/"+pack+"/"+a.replace(RegExp("^"+dep_src),"")] = {
+                            assets["pack-src/"+pack+"/"+a.replace(RegExp("^"+dep_src),"")] = {
                                 data: fs.readFileSync(a),
                                 mime: mime.lookup(a)
                             }
@@ -94,7 +94,7 @@ try{
             var req = Object.create(req);
             var res = Object.create(res);
             req.path = "/"+langs[i];
-            res.file_path = "pack_translation/"+langs[i];
+            res.file_path = "pack-translation/"+langs[i];
             req.query = { packs:packs.join(",")};
             console.log("Compiling "+langs[i]+" translation...");
             serverHandler.driver.packageTranslation(req,res);
@@ -125,7 +125,7 @@ try{
                 try{ finalize(); }
                 catch(e){
                     m.log(e);
-                    process.kill();
+                    process.exit();
                 }
             })
         }
@@ -165,7 +165,7 @@ try{
 }
 catch(e){
     m.log(e);
-    process.kill();
+    process.exit();
 }
     });
 

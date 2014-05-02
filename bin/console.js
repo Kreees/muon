@@ -8,5 +8,4 @@ muon.ready(function(){
     require('repl.history')(repl, process.env.HOME + '/.node_history');
     repl.on('exit', function () { process.exit(); });
 });
-//context.underscore = require('underscore');
 

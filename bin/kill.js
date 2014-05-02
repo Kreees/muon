@@ -4,7 +4,7 @@ var pc = require("child_process"),
     fs = require("fs");
 
 if (!fs.existsSync(process.cwd()+"/.muon")){
-    console.error("You should run it from the root of your project. Exiting.")
+    console.error("You should run it from the root of your project.")
     return -1;
 }
 

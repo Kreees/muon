@@ -1,0 +1,7 @@
+{
+    "maintenance": "SukharevKirill@gmail.com",
+    "dependency": [
+        "utils"
+    ],
+    "public": []
+}
