@@ -9,5 +9,5 @@ Base site with docs and tutorials will appear on http://muonjs.com soon.
 License
 =======
 
-Muon.JS is released under the [MIT License](http://opensource.org/licenses/MIT).
+Muon is released under the [MIT License](http://opensource.org/licenses/MIT).
 
