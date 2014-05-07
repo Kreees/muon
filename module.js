@@ -54,7 +54,7 @@ function reload(objCfg,cb){
             }
             /* Proceed */
             setTimeout(cb,0);
-        }).fail(function(e){
+        }).catch(function(e){
             console.error((e instanceof Error)?e.stack:e);
             process.exit();
         });
