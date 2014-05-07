@@ -2,7 +2,6 @@
     "version": "0.0.1",
     "maintenance": "SukharevKirill@gmail.com",
     "allowReload": false,
-    "objectDependencyArgument": true,
     "dependency": [
         "sys",
         "config",
