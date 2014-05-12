@@ -70,7 +70,44 @@ module.exports = function(grunt) {
   grunt.registerTask('testing',['mocha_phantomjs']);
   grunt.registerTask('client_render',['concat:client','uglify:client','clean:client']);
   grunt.registerTask('db','create dbs and tables with mysql',function(){
-      var sync = require('sql-ddl-sync');
+    var orm = m.utils.orm;
+    var db = m.databases.default;
+    var Sync = require('sql-ddl-sync');
+    module.app.models;
+    if (!db) throw 'Grunt error with db';
+    var sync = new Sync({
+        dialect : "mysql",
+        driver  : db.driver,
+        debug   : function (text) {
+            console.log("> %s", text);
+        }
+    });
+    
+    sync.defineCollection("ddl_sync_test", {
+        id     : { type : "number", primary: true, serial: true },
+        name   : { type : "text", required: true },
+        age    : { type : "number", rational: true },
+        male   : { type : "boolean" },
+        born   : { type : "date", time: true },
+        born2  : { type : "date" },
+        int2   : { type : "number", size: 2 },
+        int4   : { type : "number", size: 4 },
+        int8   : { type : "number", size: 8 },
+        float4 : { type : "number", rational: true, size: 4 },
+        float8 : { type : "number", rational: true, size: 8 },
+        type   : { type : "enum", values: [ 'dog', 'cat'], defaultValue: 'dog', required: true },
+        photo  : { type : "binary" }
+    });
+    
+    sync.sync(function (err) {
+        if (err) {
+            console.log("> Sync Error");
+            console.log(err);
+        } else {
+            console.log("> Sync Done");
+        }
+        process.exit(0);
+    });
   })
   // console.log(m.sys.path);
 }
