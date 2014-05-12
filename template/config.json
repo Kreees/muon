@@ -3,9 +3,7 @@
     "port": "8000",
     "dbHost": "127.0.0.1",
     "lang": "#{lang}",
-    "plugins": {
-        "muon": {}
-    },
+    "plugins": {},
     "db": {
         "default": true
     }
