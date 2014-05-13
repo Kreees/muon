@@ -31,9 +31,9 @@
     "async": "0.8.0 ",
     "ejs": "1.0.0",
     "express": "3.1.0",
-    "orm": "2.1.8",
+    "orm": "https://github.com/dresende/node-orm2/tarball/master",
     "orm-timestamps": "0.2.1",
-    "sql-ddl-sync": "0.1.4",
+    "sql-ddl-sync": "https://github.com/dresende/node-sql-ddl-sync/tarball/master",
     "underscore": "1.6.0",
     "jade": "1.3.1",
     "less-middleware": "0.2.1-beta",
@@ -54,7 +54,6 @@
     "chai": "1.9.1",
     "chai-spies": "0.5.1",
     "node-mocks-http": "1.0.4",
-    "mocha-as-promised": "~1.4.1",
     "repl.history": "*",
     "grunt": "~0.4.4",
     "mocha-phantomjs": "~3.3.2",
@@ -65,10 +64,6 @@
     "grunt-contrib-uglify": "^0.4.0",
     "grunt-shell": "^0.6.4",
     "grunt-contrib-clean": "^0.5.0",
-    "grunt-contrib-jade": "^0.11.0",
-    "mysql": "2.0.0-alpha9",
-    "pg": "2.6.2",
-    "sqlite3": "2.1.7",
-    "mongodb": "1.3.19"
+    "grunt-contrib-jade": "^0.11.0"
   }
 }
