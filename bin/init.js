@@ -66,7 +66,7 @@ sys.loadModule("utils","development").then(function(){
         "/server/",
         "/server/app/",
         "/server/app/models/",
-        "/server/app/actions/",
+        "/server/app/controllers/",
         "/server/app/middleware/",
         "/server/app/initializers/",
         "/tmp/",
