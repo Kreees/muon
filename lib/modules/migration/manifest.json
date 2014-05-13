@@ -1,0 +1,13 @@
+{
+    "version": "0.0.1",
+    "maintenance": "SukharevKirill@gmail.com",
+    "dependency": [
+        "config","utils","database","logger","models"
+    ],
+    "public": [
+        "status",
+        "createMagic",
+        "sync",
+        "magicSync"
+    ]
+}
