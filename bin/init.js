@@ -64,6 +64,7 @@ sys.loadModule("utils","development").then(function(){
         "/client/packages/application/dependency/",
         "/client/packages/application/cache/",
         "/server/",
+        "/migrations/",
         "/server/app/",
         "/server/app/models/",
         "/server/app/controllers/",
