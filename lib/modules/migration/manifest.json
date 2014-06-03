@@ -8,6 +8,9 @@
         "status",
         "createMagic",
         "sync",
-        "magicSync"
+        "magicSync",
+        "test",
+        "migrate",
+        "getDb"
     ]
 }

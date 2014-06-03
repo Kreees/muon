@@ -7,9 +7,5 @@ global._ = require('underscore');
 global.httpMock = require("../../lib/testing/http_mock");
 global.__mcfg__ = { serverMode: "testing"};
 global.async = require("async");
-process.on("uncaughtException",function(e){
-    console.error(e);
-    console.error(e.stack);
-})
 require("../../module");
 
