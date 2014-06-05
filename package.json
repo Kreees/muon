@@ -45,7 +45,8 @@
     "tar": "0.1.19",
     "fstream": "0.1.25",
     "cheerio": "0.15.0",
-    "optimist": "0.6.1"
+    "optimist": "0.6.1",
+    "sqlite3": "2.1.7"
   },
   "devDependencies": {
     "mocha": "1.18.2",
