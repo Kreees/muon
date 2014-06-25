@@ -7,12 +7,6 @@
         "config","utils","logger","plugins","database","models"
     ],
     "public": [
-        "status",
-        "createMagic",
-        "sync",
-        "magicSync",
-        "test",
-        "migrate",
-        "getDb"
+        "test"
     ]
 }
