@@ -7,6 +7,6 @@
         "config","utils","logger","plugins","database","models"
     ],
     "public": [
-        "migrate"
+        "migrate", "info", "sync"
     ]
 }
