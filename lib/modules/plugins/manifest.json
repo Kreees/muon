@@ -3,6 +3,7 @@
     "dependency": [
         "config",
         "models",
+        "logger",
         "helpers"
     ],
     "interface": [
