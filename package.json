@@ -23,9 +23,7 @@
     "m-start": "./bin/start.js",
     "m-console": "./bin/console.js",
     "m-kill": "./bin/kill.js",
-    "m-pack-client": "./bin/pack_client.js",
-    "m-gen-sitemap": "./bin/gen_sitemap.js",
-    "m-set-config": "./bin/set_config.js"
+    "m-pack-client": "./bin/pack_client.js"
   },
   "dependencies": {
     "async": "0.8.0 ",
