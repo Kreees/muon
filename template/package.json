@@ -2,6 +2,7 @@
     "name": "#{project}",
     "version": "0.0.1",
     "author":"#{user}",
+    "main": "./module.js",
     "dependencies": {
         "muon": "*"
     },
