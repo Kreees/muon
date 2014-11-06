@@ -108,7 +108,7 @@ m.ready(function(){
                             packName = fullPackName.split(":").pop();
                         var pluginName = packName.split(":").slice(0,-1).join(":"),
                             plugin = m.plugins.getPlugin(pluginName);
-                        promise = promise.then(_.partial(cc.renderTranslation,plugin,packName,lang || m.cfg.defaultLang)).then(function(trs){
+                        promise = promise.then(m.utils._.partial(cc.renderTranslation,plugin,packName,lang || m.cfg.defaultLang)).then(function(trs){
                             ret[fullPackName] = trs;
                         });
                     });
