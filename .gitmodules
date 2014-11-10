@@ -1,0 +1,3 @@
+[submodule "lib/modules/server"]
+	path = lib/modules/server
+	url = git@gitlab.muonapps.com:Kreees/muon-server.git
