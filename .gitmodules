@@ -1,0 +1,54 @@
+[submodule "lib/modules/api"]
+	path = lib/modules/api
+	url = git@gitlab.muonapps.com:Kreees/muon-api.git
+[submodule "lib/modules/client-compiler"]
+	path = lib/modules/client-compiler
+	url = git@gitlab.muonapps.com:Kreees/muon-client-compiler.git
+[submodule "lib/modules/config"]
+	path = lib/modules/config
+	url = git@gitlab.muonapps.com:Kreees/muon-config.git
+[submodule "lib/modules/database"]
+	path = lib/modules/database
+	url = git@gitlab.muonapps.com:Kreees/muon-database.git
+[submodule "lib/modules/express"]
+	path = lib/modules/express
+	url = git@gitlab.muonapps.com:Kreees/muon-express.git
+[submodule "lib/modules/helpers"]
+	path = lib/modules/helpers
+	url = git@gitlab.muonapps.com:Kreees/muon-helpers.git
+[submodule "lib/modules/http"]
+	path = lib/modules/http
+	url = git@gitlab.muonapps.com:Kreees/muon-http.git
+[submodule "lib/modules/initializers"]
+	path = lib/modules/initializers
+	url = git@gitlab.muonapps.com:Kreees/muon-initializers.git
+[submodule "lib/modules/logger"]
+	path = lib/modules/logger
+	url = git@gitlab.muonapps.com:Kreees/muon-logger.git
+[submodule "lib/modules/models"]
+	path = lib/modules/models
+	url = git@gitlab.muonapps.com:Kreees/muon-models.git
+[submodule "lib/modules/muonjs"]
+	path = lib/modules/muonjs
+	url = git@gitlab.muonapps.com:Kreees/muon-muonjs.git
+[submodule "lib/modules/plugins"]
+	path = lib/modules/plugins
+	url = git@gitlab.muonapps.com:Kreees/muon-plugins.git
+[submodule "lib/modules/process"]
+	path = lib/modules/process
+	url = git@gitlab.muonapps.com:Kreees/muon-process.git
+[submodule "lib/modules/request-processing"]
+	path = lib/modules/request-processing
+	url = git@gitlab.muonapps.com:Kreees/muon-request-processing.git
+[submodule "lib/modules/server"]
+	path = lib/modules/server
+	url = git@gitlab.muonapps.com:Kreees/muon-server.git
+[submodule "lib/modules/testing"]
+	path = lib/modules/testing
+	url = git@gitlab.muonapps.com:Kreees/muon-testing.git
+[submodule "lib/modules/utils"]
+	path = lib/modules/utils
+	url = git@gitlab.muonapps.com:Kreees/muon-utils.git
+[submodule "lib/modules/migrations"]
+	path = lib/modules/migrations
+	url = git@gitlab.muonapps.com:Neila/muon-migrations.git
