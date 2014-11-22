@@ -31,7 +31,7 @@ It's in the state of tough development, so don't rely on its description and fun
 ----
 
 <a name='quick_launch'></a>
-### Quick launch
+### Quick launch ####
 
 Make sure Node.js is installed. You could download the latest version from [its official site](http://nodejs.org/download/).
 <br>
@@ -64,54 +64,54 @@ Web server within Muon will be started at: `0.0.0.0:8000`
 
 <br>
 <a name='cli'></a>
-### Muon CLI
+### Muon CLI ####
 
 <br>
 <a name='config'></a>
-### Application configuration
+### Application configuration ####
 
 <br>
 <a name='development'></a>
-### Development
+### Development ####
 
 <br>
 <a name='plugins'></a>
-### Plugins
+### Plugins ####
 
 
 
 <br>
 <a name='modules'></a>
-### Modules
+### Modules ####
 
 
 Muon is modular framework and consists of list of modules
 
 - [API](/Kreees/muon-api) - router processing all application client-server communication within MVC architecture
-- Client-compiler - bunch of methods to prepare single HTML-page and all its additions
-- Config - module for parsing application configuration files
-- Database - database provider based on [node-orm2](https://github.com/dresende/node-orm2)
-- Express - basic Express 
-- Helpers - 
-- HTTP - 
-- Initializers - 
-- Logger - loggin subsystem
-- Migrations - module versioning database development states
-- Models - models realization within MVC Muon.js architecture based on [node-orm2](https://github.com/dresende/node-orm2)
-- Muon.js - client part of framework
-- Plugins - supports of  
-- Process - process management subsystem.
-- Request-processor - controllers realization within MVC Muon.js architecture
-- Server - 
-- Tests - 
-- Utils - 
+- [Client-compiler](/Kreees/muon-client-compiler) - bunch of methods to prepare single HTML-page and all its additions
+- [Config](/Kreees/muon-config) - module for parsing application configuration files
+- [Database](/Kreees/muon-database) - database provider based on [node-orm2](https://github.com/dresende/node-orm2)
+- [Express](/Kreees/muon-express) - basic Express 
+- [Helpers](/Kreees/muon-helpers) - 
+- [HTTP](/Kreees/muon-http) - 
+- [Initializers](/Kreees/muon-initializers) - 
+- [Logger](/Kreees/muon-logger) - loggin subsystem
+- [Migrations](/Neila/muon-migrations) - module versioning database development states
+- [Models](/Kreees/muon-models) - models realization within MVC Muon.js architecture based on [node-orm2](https://github.com/dresende/node-orm2)
+- [Muon.js](/Kreees/muon-muonjs) - client part of framework
+- [Plugins](/Kreees/muon-plugins) - supports of  
+- [Process](/Kreees/muon-process) - process management subsystem.
+- [Request-processor](/Kreees/muon-request-processing) - controllers realization within MVC Muon.js architecture
+- [Server](/Kreees/muon-server) - 
+- [Tests](/Kreees/muon-tests) - 
+- [Utils](/Kreees/muon-utils) - 
 
 <br>
 <a name='contrib'></a>
 ### Contributing
 ___
 
-###License
+### License ####
 
 
 Muon is released under the [MIT License](http://opensource.org/licenses/MIT).
