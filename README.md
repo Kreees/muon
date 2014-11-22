@@ -10,7 +10,8 @@ It's in the state of tough development, so don't rely on its description and fun
 <br>
 <br>
 
-###Table of contents
+### Table of contents ####
+
 <br>
 [Quick Launch](#quick)  
 
