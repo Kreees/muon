@@ -87,24 +87,24 @@ Web server within Muon will be started at: `0.0.0.0:8000`
 
 Muon is modular framework and consists of list of modules
 
-- [API](/Kreees/muon-api) - router processing all application client-server communication within MVC architecture
-- [Client-compiler](/Kreees/muon-client-compiler) - bunch of methods to prepare single HTML-page and all its additions
+- [API](/Kreees/muon-api) - router processing client-server communication within MVC architecture
+- [Client-compiler](/Kreees/muon-client-compiler) - bunch of methods to prepare single HTML-page and all its additions and dependencies
 - [Config](/Kreees/muon-config) - module for parsing application configuration files
 - [Database](/Kreees/muon-database) - database provider based on [node-orm2](https://github.com/dresende/node-orm2)
-- [Express](/Kreees/muon-express) - basic Express 
-- [Helpers](/Kreees/muon-helpers) - 
-- [HTTP](/Kreees/muon-http) - 
-- [Initializers](/Kreees/muon-initializers) - 
-- [Logger](/Kreees/muon-logger) - loggin subsystem
-- [Migrations](/Neila/muon-migrations) - module versioning database development states
+- [Express](/Kreees/muon-express) - basic [Express.js](http://expressjs.com) wrapper for framework 
+- [Helpers](/Kreees/muon-helpers) - server-side helpers support
+- [HTTP](/Kreees/muon-http) - HTTP standard application
+- [Initializers](/Kreees/muon-initializers) - server-side data initialization support
+- [Logger](/Kreees/muon-logger) - loggin/debug subsystem
+- [Migrations](/Neila/muon-migrations) - module for versioning database development states
 - [Models](/Kreees/muon-models) - models realization within MVC Muon.js architecture based on [node-orm2](https://github.com/dresende/node-orm2)
 - [Muon.js](/Kreees/muon-muonjs) - client part of framework
-- [Plugins](/Kreees/muon-plugins) - supports of  
+- [Plugins](/Kreees/muon-plugins) - supports of plugins for Muon.js applications
 - [Process](/Kreees/muon-process) - process management subsystem.
 - [Request-processor](/Kreees/muon-request-processing) - controllers realization within MVC Muon.js architecture
-- [Server](/Kreees/muon-server) - 
-- [Tests](/Kreees/muon-testing) - 
-- [Utils](/Kreees/muon-utils) - 
+- [Server](/Kreees/muon-server) - [Express.js](http://expressjs.com) based web server
+- [Tests](/Kreees/muon-testing) - common utils for testing
+- [Utils](/Kreees/muon-utils) - common utils and dependency referencies
 
 <br>
 <a name='contrib'></a>
