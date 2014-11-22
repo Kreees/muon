@@ -1,4 +1,4 @@
-![](https://raw.githubusercontent.com/Kreees/muonjs.com/master/client/assets/img/logo_muon.png)
+![](https://raw.githubusercontent.com/Kreees/muonjs.com/master/client/assets/img/logo_muon.png =250x100)
 
 <br>
 <a name='muon'></a>
