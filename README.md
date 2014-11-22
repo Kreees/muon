@@ -1,3 +1,5 @@
+![](https://raw.githubusercontent.com/Kreees/muonjs.com/master/client/assets/img/logo_muon.png)
+
 <br>
 <a name='muon'></a>
 Muon.js
