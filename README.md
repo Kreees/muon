@@ -1,9 +1,6 @@
-![](https://raw.githubusercontent.com/Kreees/muonjs.com/master/client/assets/img/logo_muon.png =250x100)
-
+<img src='https://raw.githubusercontent.com/Kreees/muonjs.com/master/client/assets/img/logo_muon_new.png' width='300'></img>
 <br>
-<a name='muon'></a>
-Muon.js
-=======
+<br>
 <br>
 
 Client-server Node.js  web framework for single page applications building.
