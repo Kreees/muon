@@ -103,7 +103,7 @@ Muon is modular framework and consists of list of modules
 - [Process](/Kreees/muon-process) - process management subsystem.
 - [Request-processor](/Kreees/muon-request-processing) - controllers realization within MVC Muon.js architecture
 - [Server](/Kreees/muon-server) - 
-- [Tests](/Kreees/muon-tests) - 
+- [Tests](/Kreees/muon-testing) - 
 - [Utils](/Kreees/muon-utils) - 
 
 <br>
