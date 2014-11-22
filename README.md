@@ -13,9 +13,9 @@ It's in the state of tough development, so don't rely on its description and fun
 ### Table of contents ####
 
 <br>
-[Quick Launch](#quick)  
+[Quick Launch](#quick_launch)  
 
-[Muon CLI](#cli)  
+[Muon CLI](#muoncli)  
 
 [Application configuration](#config)   
 
@@ -46,7 +46,7 @@ $ cd muon
 $ npm install
 $ npm link . # this makes global link of Muon in your system
 ``` 
-**Warning:** current muon NPM package in <https://www.npmjs.org> repository is totally outdated, so be aware when using Muon.js as Node.js module in your project. The most safe way to run muon-based application is using [Muon-CLI](#cli).
+**Warning:** current muon NPM package in <https://www.npmjs.org> repository is totally outdated, so be aware when using Muon.js as Node.js module in your project. The most safe way to run muon-based application is using [Muon-CLI](#muoncli).
 <br>
 <br>
 
@@ -63,7 +63,7 @@ $ m-start
 Web server within Muon will be started at: `0.0.0.0:8000`
 
 <br>
-<a name='cli'></a>
+<a name='muoncli'></a>
 ### Muon CLI ####
 
 <br>
