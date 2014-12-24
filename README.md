@@ -138,7 +138,8 @@ $ m-kill /var/run/project.pid
 <a name='modules'></a>
 ### Модульная структура фреймворка
 
-Muon is modular framework and consists of list of modules
+Исходно мюон создавался как монолитный клиент-серверный фреймворк, который с течением времени разросся до неимоверных размеров.
+Чтобы упорядочить структуру кода и проекта в целом он был разбит на набор составляющих, каждая из которых реализует тот или иной аспект поведения веб-приложения в целом
 
 - [API](/Kreees/muon-api) - router processing client-server communication within MVC architecture
 - [Client-compiler](/Kreees/muon-client-compiler) - bunch of methods to prepare single HTML-page and all its additions and dependencies
