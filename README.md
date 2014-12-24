@@ -4,34 +4,33 @@ Muon.js
 =======
 <br>
 
-Client-server Node.js  web framework for single page applications building.
-
-It's in the state of tough development, so don't rely on its description and functionality =) 
+Клиент-серверных Node.js веб-фреймворк для создания одностраничных приложений.
+Проект находится в стадии глубокой разработки, так что адекватность работы и полное соответствие документации не гарантируется =)
 <br>
 <br>
 
-### Table of contents ####
+### Содержание ####
 
 <br>
-[Quick Launch](#quick_launch)  
+[Быстрый запуск](#quick_launch)
 
 [Muon CLI](#muoncli)  
 
-[Application configuration](#config)   
+[Конфигурация](#config)
 
-[Development](#development)  
+[Разработка](#development)
 
-[Plugins](#plugins)   
+[Плагины](#plugins)
 
-[Modules](#modules)  
+[Модули](#modules)
 
-[Contributing](#contrib)  
+[Контибуция=)](#contrib)
 
 
 ----
 
 <a name='quick_launch'></a>
-### Quick launch ####
+### Быстрый запуск ####
 
 Make sure Node.js is installed. You could download the latest version from [its official site](http://nodejs.org/download/).
 <br>
