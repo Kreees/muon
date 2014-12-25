@@ -17,11 +17,11 @@ Muon.js
 
 [Конфигурация проекта](#config) 
 
+[Модули](#modules)
+
 [Разработка](#development) 
 
 [Плагины](#plugins)
-
-[Модули](#modules)
 
 [Контибуторам](#contrib)
 
@@ -119,48 +119,48 @@ $ m-kill /var/run/project.pid
 - `-o|--output <path>`  - имя выходной директории, либо архива. По умолчанию './public'.
 
 Архив сформированный с помощью данной утилиты может быть использован для создания мобильного HTML-приложения на базе Titanium SDK. Более подробная информация представлена в описании проекта [muon-titanium-template](https://github.com/Kreees/muon-titanium-template).
+<a name='modules'></a>
+### Модульная структура фреймворка
 
-<br>
+Исходно Muon.js создавался как монолитный клиент-серверный фреймворк и с течением времени преваратился в голем.
+Чтобы лучше структурировать код, а также упростить процесс сопровождения проекта в целом, он был разбит на набор составляющих - независимых модулей, каждый из которых реализует тот или иной аспект поведения веб-приложения. В настоящий момент фреймворк не предоставляет средств по управлению веб-проектами сам по себе, вместо этого он выступает в роли скелета, обеспечивающего связывание независимых модулей воедино и позволяющего наращивать функциональность, а также внедрять альтенативные реализации тех или иных компонентов фреймворка, не нарушая структуру и принцип работы одностраничных веб-приложений.
+
+Более подробная ифнормация о способах расширения функциональности фреймворка и создании соственных модулей представлена в разделе для [контрибьюторов](#contrib).
+
+На текущий момент фреймворк включает в себя три категории модулей:
+##### Служебные
+- [Config](/Kreees/muon-config) - модуль формирования актуальной на момент запуска конфигурации проекта
+- [Logger](/Kreees/muon-logger) - модуль обслуживания лог-данных приложения
+- [Process](/Kreees/muon-process) - модуль управление состоянием запущенного процесса
+- [Database](/Kreees/muon-database) - средства, предоставляющие доступ к хранилищу данных приложения (универсальный драйвер базы данных)
+- [Migrations](/Neila/muon-migrations) - средства синхронизации описания структур данных (моделей) на стороне сервера кода с соответствующими структурами в составе хранилища (базе данных)
+- [Plugins](/Kreees/muon-plugins) - средства обслуживания плагинной структуры Muon.js приложения
+- [Utils](/Kreees/muon-utils) - набор утилит-помощников общего назначения
+- [Tests utils](/Kreees/muon-testing) - набор утилит-помощников для тестирования Muon.js проектов
+
+##### Серверные
+- [HTTP](/Kreees/muon-http) - набор констант протокола HTTP.
+- [Server](/Kreees/muon-server) - встроенный веб-сервер на базе бибилотеки [Express.js](http://expressjs.com)
+- [API](/Kreees/muon-api) - маршрутизатор HTTP-запросов, определяющий API для управления данными в процессе клиент-серверного взаимодействия.
+- [Request-processor](/Kreees/muon-request-processing) - серверная реализация контроллера (обработчиков запросов) в рамках архитектуры MVC, используемой Muon.js
+- [Models](/Kreees/muon-models) - серверная реализация моделей данных в рамках архитектуры MVC, используемой Muon.js
+- [Initializers](/Kreees/muon-initializers) - средства инициализации исходного состояния сервера при запуске Muon.js проекта
+- [Helpers](/Kreees/muon-helpers) - реализация общих вспомогательных классов, методов и объектов в составе серверного кода.
+
+##### Клиентские
+- [Muon.js](/Kreees/muon-muonjs) - реализация клиентской части одностраничного приложения на базе фреймворка [Backbone.js](http://backbonejs.org)
+- [Client compiler](/Kreees/muon-client-compiler) - набор средств для обслуживания и компиляции клиентского кода в одностраничное приложение, а также формирование клиентских пакетов.
+
+Какждый из модулей отражает отдельно взятый аспект работы веб-приложения и должен быть снабжен соответствующей документацией.
+Все модули подчиняются общему правилу встраивания в фреймворк, который включает в себя в том числе требования локального и интегрированного тестирования, а также наличие декларированного интерфейса.
 <a name='config'></a>
 ### Конфигурация проекта
 
 <br>
 <a name='development'></a>
 ### Разработка
-
-<br>
 <a name='plugins'></a>
 ### Плагины
-
-
-
-<br>
-<a name='modules'></a>
-### Модульная структура фреймворка
-
-Исходно мюон создавался как монолитный клиент-серверный фреймворк, который с течением времени разросся до неимоверных размеров.
-Чтобы упорядочить структуру кода и проекта в целом он был разбит на набор составляющих, каждая из которых реализует тот или иной аспект поведения веб-приложения в целом
-
-- [API](/Kreees/muon-api) - router processing client-server communication within MVC architecture
-- [Client-compiler](/Kreees/muon-client-compiler) - bunch of methods to prepare single HTML-page and all its additions and dependencies
-- [Config](/Kreees/muon-config) - module for parsing application configuration files
-- [Database](/Kreees/muon-database) - database provider based on [node-orm2](https://github.com/dresende/node-orm2)
-- [Express](/Kreees/muon-express) - basic [Express.js](http://expressjs.com) wrapper for framework 
-- [Helpers](/Kreees/muon-helpers) - server-side helpers support
-- [HTTP](/Kreees/muon-http) - HTTP standard application
-- [Initializers](/Kreees/muon-initializers) - server-side data initialization support
-- [Logger](/Kreees/muon-logger) - loggin/debug subsystem
-- [Migrations](/Neila/muon-migrations) - module for versioning database development states
-- [Models](/Kreees/muon-models) - models realization within MVC Muon.js architecture based on [node-orm2](https://github.com/dresende/node-orm2)
-- [Muon.js](/Kreees/muon-muonjs) - client part of framework
-- [Plugins](/Kreees/muon-plugins) - supports of plugins for Muon.js applications
-- [Process](/Kreees/muon-process) - process management subsystem.
-- [Request-processor](/Kreees/muon-request-processing) - controllers realization within MVC Muon.js architecture
-- [Server](/Kreees/muon-server) - [Express.js](http://expressjs.com) based web server
-- [Tests](/Kreees/muon-testing) - common utils for testing
-- [Utils](/Kreees/muon-utils) - common utils and dependency referencies
-
-<br>
 <a name='contrib'></a>
 ### Contributing
 ___
@@ -168,5 +168,5 @@ ___
 ### License
 
 
-Muon is released under the [MIT License](http://opensource.org/licenses/MIT).
+Muon.js распространяется под [MIT](http://opensource.org/licenses/MIT) лицензией .
 
