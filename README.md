@@ -38,11 +38,9 @@ Muon.js
 
 
 ```
-$ git clone git@github.com:Kreees/muon.git
+$ git clone -recursive git@github.com:Kreees/muon.git
 $ cd muon
 $ npm install
-$ git submodule init
-$ git submodule update
 $ npm link . # сделает muon-пакет глобальным среди NPM-пакетов системы
 ``` 
 **Внимание:** muon является полноценным NPM-пакетом, однако текущая версия фреймворка, размещенная в NPM-репозитории <https://www.npmjs.org>, основательно устарела. Поэтому наиболее простой способ работы с библиотекой на текущий момент - использование последней версии проекта из GIT, и установка проекта в виде NPM-модуля глобально в системе.
