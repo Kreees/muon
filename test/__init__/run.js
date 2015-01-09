@@ -14,11 +14,12 @@ var testDirs = fs.readdirSync(testPath);
 
 for(var i in testDirs){
     var test = testDirs[i];
+    var targetDir = testPath+"/"+test;
     if (/^_/.test(testDirs[i])) continue;
-    var f = fs.statSync(testPath+"/"+test);
+    var f = fs.statSync();
     if (!f.isDirectory()) continue;
-    tests[testDirs[i]] = {path: testPath+test};
-    var files = fs.readdirSync(testPath+test);
+    tests[testDirs[i]] = {path: targetDir};
+    var files = fs.readdirSync(targetDir);
     tests[test].modules = files.filter(function(a){
         return /.js$/.test(a) && !/^\./.test(a) && !/^_/.test(a) ;
     });
