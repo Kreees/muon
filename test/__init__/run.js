@@ -1,12 +1,14 @@
 var tests = {};
-var fs = require("fs");
-var testPath = m.cfg.path+"/test/";
+var fs = require("fs"),
+    path = require("path");
+var testPath = path.normalize(__dirname+"/..");
 
 var testDirs = fs.readdirSync(testPath);
+
 for(var i in testDirs){
     var test = testDirs[i];
     if (/^_/.test(testDirs[i])) continue;
-    var f = fs.statSync(testPath+test);
+    var f = fs.statSync(testPath+"/"+test);
     if (!f.isDirectory()) continue;
     tests[testDirs[i]] = {path: testPath+test};
     var files = fs.readdirSync(testPath+test);
@@ -14,8 +16,6 @@ for(var i in testDirs){
         return /.js$/.test(a) && !/^\./.test(a) && !/^_/.test(a) ;
     });
 }
-
-
 
 describe('Run MUON complete test:',function(){
     before(function(done){
