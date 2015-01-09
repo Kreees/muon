@@ -26,10 +26,6 @@ for(var i in testDirs){
 }
 
 describe('Run MUON complete test:',function(){
-    before(function(done){
-        m.ready(done);
-    });
-
     for(var i in tests){
         describe(i+":",function(){
             tests[i].modules.forEach(function(a){
