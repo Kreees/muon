@@ -16,7 +16,7 @@ for(var i in testDirs){
     var test = testDirs[i];
     var targetDir = testPath+"/"+test;
     if (/^_/.test(testDirs[i])) continue;
-    var f = fs.statSync();
+    var f = fs.statSync(targetDir);
     if (!f.isDirectory()) continue;
     tests[testDirs[i]] = {path: targetDir};
     var files = fs.readdirSync(targetDir);
