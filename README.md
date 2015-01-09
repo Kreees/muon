@@ -23,8 +23,6 @@ Muon.js
 
 [Разработка](#development) 
 
-[Плагины](#plugins)
-
 [Контибуторам](#contrib)
 
 ----
@@ -260,19 +258,29 @@ $ M_DB_DEFAULT_HOST=1.1.1.1 M_DB_DEFAULT_USER=dbuser M_DB_DEFAULT_PASSWORD=super
     }
 }
 ```
-Более подробно о работе плагинов в составе проектов Muon.js вы найдете [ниже](#plugins), либо в документации к модулю [muon-plugins](/Kreees/muon-plugins).
+Более подробно о работе плагинов в составе проектов Muon.js вы найдете  в документации к модулю [muon-plugins](/Kreees/muon-plugins).
 <a name='server_modes'></a>
 ### Режимы работы
 <a name='development'></a>
 ### Разработка
-<a name='plugins'></a>
-### Плагины
+В силу обширности фреймворка, достаточно сложно будет уместить на этой странице описание принципов работы фреймворка и аспектов его использования.
+
+Для первого знакомства с фреймворком я рекомендую Вам пройти через [Get Started](/Kreees/muon/wikis/Get-started-tutorial) туториал. 
+
+Для изучения особенностей серверного программирования на Muon.js можете обратиться к [соответствующему разделу](/Kreees/muon/wikis/Server-programming), а также ознакомиться с документацией к **Серверным** и **Служебным** модулям фреймворка. Также я рекомендую изучить работу следующих сторонних Node.js модулей:
+- [express](http://expressjs.com/)/[connect](https://github.com/senchalabs/connect) - фреймворк для построения веб-серверов на базе Node.js
+- [node-orm2](https://github.com/dresende/node-orm2) - ORM (Object-Relational Mapping) библиотека для взаимодейтсвия с базами данных
+- [Q](https://github.com/kriskowal/q) - одна из реализаций технологии Promise, активно используемой в программах на JavaScript
+
+Для изучения клиентской составляющей фреймворка Вы также можете посетить соответствующий раздел [wiki](/Kreees/muon/wikis/Client-programming), либо описание модуля [muon-muonjs](Kreees/muon-muonjs). Реализация одностраничных приложений выполнена на базе бибилотеки [Backbone.js](http://backbonejs.org). Присутствующая на сайте данной библиотеки документация также поможет ускорить знакомство с Muon.js.
+
 <a name='contrib'></a>
     
-### Contributing
+### Разработка фреймворка
+
 ___
 
-### License
+### Лицензия
 
 
 Muon.js распространяется под [MIT](http://opensource.org/licenses/MIT) лицензией .
