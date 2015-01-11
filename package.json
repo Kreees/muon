@@ -17,6 +17,10 @@
     "url": "http://github.com/Kreees/muonjs/issues",
     "email": "SukharevKirill@gmail.com"
   },
+  "scripts": {
+    "pretest": "rm -rf reports || true && mkdir reports",
+    "test": "./node_modules/.bin/mocha -C --reporter xunit > reports/xunit.xml"
+  },
   "main": "./module.js",
   "bin": {
     "m-init": "./bin/init.js",
