@@ -19,7 +19,8 @@
   },
   "scripts": {
     "pretest": "rm -rf reports || true && mkdir reports",
-    "test": "./node_modules/.bin/mocha -C --reporter xunit > reports/xunit.xml"
+    "test": "./node_modules/.bin/mocha -C --reporter xunit > reports/xunit.xml",
+    "posttest": "chmod 444 reports/xunit.xml"
   },
   "main": "./module.js",
   "bin": {
