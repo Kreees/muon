@@ -269,8 +269,8 @@ $ M_DB_DEFAULT_HOST=1.1.1.1 M_DB_DEFAULT_USER=dbuser M_DB_DEFAULT_PASSWORD=super
 
 Для изучения особенностей серверного программирования на Muon.js можете обратиться к [соответствующему разделу](/Kreees/muon/wikis/Server-programming), а также ознакомиться с документацией к **Серверным** и **Служебным** модулям фреймворка. Также я рекомендую изучить работу следующих сторонних Node.js модулей:
 - [express](http://expressjs.com/)/[connect](https://github.com/senchalabs/connect) - фреймворк для построения веб-серверов на базе Node.js
-- [node-orm2](https://github.com/dresende/node-orm2) - ORM (Object-Relational Mapping) библиотека для взаимодейтсвия с базами данных
-- [Q](https://github.com/kriskowal/q) - одна из реализаций технологии Promise, активно используемой в программах на JavaScript
+- [node-orm2](https://github.com/dresende/node-orm2) - ORM (Object-Relational Mapping) библиотека для управления записями баз данных из JavaScript-кода в объектно-ориентированной манере.
+- [Q](https://github.com/kriskowal/q) - одна из реализаций Promise технологии , активно используемой в программах на JavaScript.
 
 Для изучения клиентской составляющей фреймворка Вы также можете посетить соответствующий раздел [wiki](/Kreees/muon/wikis/Client-programming), либо описание модуля [muon-muonjs](Kreees/muon-muonjs). Реализация одностраничных приложений выполнена на базе бибилотеки [Backbone.js](http://backbonejs.org). Присутствующая на сайте данной библиотеки документация также поможет ускорить знакомство с Muon.js.
 
