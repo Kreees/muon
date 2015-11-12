@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var muon = require('./../module');
+var muon = require('./../module')();
 muon.ready(function(){
     var repl = require("repl").start('> ');
     var context = repl.context;

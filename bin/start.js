@@ -101,8 +101,11 @@ if (argv.detach || argv.d){
     var out = fs.openSync('./tmp/out.log', 'a');
     var err = fs.openSync('./tmp/error.log', 'a');
 
-    try { var cfg = JSON.parse(fs.readFileSync("./config.json").toString()); }
-    catch(e){ var cfg = {}; }
+    try {
+        var cfg = JSON.parse(fs.readFileSync("./config.json").toString());
+    } catch(e){
+        var cfg = {};
+    }
     host = host || cfg.host || "0.0.0.0";
     port = port || cfg.port || "8000";
     serverMode = serverMode || cfg.serverMode || "development";
@@ -112,7 +115,9 @@ if (argv.detach || argv.d){
         new_args.push((i.length == 1?"-":"--")+i);
         if (argv[i] !== true) new_args.push(argv[i]);
     }
-    if (argv._.length > 0) new_args = new_args.concat(argv._);
+    if (argv._.length > 0) {
+        new_args = new_args.concat(argv._);
+    }
     var clone = spawn(argv.$0,new_args,{detached: true,stdio:["ignore",out,err]});
 
     console.log("Server started in "+serverMode+" mode, listening on "+host+":"+port+" address.");
@@ -133,12 +138,13 @@ function launch(){
     if (host) global.__mcfg__.host = host;
     if (isFinite(port)) global.__mcfg__.host = port;
 
-    require("../module");
+    require("../module")();
 }
 
 var old_pid = fs.readFileSync(".muon","utf-8");
-if (old_pid.length == 0) launch();
-else {
+if (old_pid.length == 0) {
+    launch();
+} else {
     var pkill = spawn("kill",["-16",old_pid],{});
     pkill.stderr.on("data",function(){ fs.writeFileSync(".muon",""); });
     pkill.on("close",launch);
