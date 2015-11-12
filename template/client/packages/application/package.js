@@ -12,5 +12,5 @@ module.exports = {
                 page: "error"
         }
     ],
-    surrogate: {}
+    self: {}
 }

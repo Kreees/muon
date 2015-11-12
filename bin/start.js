@@ -54,10 +54,7 @@ if (argv.help){
     console_params([,
         "development - Server with live per request reloading, with all debug ",
         "testing - Server is launched once to run all defined client- and server-side test modules (requires PhantomJS)",
-//        "indexing - Server is launched once to generate 'sitemap.xml' file for searching robots (requires PhantomJS)",
         "production - Clear cached server with automated robot response generation and indexing (requires PhantomJS)",
-//        "production-clear - Clear cached server without PhantomJS dependency",
-//        "phantom - Wrap on PhantomJS for remote testing and indexing purposes",
         ""
     ]);
     return;
