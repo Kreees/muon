@@ -10,27 +10,20 @@ function Muon(){
 util.inherits(Muon,EventEmitter);
 
 var mCache = {};
-var mCfgCache = {};
-module.exports = function(alias,objCfg){
-    if (_.isObject(alias)){
-        objCfg = alias;
-        alias = "";
-    }
+
+var Module = function(alias,cb){
     alias = alias || "";
 
     if (mCache.hasOwnProperty(alias)){
         var m = mCache[alias];
-        if (JSON.stringify(objCfg) !== JSON.stringify(mCfgCache[alias])){
-            setTimeout(function(){
-                m.reload(objCfg,function(){});
-            },0);
+        if (_.isFunction(cb)){
+            m.ready(cb);
         }
         return m;
     }
 
     var m = new Muon();
     mCache[alias] = m;
-    mCfgCache[alias] = objCfg || global.__mcfg__;
     var sys = require("./lib/sys")(m);
     m.sys = sys;
 
@@ -48,6 +41,10 @@ module.exports = function(alias,objCfg){
             readyStack.push(callback);
         }
     };
+
+    if (_.isFunction(cb)){
+        m.ready(cb);
+    }
 
     m.beforeReload = function(callback){
         if (!_.isFunction(callback)) {
@@ -106,8 +103,13 @@ module.exports = function(alias,objCfg){
         return reload(objCfg,cb);
     };
 
-    setTimeout(function(){
-        reload(objCfg);
-    },0);
+    setTimeout(reload,0);
     return m;
 }
+
+Module.loaded = function(alias) {
+    alias = alias || "";
+    return mCache.hasOwnProperty(alias);
+}
+
+module.exports = Module;
